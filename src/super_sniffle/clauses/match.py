@@ -60,13 +60,9 @@ class MatchClause(Clause):
             >>> # MATCH (c:Company)
         """
         # Create a new MatchClause for the additional patterns
-        new_match = MatchClause(list(patterns))
+        new_match = MatchClause(list(patterns), next_clause=self.next_clause)
         
-        # If this clause has a next clause, chain the new match before it
-        if self.next_clause:
-            return replace(self, next_clause=new_match.with_next(self.next_clause))
-        
-        # Otherwise, chain the new match directly
+        # Chain this match clause to the new match clause
         return replace(self, next_clause=new_match)
     
     def where(self, condition: Expression):
@@ -94,16 +90,39 @@ class MatchClause(Clause):
         # Import WhereClause here to avoid circular imports
         from .where import WhereClause
         
-        where_clause = WhereClause(condition)
+        # Collect all consecutive MATCH clauses as the preceding clause
+        # This ensures that multiple MATCH clauses are grouped together before WHERE
+        full_preceding_match = self._collect_all_match_clauses()
         
-        # If this clause has a next clause, chain the where before it
-        if self.next_clause:
-            return replace(self, next_clause=where_clause.with_next(self.next_clause))
+        # Find the non-MATCH next clause (if any) after all the MATCH clauses
+        non_match_next_clause = self._find_non_match_next_clause()
         
-        # Otherwise, chain the where directly
-        return replace(self, next_clause=where_clause)
+        # Return the WhereClause with all MATCH clauses as its preceding clause
+        return WhereClause(condition, preceding_clause=full_preceding_match, next_clause=non_match_next_clause)
     
-    def return_(self, *projections: str):
+    def _collect_all_match_clauses(self) -> 'MatchClause':
+        """
+        Collect all consecutive MATCH clauses into a single chain.
+        
+        This ensures that when WHERE is added, all MATCH clauses are properly
+        grouped together before the WHERE clause.
+        """
+        # Simply return self - the _render_preceding_clauses method in WhereClause
+        # will handle collecting all consecutive MATCH clauses properly
+        return self
+    
+    def _find_non_match_next_clause(self) -> Optional[Clause]:
+        """
+        Find the first non-MATCH clause in the chain.
+        
+        This is used to determine what should come after the WHERE clause.
+        """
+        current = self
+        while current and isinstance(current, MatchClause):
+            current = current.next_clause
+        return current
+    
+    def return_(self, *projections: str, distinct: bool = False):
         """
         Add a RETURN clause to specify what to return from the query.
         
@@ -111,10 +130,12 @@ class MatchClause(Clause):
         such as node properties, relationships, or computed values.
         
         Args:
-            *projections: Strings representing what to return
+            *projections: Strings representing what to return.
+                         Use "*" or no arguments to return everything.
+            distinct: Whether to return only distinct results
             
         Returns:
-            A new ReturnClause instance (when implemented)
+            A new ReturnClause instance
             
         Example:
             >>> query = (
@@ -124,9 +145,32 @@ class MatchClause(Clause):
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # RETURN p.name, p.age
+            
+            >>> query = match(node("p", "Person")).return_()
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # RETURN *
+            
+            >>> query = match(node("p", "Person")).return_(distinct=True)
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # RETURN DISTINCT *
         """
-        # TODO: Implement ReturnClause when needed
-        raise NotImplementedError("RETURN clause will be implemented in upcoming releases")
+        # Import ReturnClause here to avoid circular imports
+        from .return_ import ReturnClause
+        
+        # Handle the case of returning everything
+        if not projections or (len(projections) == 1 and projections[0] == "*"):
+            projections = ["*"]
+        
+        return_clause = ReturnClause(list(projections), distinct)
+        
+        # If this clause has a next clause, chain the return before it
+        if self.next_clause:
+            return replace(self, next_clause=return_clause.with_next(self.next_clause))
+        
+        # Otherwise, chain the return directly
+        return replace(self, next_clause=return_clause)
     
     def order_by(self, *fields: str):
         """

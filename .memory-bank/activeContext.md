@@ -1,14 +1,18 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-Building the **Global Conditions System** - a feature to automatically apply performance and business logic conditions to nodes/relationships based on their labels/types. This is a high-priority feature for production use cases where certain conditions (like `apoc.node.degree(n) < 1000`) need to be applied consistently across queries.
+**Completing Basic Query Construction** - We just achieved a major milestone with the RETURN clause implementation! The core query building blocks (MATCH, WHERE, RETURN) are now fully functional with proper clause chaining. Next priority is completing the basic query functionality with ORDER BY, LIMIT, and SKIP clauses.
 
 ## Recent Changes
 - ✅ Implemented complete operator-based expression system
 - ✅ Built inline pattern conditions with native Cypher syntax support
 - ✅ Created NodePattern, RelationshipPattern, and PathPattern classes
-- ✅ Added comprehensive unit tests and real-world examples
-- 📋 **NEXT PRIORITY**: Global conditions system for auto-applying conditions
+- ✅ **COMPLETED: Full MATCH clause implementation with chaining**
+- ✅ **COMPLETED: Enhanced WHERE clause with complex chaining support**
+- ✅ **COMPLETED: Full RETURN clause with projections, DISTINCT, and "return everything" (*) support**
+- ✅ Fixed complex clause ordering issues (MATCH → WHERE → RETURN)
+- ✅ Added comprehensive unit tests and real-world examples (test_return_demo.py)
+- 📋 **NEXT PRIORITY**: ORDER BY, LIMIT, SKIP clauses to complete basic functionality
 
 ## Active Decisions
 

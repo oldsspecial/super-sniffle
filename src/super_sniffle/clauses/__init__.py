@@ -9,7 +9,7 @@ from .match import MatchClause, Clause
 
 # TODO: Import other clause classes when implemented
 from .where import WhereClause
-# from .return_ import ReturnClause
+from .return_ import ReturnClause
 # from .order import OrderByClause
 # from .limit import LimitClause
 # from .skip import SkipClause
@@ -17,7 +17,7 @@ from .where import WhereClause
 __all__ = [
     "MatchClause",
     "WhereClause",
-    # "ReturnClause",
+    "ReturnClause",
     # "OrderByClause",
     # "LimitClause",
     # "SkipClause",

@@ -62,33 +62,41 @@
 - 🔄 Development environment configuration
 - ✅ Initial package scaffolding (completed)
 
-## Current Status: MATCH Clause Complete! 🎉
+## Current Status: RETURN Clause Complete! 🎉
 
-**Major Milestone Achieved**: Full MATCH clause implementation with pattern system integration
+**Major Milestone Achieved**: Full RETURN clause implementation with comprehensive chaining support
 
 ### Recently Completed (This Session)
-1. **Complete MATCH clause implementation** (`src/super_sniffle/clauses/match.py`)
-   - Single and multiple pattern support
-   - Chainable `.match()` method for multiple MATCH clauses
-   - Full integration with all pattern types
-   - Proper Cypher generation
+1. **Complete RETURN clause implementation** (`src/super_sniffle/clauses/return_.py`)
+   - Support for specific projections and "return everything" (*) functionality
+   - Full DISTINCT support for both projections and "*"
+   - Seamless integration with MATCH and WHERE clauses
+   - Proper Cypher generation with correct clause ordering
 
-2. **Enhanced relates_to() method**
-   - Fixed parameter handling for cleaner API
-   - Supports chaining relationships: `person.relates_to(">", "KNOWS", "r", friend)`
-   - Works seamlessly with inline conditions
+2. **Enhanced clause chaining system**
+   - Fixed complex clause ordering issues (MATCH → WHERE → RETURN)
+   - Added preceding_clause support to WHERE clause
+   - Implemented `_render_preceding_clauses()` for complex clause chains
+   - Support for multiple MATCH clauses with proper ordering
 
-3. **Updated exports and imports**
-   - Added `match` function to public API
-   - Fixed all import dependencies
-   - Updated package initialization
+3. **Updated exports and module structure**
+   - Added `ReturnClause` to package exports
+   - Updated both `MatchClause.return_()` and `WhereClause.return_()` methods
+   - Proper import handling to avoid circular dependencies
+
+4. **Comprehensive testing**
+   - Created `test_return_demo.py` with 7 complete test scenarios
+   - All tests passing including complex real-world examples
+   - Covers return everything, DISTINCT, clause chaining, multiple MATCH clauses
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions
 - **Pattern System**: Nodes, relationships, paths with inline WHERE conditions  
 - **MATCH Clause**: Single patterns, multiple patterns, chaining, relates_to integration
-- **Test Coverage**: Comprehensive test suite passes (test_match_demo.py)
-- **Examples**: Working demonstrations in examples/basic_usage.py
+- **WHERE Clause**: Filtering with proper clause order and complex chaining
+- **RETURN Clause**: Projections, DISTINCT, return everything (*), full chaining support
+- **Test Coverage**: Comprehensive test suites pass (test_match_demo.py, test_return_demo.py)
+- **Examples**: Working demonstrations with complete query chains
 
 ## What's Next
 
@@ -97,8 +105,8 @@
 - ✅ AST dataclasses for nodes and relationships (COMPLETED!)
 - ✅ Basic pattern construction (COMPLETED!)
 - ✅ **MATCH clause implementation (COMPLETED!)** 
-- ⬜ **WHERE clause (separate from patterns)** - Filtering after MATCH
-- ⬜ RETURN clause projections
+- ✅ **WHERE clause (separate from patterns) (COMPLETED!)** - Filtering after MATCH with complex chaining
+- ✅ **RETURN clause projections (COMPLETED!)** - Full support including DISTINCT and return everything (*)
 - ⬜ ORDER BY clause for result ordering
 - ⬜ LIMIT/SKIP clauses for pagination
 
