@@ -29,6 +29,37 @@ class WhereClause(Clause):
     preceding_clause: Optional[Clause] = None
     next_clause: Optional[Clause] = None
     
+    def with_(self, *projections: str, distinct: bool = False):
+        """
+        Add a WITH clause to pipe results to subsequent query parts.
+        
+        The WITH clause allows query parts to be chained together, piping the results
+        from one to be used as starting points or criteria in the next.
+        
+        Args:
+            *projections: Strings representing what to pass forward
+            distinct: Whether to return only distinct results
+            
+        Returns:
+            A new WithClause instance
+            
+        Example:
+            >>> query = (
+            ...     match(node("p", "Person"))
+            ...     .where(prop("p", "age") > 30)
+            ...     .with_("p.name AS name", "p.age AS age")
+            ... )
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # WHERE p.age > 30
+            >>> # WITH p.name AS name, p.age AS age
+        """
+        # Import WithClause here to avoid circular imports
+        from .with_ import WithClause
+        
+        # Return the WithClause with this WhereClause as its preceding clause
+        return WithClause(list(projections), distinct, preceding_clause=self, next_clause=self.next_clause)
+    
     def return_(self, *projections: str, distinct: bool = False):
         """
         Add a RETURN clause to specify what to return from the query.

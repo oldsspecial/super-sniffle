@@ -122,6 +122,50 @@ class MatchClause(Clause):
             current = current.next_clause
         return current
     
+    def with_(self, *projections: str, distinct: bool = False):
+        """
+        Add a WITH clause to pipe results to subsequent query parts.
+        
+        The WITH clause allows query parts to be chained together, piping the results
+        from one to be used as starting points or criteria in the next.
+        
+        Args:
+            *projections: Strings representing what to pass forward
+            distinct: Whether to return only distinct results
+            
+        Returns:
+            A new WithClause instance
+            
+        Example:
+            >>> query = (
+            ...     match(node("p", "Person"))
+            ...     .with_("p.name AS name", "p.age AS age")
+            ... )
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # WITH p.name AS name, p.age AS age
+            
+            >>> query = (
+            ...     match(node("p", "Person"))
+            ...     .with_("p")
+            ... )
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # WITH p
+        """
+        # Import WithClause here to avoid circular imports
+        from .with_ import WithClause
+        
+        # Collect all consecutive MATCH clauses as the preceding clause
+        # This ensures that multiple MATCH clauses are grouped together before WITH
+        full_preceding_match = self._collect_all_match_clauses()
+        
+        # Find the non-MATCH next clause (if any) after all the MATCH clauses
+        non_match_next_clause = self._find_non_match_next_clause()
+        
+        # Return the WithClause with all MATCH clauses as its preceding clause
+        return WithClause(list(projections), distinct, preceding_clause=full_preceding_match, next_clause=non_match_next_clause)
+    
     def return_(self, *projections: str, distinct: bool = False):
         """
         Add a RETURN clause to specify what to return from the query.
