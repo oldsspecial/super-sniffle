@@ -5,10 +5,10 @@ This module contains classes for representing and constructing different
 types of Cypher clauses such as MATCH, WHERE, RETURN, ORDER BY, etc.
 """
 
-from .match import MatchClause
+from .match import MatchClause, Clause
 
 # TODO: Import other clause classes when implemented
-# from .where import WhereClause
+from .where import WhereClause
 # from .return_ import ReturnClause
 # from .order import OrderByClause
 # from .limit import LimitClause
@@ -16,7 +16,7 @@ from .match import MatchClause
 
 __all__ = [
     "MatchClause",
-    # "WhereClause",
+    "WhereClause",
     # "ReturnClause",
     # "OrderByClause",
     # "LimitClause",

@@ -90,31 +90,39 @@ def relationship_query():
     
     Using the new operator syntax for complex WHERE conditions.
     
-    Would generate:
+    Now generates:
         MATCH (p:Person)-[:KNOWS]->(f:Person)-[:LIVES_IN]->(c:City)
         WHERE (p.age > $min_age) AND (c.name = $city_name)
-        RETURN p.name, f.name, c.name
     """
-    # New intuitive syntax - much cleaner than chained methods!
+    # Create the query with MATCH and WHERE clauses
+    person = node("p", "Person")
+    friend = node("f", "Person")
+    city = node("c", "City")
+    
+    # Build the complete path pattern using the path() constructor
+    complex_path = path(
+        person,
+        relationship(">", "r1", "KNOWS"),
+        friend,
+        relationship(">", "r2", "LIVES_IN"),
+        city
+    )
+    
+    # Create the WHERE condition
     where_condition = (
         (prop("p", "age") > param("min_age")) & 
         (prop("c", "name") == param("city_name"))
     )
     
-    print(f"WHERE condition: {where_condition.to_cypher()}")
+    # Build the complete query
+    query = match(complex_path).where(where_condition)
     
-    # TODO: Complete query when MATCH/RETURN are implemented
-    # return (
-    #     match(
-    #         node("p", "Person")
-    #         .relates_to(">", "KNOWS", node("f", "Person"))
-    #         .relates_to(">", "LIVES_IN", node("c", "City"))
-    #     )
-    #     .where(where_condition)
-    #     .return_("p.name", "f.name", "c.name")
-    # )
+    print(f"Complete query: {query.to_cypher()}")
     
-    return where_condition
+    # TODO: Add RETURN clause when implemented
+    # return query.return_("p.name", "f.name", "c.name")
+    
+    return query
 
 
 def complex_pattern_query():
@@ -236,11 +244,59 @@ def demonstrate_patterns():
     print(f"Cypher: {complex_path.to_cypher()}")
 
 
+def demonstrate_where_clause():
+    """
+    Demonstrate the new WHERE clause functionality.
+    """
+    print("\n🚀 WHERE Clause Examples (NEW!)")
+    print("=" * 50)
+    
+    # Basic WHERE
+    print("\n1. Basic WHERE:")
+    query1 = match(node("p", "Person")).where(prop("p", "age") > literal(30))
+    print("match(node('p', 'Person')).where(prop('p', 'age') > literal(30))")
+    print(f"Cypher: {query1.to_cypher()}")
+    
+    # WHERE with complex conditions
+    print("\n2. WHERE with Complex Conditions:")
+    condition = (prop("p", "age") > literal(25)) & (prop("p", "active") == literal(True))
+    query2 = match(node("p", "Person")).where(condition)
+    print("Complex condition with logical operators:")
+    print(f"Cypher: {query2.to_cypher()}")
+    
+    # WHERE with parameters
+    print("\n3. WHERE with Parameters:")
+    query3 = match(node("p", "Person")).where(prop("p", "name").contains(param("search_term")))
+    print("match(node('p', 'Person')).where(prop('p', 'name').contains(param('search_term')))")
+    print(f"Cypher: {query3.to_cypher()}")
+    
+    # WHERE with multiple MATCH clauses
+    print("\n4. WHERE with Multiple MATCH:")
+    query4 = (
+        match(node("p", "Person"))
+        .match(node("c", "Company"))
+        .where(prop("p", "works_at") == prop("c", "id"))
+    )
+    print("WHERE applied to multiple MATCH clauses:")
+    print(f"Cypher: {query4.to_cypher()}")
+    
+    # WHERE with relationship patterns
+    print("\n5. WHERE with Relationship Patterns:")
+    person = node("p", "Person")
+    friend = node("f", "Person")
+    query5 = (
+        match(person.relates_to("r", "KNOWS", ">", friend))
+        .where((prop("p", "age") > literal(25)) & (prop("f", "age") < literal(35)))
+    )
+    print("WHERE with relationship patterns:")
+    print(f"Cypher: {query5.to_cypher()}")
+
+
 def demonstrate_match_clause():
     """
     Demonstrate the new MATCH clause functionality.
     """
-    print("\n🚀 MATCH Clause Examples (NEW!)")
+    print("\n🚀 MATCH Clause Examples")
     print("=" * 50)
     
     # Basic MATCH
@@ -259,8 +315,8 @@ def demonstrate_match_clause():
     print("\n3. MATCH with relates_to Method:")
     person = node("p", "Person")
     friend = node("f", "Person")
-    query3 = match(person.relates_to(">", "KNOWS", "r", friend))
-    print("match(person.relates_to('>', 'KNOWS', 'r', friend))")
+    query3 = match(person.relates_to("r", "KNOWS", ">", friend))
+    print("match(person.relates_to('r', 'KNOWS', '>', friend))")
     print(f"Cypher: {query3.to_cypher()}")
     
     # Multiple MATCH clauses
@@ -276,10 +332,10 @@ def demonstrate_match_clause():
     print("\n5. Complex Path with relates_to:")
     query5 = match(
         node("p", "Person").where(prop("p", "active") == literal(True))
-        .relates_to(">", "KNOWS", "r", 
+        .relates_to("r", "KNOWS", ">", 
                    node("f", "Person")
-                   .relates_to(">", "LIVES_IN", variable="lives", 
-                              target_node=node("c", "City").where(prop("c", "name") == param("city_name"))))
+                   .relates_to("lives", "LIVES_IN", ">", 
+                              node("c", "City").where(prop("c", "name") == param("city_name"))))
     )
     print("Complex chained relates_to:")
     print(f"Cypher: {query5.to_cypher()}")
@@ -296,6 +352,9 @@ if __name__ == "__main__":
     
     print("\n🎯 Working Features - MATCH Clause:")
     demonstrate_match_clause()
+    
+    print("\n🎯 Working Features - WHERE Clause:")
+    demonstrate_where_clause()
     
     print("\n📋 Current Features in Action:")
     print("Simple person query:")

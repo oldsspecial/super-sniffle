@@ -60,17 +60,17 @@ class NodePattern:
         """
         return replace(self, condition=condition)
     
-    def relates_to(self, direction: str, rel_type: str, 
-                  variable: Optional[str] = None, 
+    def relates_to(self, variable: Optional[str] = None, rel_type: str = "", 
+                  direction: str = "-", 
                   target_node: Optional['NodePattern'] = None,
                   **properties: Any) -> Union['RelationshipPattern', 'PathPattern']:
         """
         Create a relationship from this node to another node.
         
         Args:
-            direction: Relationship direction ("<", ">", or "-")
-            rel_type: Relationship type (e.g., "KNOWS", "FOLLOWS")
             variable: Optional variable name for the relationship
+            rel_type: Relationship type (e.g., "KNOWS", "FOLLOWS")
+            direction: Relationship direction ("<", ">", or "-" for undirected, default: "-")
             target_node: Optional target node (if None, only the relationship is returned)
             **properties: Relationship properties
             
@@ -80,18 +80,15 @@ class NodePattern:
             
         Example:
             >>> person = node("p", "Person")
-            >>> friend_path = person.relates_to(">", "KNOWS", "r", node("f", "Person"))
+            >>> friend_path = person.relates_to("r", "KNOWS", ">", node("f", "Person"))
             >>> # Generates: (p:Person)-[r:KNOWS]->(f:Person)
             
-            >>> # Alternative with keyword arguments:
-            >>> friend_path = person.relates_to(">", "KNOWS", variable="r", target_node=node("f", "Person"))
+            >>> # Using defaults for undirected relationship:
+            >>> friend_path = person.relates_to("r", "KNOWS", target_node=node("f", "Person"))
+            >>> # Generates: (p:Person)-[r:KNOWS]-(f:Person)
         """
-        # Handle the common case where variable and target_node are passed positionally
-        # relates_to(direction, rel_type, variable, target_node)
-        if variable is not None and isinstance(variable, str) and target_node is None:
-            # Check if there are extra positional arguments
-            # This handles: relates_to(">", "KNOWS", "r", node(...))
-            pass  # variable is already set correctly
+        if not rel_type:
+            raise ValueError("rel_type is required")
         
         # Create the relationship with a single type
         rel = RelationshipPattern(direction, variable, (rel_type,), properties)

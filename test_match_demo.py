@@ -32,7 +32,7 @@ def test_match_with_relates_to():
     print("Testing MATCH with relates_to...")
     person = node("p", "Person")
     friend = node("f", "Person")
-    query = match(person.relates_to(">", "KNOWS", "r", friend))
+    query = match(person.relates_to("r", "KNOWS", ">", friend))
     result = query.to_cypher()
     expected = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
     print(f"Query: {result}")
@@ -91,7 +91,7 @@ def test_relates_to_with_properties():
     print("Testing relates_to with properties...")
     person = node("p", "Person")
     friend = node("f", "Person")
-    query = match(person.relates_to(">", "KNOWS", "r", friend, since=2020))
+    query = match(person.relates_to("r", "KNOWS", ">", friend, since=2020))
     result = query.to_cypher()
     expected = "MATCH (p:Person)-[r:KNOWS {since: 2020}]->(f:Person)"
     print(f"Query: {result}")
@@ -107,21 +107,21 @@ def test_relates_to_directions():
     # Outgoing
     person = node("p", "Person")
     friend = node("f", "Person")
-    query1 = match(person.relates_to(">", "KNOWS", "r", friend))
+    query1 = match(person.relates_to("r", "KNOWS", ">", friend))
     result1 = query1.to_cypher()
     expected1 = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
     print(f"Outgoing: {result1}")
     assert result1 == expected1
     
     # Incoming
-    query2 = match(person.relates_to("<", "KNOWS", "r", friend))
+    query2 = match(person.relates_to("r", "KNOWS", "<", friend))
     result2 = query2.to_cypher()
     expected2 = "MATCH (p:Person)<-[r:KNOWS]-(f:Person)"
     print(f"Incoming: {result2}")
     assert result2 == expected2
     
-    # Undirected
-    query3 = match(person.relates_to("-", "KNOWS", "r", friend))
+    # Undirected (using default)
+    query3 = match(person.relates_to("r", "KNOWS", target_node=friend))
     result3 = query3.to_cypher()
     expected3 = "MATCH (p:Person)-[r:KNOWS]-(f:Person)"
     print(f"Undirected: {result3}")
@@ -137,7 +137,7 @@ def test_immutability():
     # Test NodePattern immutability with relates_to
     original_person = node("p", "Person")
     friend = node("f", "Person")
-    path_result = original_person.relates_to(">", "KNOWS", "r", friend)
+    path_result = original_person.relates_to("r", "KNOWS", ">", friend)
     
     # Original should be unchanged
     assert original_person.to_cypher() == "(p:Person)"
@@ -164,10 +164,10 @@ def demonstrate_real_world_example():
     # Build a complex query using the new features
     query = match(
         node("p", "Person").where(prop("p", "active") == literal(True))
-        .relates_to(">", "KNOWS", "r", 
+        .relates_to("r", "KNOWS", ">", 
                    node("f", "Person")
-                   .relates_to(">", "LIVES_IN", variable="lives", 
-                              target_node=node("c", "City").where(prop("c", "name") == param("city_name"))))
+                   .relates_to("lives", "LIVES_IN", ">", 
+                              node("c", "City").where(prop("c", "name") == param("city_name"))))
     )
     
     result = query.to_cypher()

@@ -80,7 +80,7 @@ class MatchClause(Clause):
             condition: Expression representing the WHERE condition
             
         Returns:
-            A new WhereClause instance (when implemented)
+            A new WhereClause instance
             
         Example:
             >>> query = (
@@ -91,8 +91,17 @@ class MatchClause(Clause):
             >>> # MATCH (p:Person)
             >>> # WHERE p.age > 30
         """
-        # TODO: Implement WhereClause when needed
-        raise NotImplementedError("WHERE clause will be implemented in upcoming releases")
+        # Import WhereClause here to avoid circular imports
+        from .where import WhereClause
+        
+        where_clause = WhereClause(condition)
+        
+        # If this clause has a next clause, chain the where before it
+        if self.next_clause:
+            return replace(self, next_clause=where_clause.with_next(self.next_clause))
+        
+        # Otherwise, chain the where directly
+        return replace(self, next_clause=where_clause)
     
     def return_(self, *projections: str):
         """
