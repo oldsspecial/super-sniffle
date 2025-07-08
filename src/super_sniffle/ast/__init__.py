@@ -6,19 +6,47 @@ tree representation of Cypher queries. These classes provide the structural
 foundation for query construction and manipulation.
 """
 
-# TODO: Import AST classes when implemented
-# from .nodes import Node, NodePattern
-# from .relationships import Relationship, RelationshipPattern
-# from .patterns import Pattern, PathPattern
+# Import expression classes
+from .expressions import (
+    Expression,
+    ComparisonExpression,
+    LogicalExpression,
+    NotExpression,
+    Property,
+    Parameter,
+    Literal,
+)
+
+# Import pattern classes
+from .patterns import (
+    NodePattern,
+    RelationshipPattern,
+    PathPattern,
+    simple_node_pattern,
+    simple_relationship_pattern,
+    simple_path,
+)
+
+# TODO: Import other AST classes when implemented
 # from .clauses import Clause, MatchClause, WhereClause, ReturnClause
 
 __all__ = [
-    # "Node",
-    # "NodePattern", 
-    # "Relationship",
-    # "RelationshipPattern",
-    # "Pattern",
-    # "PathPattern",
+    # Expression classes
+    "Expression",
+    "ComparisonExpression",
+    "LogicalExpression",
+    "NotExpression",
+    "Property",
+    "Parameter",
+    "Literal",
+    # Pattern classes
+    "NodePattern",
+    "RelationshipPattern",
+    "PathPattern",
+    "simple_node_pattern",
+    "simple_relationship_pattern",
+    "simple_path",
+    # TODO: Add other classes when implemented
     # "Clause",
     # "MatchClause",
     # "WhereClause", 

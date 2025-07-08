@@ -4,56 +4,117 @@ Basic usage examples for super-sniffle.
 This file demonstrates how to use super-sniffle to build Cypher queries
 in a functional and composable way.
 
-Note: These examples represent the planned API and are not yet functional.
-The actual implementation is still in development.
+Note: Some of these examples represent the planned API and are not yet functional.
+The MATCH clause and pattern system are now working!
 """
 
-from super_sniffle import match, node, relationship, prop, param
+import sys
+import os
+
+# Add the src directory to the Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from super_sniffle import prop, param, literal, node, relationship, path, match
+
+
+def demonstrate_operator_syntax():
+    """
+    Demonstrate the new operator-based syntax for WHERE clauses.
+    
+    This shows how the new syntax makes conditions more readable and intuitive.
+    """
+    print("🚀 New Operator-Based Syntax Examples")
+    print("=" * 50)
+    
+    # Basic comparisons
+    print("\n1. Basic Comparisons:")
+    age_filter = prop("p", "age") > param("min_age")
+    print(f"prop('p', 'age') > param('min_age')")
+    print(f"Cypher: {age_filter.to_cypher()}")
+    
+    name_filter = prop("p", "name") == literal("Alice")
+    print(f"\nprop('p', 'name') == literal('Alice')")
+    print(f"Cypher: {name_filter.to_cypher()}")
+    
+    # Logical combinations
+    print("\n2. Logical Combinations:")
+    complex_filter = (prop("p", "age") >= literal(18)) & (prop("p", "active") == literal(True))
+    print("(prop('p', 'age') >= 18) & (prop('p', 'active') == True)")
+    print(f"Cypher: {complex_filter.to_cypher()}")
+    
+    # String operations
+    print("\n3. String Operations:")
+    contains_filter = prop("p", "name").contains(param("search_term"))
+    print("prop('p', 'name').contains(param('search_term'))")
+    print(f"Cypher: {contains_filter.to_cypher()}")
+    
+    return {
+        "age_filter": age_filter,
+        "name_filter": name_filter, 
+        "complex_filter": complex_filter,
+        "contains_filter": contains_filter
+    }
 
 
 def simple_person_query():
     """
     Build a simple query to find people older than a certain age.
     
-    Returns:
-        A query object that would generate:
-        MATCH (p:Person)
-        WHERE p.age > $min_age
-        RETURN p.name, p.age
-        ORDER BY p.age
-        LIMIT 10
+    Using the new operator syntax for WHERE clauses and MATCH clause.
+    
+    Currently generates:
+        MATCH (p:Person WHERE p.age > $min_age)
+    
+    Future implementation will add WHERE, RETURN, ORDER BY, LIMIT clauses.
     """
-    return (
-        match(node("p", "Person"))
-        .where(prop("p", "age").gt(param("min_age")))
-        .return_("p.name", "p.age")
-        .order_by("p.age")
-        .limit(10)
-    )
+    # Using inline WHERE condition - this is working now!
+    query = match(node("p", "Person").where(prop("p", "age") > param("min_age")))
+    
+    print(f"MATCH query: {query.to_cypher()}")
+    
+    # TODO: Complete query when WHERE/RETURN clauses are implemented
+    # return (
+    #     match(node("p", "Person"))
+    #     .where(prop("p", "age") > param("min_age"))
+    #     .return_("p.name", "p.age")
+    #     .order_by("p.age")
+    #     .limit(10)
+    # )
+    
+    return query
 
 
 def relationship_query():
     """
     Build a query with relationships to find friends living in a specific city.
     
-    Returns:
-        A query object that would generate:
+    Using the new operator syntax for complex WHERE conditions.
+    
+    Would generate:
         MATCH (p:Person)-[:KNOWS]->(f:Person)-[:LIVES_IN]->(c:City)
-        WHERE p.age > $min_age AND c.name = $city_name
+        WHERE (p.age > $min_age) AND (c.name = $city_name)
         RETURN p.name, f.name, c.name
     """
-    return (
-        match(
-            node("p", "Person")
-            .relates_to(">", "KNOWS", node("f", "Person"))
-            .relates_to(">", "LIVES_IN", node("c", "City"))
-        )
-        .where(
-            prop("p", "age").gt(param("min_age"))
-            .and_(prop("c", "name").equals(param("city_name")))
-        )
-        .return_("p.name", "f.name", "c.name")
+    # New intuitive syntax - much cleaner than chained methods!
+    where_condition = (
+        (prop("p", "age") > param("min_age")) & 
+        (prop("c", "name") == param("city_name"))
     )
+    
+    print(f"WHERE condition: {where_condition.to_cypher()}")
+    
+    # TODO: Complete query when MATCH/RETURN are implemented
+    # return (
+    #     match(
+    #         node("p", "Person")
+    #         .relates_to(">", "KNOWS", node("f", "Person"))
+    #         .relates_to(">", "LIVES_IN", node("c", "City"))
+    #     )
+    #     .where(where_condition)
+    #     .return_("p.name", "f.name", "c.name")
+    # )
+    
+    return where_condition
 
 
 def complex_pattern_query():
@@ -71,24 +132,26 @@ def complex_pattern_query():
         ORDER BY p.age DESC, company.name ASC
         LIMIT $limit
     """
-    return (
-        match(
-            node("p", "Person")
-            .relates_to(">", "WORKS_FOR", node("company", "Company"))
-        )
-        .match(
-            node("p")
-            .relates_to(">", "LIVES_IN", node("city", "City"))
-        )
-        .where(
-            prop("p", "age").between(param("min_age"), param("max_age"))
-            .and_(prop("company", "industry").equals(param("industry")))
-            .and_(prop("city", "population").gt(param("min_population")))
-        )
-        .return_("p.name", "company.name", "city.name")
-        .order_by("p.age DESC", "company.name ASC")
-        .limit(param("limit"))
-    )
+    # TODO: Uncomment when match() is implemented
+    # return (
+    #     match(
+    #         node("p", "Person")
+    #         .relates_to(">", "WORKS_FOR", node("company", "Company"))
+    #     )
+    #     .match(
+    #         node("p")
+    #         .relates_to(">", "LIVES_IN", node("city", "City"))
+    #     )
+    #     .where(
+    #         prop("p", "age").between(param("min_age"), param("max_age"))
+    #         .and_(prop("company", "industry").equals(param("industry")))
+    #         .and_(prop("city", "population").gt(param("min_population")))
+    #     )
+    #     .return_("p.name", "company.name", "city.name")
+    #     .order_by("p.age DESC", "company.name ASC")
+    #     .limit(param("limit"))
+    # )
+    pass
 
 
 def with_aggregation_query():
@@ -103,49 +166,156 @@ def with_aggregation_query():
         ORDER BY employee_count DESC
         LIMIT 5
     """
-    return (
-        match(
-            node("p", "Person")
-            .relates_to(">", "WORKS_FOR", node("c", "Company"))
-        )
-        .where(prop("c", "industry").equals(param("industry")))
-        .return_(
-            "c.name",
-            "COUNT(p) as employee_count",
-            "AVG(p.age) as avg_age"
-        )
-        .order_by("employee_count DESC")
-        .limit(5)
+    # TODO: Uncomment when match() is implemented
+    # return (
+    #     match(
+    #         node("p", "Person")
+    #         .relates_to(">", "WORKS_FOR", node("c", "Company"))
+    #     )
+    #     .where(prop("c", "industry").equals(param("industry")))
+    #     .return_(
+    #         "c.name",
+    #         "COUNT(p) as employee_count",
+    #         "AVG(p.age) as avg_age"
+    #     )
+    #     .order_by("employee_count DESC")
+    #     .limit(5)
+    # )
+    pass
+
+
+def demonstrate_patterns():
+    """
+    Demonstrate the new pattern system with inline conditions.
+    """
+    print("\n🚀 Pattern System with Inline Conditions")
+    print("=" * 50)
+    
+    # Basic node patterns
+    print("\n1. Basic Node Patterns:")
+    person_node = node("p", "Person")
+    print(f"node('p', 'Person')")
+    print(f"Cypher: {person_node.to_cypher()}")
+    
+    # Node with inline condition
+    print("\n2. Node with Inline Condition:")
+    adult_person = node("p", "Person").where(prop("p", "age") > literal(18))
+    print("node('p', 'Person').where(prop('p', 'age') > 18)")
+    print(f"Cypher: {adult_person.to_cypher()}")
+    
+    # Basic relationship patterns
+    print("\n3. Basic Relationship Patterns:")
+    knows_rel = relationship(">", "r", "KNOWS")
+    print("relationship('>', 'r', 'KNOWS')")
+    print(f"Cypher: {knows_rel.to_cypher()}")
+    
+    # Relationship with inline condition
+    print("\n4. Relationship with Inline Condition:")
+    recent_knows = relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020))
+    print("relationship('>', 'r', 'KNOWS').where(prop('r', 'since') > 2020)")
+    print(f"Cypher: {recent_knows.to_cypher()}")
+    
+    # Path patterns
+    print("\n5. Path Patterns:")
+    friend_path = path(
+        node("p1", "Person"),
+        relationship(">", "r", "KNOWS"),
+        node("p2", "Person")
     )
+    print("path(node('p1', 'Person'), relationship('>', 'r', 'KNOWS'), node('p2', 'Person'))")
+    print(f"Cypher: {friend_path.to_cypher()}")
+    
+    # Complex path with multiple inline conditions
+    print("\n6. Complex Path with Multiple Inline Conditions:")
+    complex_path = path(
+        node("p1", "Person").where(prop("p1", "active") == literal(True)),
+        relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
+        node("p2", "Person").where(prop("p2", "age") > literal(18))
+    )
+    print("Complex path with inline conditions:")
+    print(f"Cypher: {complex_path.to_cypher()}")
+
+
+def demonstrate_match_clause():
+    """
+    Demonstrate the new MATCH clause functionality.
+    """
+    print("\n🚀 MATCH Clause Examples (NEW!)")
+    print("=" * 50)
+    
+    # Basic MATCH
+    print("\n1. Basic MATCH:")
+    query1 = match(node("p", "Person"))
+    print("match(node('p', 'Person'))")
+    print(f"Cypher: {query1.to_cypher()}")
+    
+    # MATCH with inline condition
+    print("\n2. MATCH with Inline Condition:")
+    query2 = match(node("p", "Person").where(prop("p", "age") > literal(25)))
+    print("match(node('p', 'Person').where(prop('p', 'age') > 25))")
+    print(f"Cypher: {query2.to_cypher()}")
+    
+    # MATCH with relationships using relates_to
+    print("\n3. MATCH with relates_to Method:")
+    person = node("p", "Person")
+    friend = node("f", "Person")
+    query3 = match(person.relates_to(">", "KNOWS", "r", friend))
+    print("match(person.relates_to('>', 'KNOWS', 'r', friend))")
+    print(f"Cypher: {query3.to_cypher()}")
+    
+    # Multiple MATCH clauses
+    print("\n4. Multiple MATCH Clauses:")
+    query4 = (
+        match(node("p", "Person"))
+        .match(node("c", "Company"))
+    )
+    print("match(node('p', 'Person')).match(node('c', 'Company'))")
+    print(f"Cypher: {query4.to_cypher()}")
+    
+    # Complex path with relates_to
+    print("\n5. Complex Path with relates_to:")
+    query5 = match(
+        node("p", "Person").where(prop("p", "active") == literal(True))
+        .relates_to(">", "KNOWS", "r", 
+                   node("f", "Person")
+                   .relates_to(">", "LIVES_IN", variable="lives", 
+                              target_node=node("c", "City").where(prop("c", "name") == param("city_name"))))
+    )
+    print("Complex chained relates_to:")
+    print(f"Cypher: {query5.to_cypher()}")
 
 
 if __name__ == "__main__":
-    # When the library is implemented, these would work:
+    # Demonstrate the working parts of the library
     
+    print("🎯 Working Features - Operator Syntax:")
+    demonstrate_operator_syntax()
+    
+    print("\n🎯 Working Features - Pattern System:")
+    demonstrate_patterns()
+    
+    print("\n🎯 Working Features - MATCH Clause:")
+    demonstrate_match_clause()
+    
+    print("\n📋 Current Features in Action:")
     print("Simple person query:")
     try:
         query = simple_person_query()
-        print(query.to_cypher())
-    except NotImplementedError:
-        print("Not yet implemented - showing planned API")
+        print(f"Generated: {query.to_cypher()}")
+    except Exception as e:
+        print(f"Error: {e}")
     
-    print("\nRelationship query:")
+    print("\nRelationship query (WHERE condition only):")
     try:
-        query = relationship_query()
-        print(query.to_cypher())
-    except NotImplementedError:
-        print("Not yet implemented - showing planned API")
+        condition = relationship_query()
+        print(f"WHERE condition: {condition.to_cypher()}")
+    except Exception as e:
+        print(f"Error: {e}")
     
-    print("\nComplex pattern query:")
-    try:
-        query = complex_pattern_query()
-        print(query.to_cypher())
-    except NotImplementedError:
-        print("Not yet implemented - showing planned API")
-    
-    print("\nAggregation query:")
-    try:
-        query = with_aggregation_query()
-        print(query.to_cypher())
-    except NotImplementedError:
-        print("Not yet implemented - showing planned API")
+    print("\n📋 Future Features (WHERE, RETURN, ORDER BY, LIMIT clauses):")
+    print("- WHERE clause for filtering after MATCH")
+    print("- RETURN clause for selecting output")
+    print("- ORDER BY clause for sorting")
+    print("- LIMIT clause for pagination")
+    print("- WITH clause for chaining queries")
+    print("- CREATE/UPDATE/DELETE operations")

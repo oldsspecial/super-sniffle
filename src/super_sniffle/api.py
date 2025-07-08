@@ -8,12 +8,14 @@ query components and assembling them into complete queries.
 
 from typing import Any, Dict, List, Optional, Union
 
-# TODO: Import from component modules when implemented
-# from .components import Node, Relationship, Property
+# Import expression and pattern classes
+from .ast import Property, Parameter, Literal, NodePattern, RelationshipPattern, PathPattern
+
+# TODO: Import from clause modules when implemented
 # from .clauses import MatchClause, WhereClause, ReturnClause
 
 
-def match(*patterns):
+def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern]):
     """
     Create a MATCH clause with the given patterns.
     
@@ -24,13 +26,13 @@ def match(*patterns):
         A MatchClause object that can be chained with other clauses
         
     Example:
-        >>> query = match(node("p", "Person")).where(prop("p", "age").gt(30))
+        >>> query = match(node("p", "Person")).where(prop("p", "age") > 30)
     """
-    # TODO: Implement when MatchClause is available
-    raise NotImplementedError("match() will be implemented in upcoming releases")
+    from .clauses.match import MatchClause
+    return MatchClause(list(patterns))
 
 
-def node(variable: str, *labels: str, **properties: Any):
+def node(variable: str, *labels: str, **properties: Any) -> NodePattern:
     """
     Create a node pattern.
     
@@ -40,35 +42,65 @@ def node(variable: str, *labels: str, **properties: Any):
         **properties: Node properties
         
     Returns:
-        A Node object representing the node pattern
+        A NodePattern object representing the node pattern
         
     Example:
         >>> person = node("p", "Person", age=30, name="Alice")
+        >>> # With inline condition:
+        >>> adult = node("p", "Person").where(prop("p", "age") > 18)
     """
-    # TODO: Implement when Node class is available
-    raise NotImplementedError("node() will be implemented in upcoming releases")
+    return NodePattern(variable, labels, properties)
 
 
-def relationship(variable: Optional[str] = None, *types: str, **properties: Any):
+def relationship(direction: str = "-", variable: Optional[str] = None, 
+                *types: str, **properties: Any) -> RelationshipPattern:
     """
     Create a relationship pattern.
     
     Args:
+        direction: Relationship direction ("<", ">", or "-" for undirected)
         variable: Optional variable name for the relationship
         *types: Relationship types
         **properties: Relationship properties
         
     Returns:
-        A Relationship object representing the relationship pattern
+        A RelationshipPattern object representing the relationship pattern
         
     Example:
-        >>> knows = relationship("r", "KNOWS", since=2020)
+        >>> knows = relationship(">", "r", "KNOWS", since=2020)
+        >>> # With inline condition:
+        >>> recent = relationship(">", "r", "KNOWS").where(prop("r", "since") > 2022)
     """
-    # TODO: Implement when Relationship class is available
-    raise NotImplementedError("relationship() will be implemented in upcoming releases")
+    return RelationshipPattern(direction, variable, types, properties)
 
 
-def prop(variable: str, property_name: str):
+def path(*elements: Union[NodePattern, RelationshipPattern]) -> PathPattern:
+    """
+    Create a path pattern from nodes and relationships.
+    
+    Args:
+        *elements: Alternating NodePattern and RelationshipPattern objects
+        
+    Returns:
+        A PathPattern object representing the path pattern
+        
+    Example:
+        >>> friends = path(
+        ...     node("p1", "Person"),
+        ...     relationship(">", "r", "KNOWS"),
+        ...     node("p2", "Person")
+        ... )
+        >>> # With inline conditions:
+        >>> active_friends = path(
+        ...     node("p1", "Person").where(prop("p1", "active") == True),
+        ...     relationship(">", "r", "KNOWS").where(prop("r", "since") > 2020),
+        ...     node("p2", "Person")
+        ... )
+    """
+    return PathPattern(list(elements))
+
+
+def prop(variable: str, property_name: str) -> Property:
     """
     Create a property reference.
     
@@ -81,12 +113,12 @@ def prop(variable: str, property_name: str):
         
     Example:
         >>> age_prop = prop("p", "age")
+        >>> # Can now use operators: age_prop > 30
     """
-    # TODO: Implement when Property class is available
-    raise NotImplementedError("prop() will be implemented in upcoming releases")
+    return Property(variable, property_name)
 
 
-def param(name: str):
+def param(name: str) -> Parameter:
     """
     Create a parameter reference.
     
@@ -98,6 +130,24 @@ def param(name: str):
         
     Example:
         >>> age_param = param("min_age")
+        >>> # Use in comparisons: prop("p", "age") > age_param
     """
-    # TODO: Implement when Parameter class is available
-    raise NotImplementedError("param() will be implemented in upcoming releases")
+    return Parameter(name)
+
+
+def literal(value: Any) -> Literal:
+    """
+    Create a literal value.
+    
+    Args:
+        value: The literal value (string, number, boolean, etc.)
+        
+    Returns:
+        A Literal object representing the literal value
+        
+    Example:
+        >>> name_literal = literal("Alice")
+        >>> age_literal = literal(30)
+        >>> # Use in comparisons: prop("p", "name") == name_literal
+    """
+    return Literal(value)

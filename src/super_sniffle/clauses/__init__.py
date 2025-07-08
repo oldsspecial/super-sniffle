@@ -5,8 +5,9 @@ This module contains classes for representing and constructing different
 types of Cypher clauses such as MATCH, WHERE, RETURN, ORDER BY, etc.
 """
 
-# TODO: Import clause classes when implemented
-# from .match import MatchClause
+from .match import MatchClause
+
+# TODO: Import other clause classes when implemented
 # from .where import WhereClause
 # from .return_ import ReturnClause
 # from .order import OrderByClause
@@ -14,7 +15,7 @@ types of Cypher clauses such as MATCH, WHERE, RETURN, ORDER BY, etc.
 # from .skip import SkipClause
 
 __all__ = [
-    # "MatchClause",
+    "MatchClause",
     # "WhereClause",
     # "ReturnClause",
     # "OrderByClause",
