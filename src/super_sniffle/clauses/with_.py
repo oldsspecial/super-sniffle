@@ -6,10 +6,13 @@ in Cypher queries and supports method chaining with other clauses.
 """
 
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING, Tuple
 
 from ..ast.expressions import Expression
 from .match import Clause, MatchClause
+
+if TYPE_CHECKING:
+    from ..ast.expressions import OrderByExpression
 
 
 @dataclass(frozen=True)
@@ -59,12 +62,12 @@ class WithClause(Clause):
     next part of the query.
     
     Attributes:
-        projections: List of strings representing what to pass forward
+        projections: List of strings or tuples representing what to pass forward
         distinct: Whether to return only distinct results
         preceding_clause: Optional clause that comes before this WITH clause
         next_clause: Optional next clause in the query chain
     """
-    projections: List[str]
+    projections: List[Union[str, Tuple[str, str]]]
     distinct: bool = False
     preceding_clause: Optional[Clause] = None
     next_clause: Optional[Clause] = None
@@ -126,7 +129,7 @@ class WithClause(Clause):
         # Return the WhereClause with this WithClause as its preceding clause
         return WhereClause(condition, preceding_clause=self, next_clause=self.next_clause)
     
-    def with_(self, *projections: str, distinct: bool = False):
+    def with_(self, *projections: Union[str, Tuple[str, str]], distinct: bool = False):
         """
         Add another WITH clause to further transform the results.
         
@@ -134,7 +137,9 @@ class WithClause(Clause):
         and filtering operations.
         
         Args:
-            *projections: Strings representing what to pass forward
+            *projections: Projections to include. Each projection can be:
+                         - A string (raw projection, e.g., "p")
+                         - A tuple of (expression, alias), e.g., ("count(n)", "cnt")
             distinct: Whether to return only distinct results
             
         Returns:
@@ -145,13 +150,13 @@ class WithClause(Clause):
             ...     match(node("p", "Person"))
             ...     .with_("p")
             ...     .match(node("p").relates_to("KNOWS", ">", node("friend", "Person")))
-            ...     .with_("p", "collect(friend) AS friends")
+            ...     .with_(("collect(friend)", "friends"))
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # WITH p
             >>> # MATCH (p)-[:KNOWS]->(friend:Person)
-            >>> # WITH p, collect(friend) AS friends
+            >>> # WITH collect(friend) AS friends
         """
         # Create a new WithClause for the additional projections
         new_with = WithClause(list(projections), distinct, next_clause=self.next_clause)
@@ -201,7 +206,7 @@ class WithClause(Clause):
         # Otherwise, chain the return directly
         return replace(self, next_clause=return_clause)
     
-    def order_by(self, *fields: str):
+    def order_by(self, *fields: Union[str, 'OrderByExpression']):
         """
         Add an ORDER BY clause to sort the results.
         
@@ -209,24 +214,37 @@ class WithClause(Clause):
         fields, with optional ASC/DESC modifiers.
         
         Args:
-            *fields: Fields to sort by, with optional ASC/DESC
+            *fields: Fields to sort by. Each field can be:
+                    - A string (field name, defaults to ascending)
+                    - An OrderByExpression created with asc() or desc()
             
         Returns:
-            A new OrderByClause instance (when implemented)
+            A new OrderByClause instance
             
         Example:
+            >>> from super_sniffle import asc, desc
             >>> query = (
             ...     match(node("p", "Person"))
-            ...     .with_("p.name AS name", "p.age AS age")
-            ...     .order_by("age DESC", "name")
+            ...     .with_(("p.name", "name"), ("p.age", "age"))
+            ...     .order_by("name", desc("age"))
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # WITH p.name AS name, p.age AS age
-            >>> # ORDER BY age DESC, name
+            >>> # ORDER BY name, age DESC
         """
-        # TODO: Implement OrderByClause when needed
-        raise NotImplementedError("ORDER BY clause will be implemented in upcoming releases")
+        from ..ast.expressions import OrderByExpression
+        from .order_by import OrderByClause
+        
+        # Convert string fields to OrderByExpression objects
+        expressions = []
+        for field in fields:
+            if isinstance(field, str):
+                expressions.append(OrderByExpression(field))
+            else:
+                expressions.append(field)
+        
+        return OrderByClause(expressions, preceding_clause=self)
     
     def limit(self, count: Union[int, str]):
         """
@@ -322,7 +340,17 @@ class WithClause(Clause):
         
         # Add this WITH clause
         distinct_str = "DISTINCT " if self.distinct else ""
-        projections_str = ", ".join(self.projections)
+        
+        # Process projections (handle both strings and tuples)
+        projection_strings = []
+        for proj in self.projections:
+            if isinstance(proj, str):
+                projection_strings.append(proj)
+            else:  # It's a tuple (expression, alias)
+                expression, alias = proj
+                projection_strings.append(f"{expression} AS {alias}")
+        
+        projections_str = ", ".join(projection_strings)
         result += f"WITH {distinct_str}{projections_str}"
         
         # Add the next clause if there is one

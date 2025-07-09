@@ -62,41 +62,54 @@
 - 🔄 Development environment configuration
 - ✅ Initial package scaffolding (completed)
 
-## Current Status: RETURN Clause Complete! 🎉
+## Current Status: ORDER BY Clause and Enhanced WITH Implemented! 🎉
 
-**Major Milestone Achieved**: Full RETURN clause implementation with comprehensive chaining support
+**Major Milestone Achieved**: ORDER BY clause implementation with asc/desc functions and enhanced WITH clause with tuple projections
 
 ### Recently Completed (This Session)
-1. **Complete RETURN clause implementation** (`src/super_sniffle/clauses/return_.py`)
-   - Support for specific projections and "return everything" (*) functionality
-   - Full DISTINCT support for both projections and "*"
-   - Seamless integration with MATCH and WHERE clauses
-   - Proper Cypher generation with correct clause ordering
+1. **ORDER BY clause implementation** (`src/super_sniffle/clauses/order_by.py`)
+   - Complete OrderByClause with ascending/descending sort support  
+   - OrderByExpression class for sort field definitions
+   - asc() and desc() helper functions for intuitive syntax
+   - Integration with all clause types (MATCH, WHERE, WITH, RETURN)
+   - Proper chaining support with return_() method
 
-2. **Enhanced clause chaining system**
-   - Fixed complex clause ordering issues (MATCH → WHERE → RETURN)
-   - Added preceding_clause support to WHERE clause
-   - Implemented `_render_preceding_clauses()` for complex clause chains
-   - Support for multiple MATCH clauses with proper ordering
+2. **Enhanced WITH clause with tuple projections** (`src/super_sniffle/clauses/with_.py`)
+   - Support for tuple-based projections: (expression, alias)
+   - Mixed projections: strings and tuples in same clause
+   - Improved type annotations with Union[str, Tuple[str, str]]
+   - Backwards compatible with existing string projections
+   - Full integration with ORDER BY and other clauses
 
-3. **Updated exports and module structure**
-   - Added `ReturnClause` to package exports
-   - Updated both `MatchClause.return_()` and `WhereClause.return_()` methods
-   - Proper import handling to avoid circular dependencies
+3. **Expression system improvements** (`src/super_sniffle/ast/expressions.py`)
+   - OrderByExpression class for sort field definitions
+   - Proper Cypher generation with ASC/DESC modifiers
+   - Integration with expression type hierarchy
 
-4. **Comprehensive testing**
-   - Created `test_return_demo.py` with 7 complete test scenarios
-   - All tests passing including complex real-world examples
-   - Covers return everything, DISTINCT, clause chaining, multiple MATCH clauses
+4. **API and package updates**
+   - Added asc() and desc() functions to public API
+   - Updated package exports in __init__.py files
+   - OrderByClause added to clause exports
+   - Full type checking and import handling
+
+5. **Comprehensive testing**
+   - Created `test_order_by_demo.py` with complete test scenarios
+   - Demonstrates ORDER BY with RETURN, WITH, and complex chains
+   - Tests tuple projections in WITH clauses
+   - Real-world examples: ranking queries, aggregations
+   - All tests passing successfully
 
 ### What Works Now ✅
-- **Expression System**: Complete operator overloading for WHERE conditions
+- **Expression System**: Complete operator overloading for WHERE conditions + OrderByExpression
 - **Pattern System**: Nodes, relationships, paths with inline WHERE conditions  
 - **MATCH Clause**: Single patterns, multiple patterns, chaining, relates_to integration
 - **WHERE Clause**: Filtering with proper clause order and complex chaining
+- **WITH Clause**: String and tuple projections, DISTINCT support, seamless chaining
+- **ORDER BY Clause**: Ascending/descending sorts with asc()/desc() functions, full chaining
 - **RETURN Clause**: Projections, DISTINCT, return everything (*), full chaining support
-- **Test Coverage**: Comprehensive test suites pass (test_match_demo.py, test_return_demo.py)
-- **Examples**: Working demonstrations with complete query chains
+- **Variables System**: var() function for referencing variables in WHERE after WITH
+- **Test Coverage**: Comprehensive test suites pass (test_match_demo.py, test_return_demo.py, test_order_by_demo.py)
+- **Examples**: Working demonstrations with complete query chains and real-world scenarios
 
 ## What's Next
 
@@ -106,8 +119,9 @@
 - ✅ Basic pattern construction (COMPLETED!)
 - ✅ **MATCH clause implementation (COMPLETED!)** 
 - ✅ **WHERE clause (separate from patterns) (COMPLETED!)** - Filtering after MATCH with complex chaining
+- ✅ **WITH clause projections (COMPLETED!)** - String and tuple projections with full chaining support
+- ✅ **ORDER BY clause (COMPLETED!)** - Ascending/descending sorts with asc()/desc() functions
 - ✅ **RETURN clause projections (COMPLETED!)** - Full support including DISTINCT and return everything (*)
-- ⬜ ORDER BY clause for result ordering
 - ⬜ LIMIT/SKIP clauses for pagination
 
 ### Development Infrastructure

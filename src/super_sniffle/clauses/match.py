@@ -6,10 +6,13 @@ in Cypher queries and supports method chaining with other clauses.
 """
 
 from dataclasses import dataclass, field, replace
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Union, Any, TYPE_CHECKING, Tuple
 
 from ..ast.patterns import NodePattern, RelationshipPattern, PathPattern
 from ..ast.expressions import Expression
+
+if TYPE_CHECKING:
+    from ..ast.expressions import OrderByExpression
 
 
 @dataclass(frozen=True)
@@ -122,7 +125,7 @@ class MatchClause(Clause):
             current = current.next_clause
         return current
     
-    def with_(self, *projections: str, distinct: bool = False):
+    def with_(self, *projections: Union[str, Tuple[str, str]], distinct: bool = False):
         """
         Add a WITH clause to pipe results to subsequent query parts.
         
@@ -130,7 +133,9 @@ class MatchClause(Clause):
         from one to be used as starting points or criteria in the next.
         
         Args:
-            *projections: Strings representing what to pass forward
+            *projections: Projections to include. Each projection can be:
+                         - A string (raw projection, e.g., "p")
+                         - A tuple of (expression, alias), e.g., ("count(n)", "cnt")
             distinct: Whether to return only distinct results
             
         Returns:
@@ -139,7 +144,7 @@ class MatchClause(Clause):
         Example:
             >>> query = (
             ...     match(node("p", "Person"))
-            ...     .with_("p.name AS name", "p.age AS age")
+            ...     .with_(("p.name", "name"), ("p.age", "age"))
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
@@ -216,7 +221,7 @@ class MatchClause(Clause):
         # Otherwise, chain the return directly
         return replace(self, next_clause=return_clause)
     
-    def order_by(self, *fields: str):
+    def order_by(self, *fields: Union[str, 'OrderByExpression']):
         """
         Add an ORDER BY clause to sort the results.
         
@@ -224,24 +229,37 @@ class MatchClause(Clause):
         fields, with optional ASC/DESC modifiers.
         
         Args:
-            *fields: Fields to sort by, with optional ASC/DESC
+            *fields: Fields to sort by. Each field can be:
+                    - A string (field name, defaults to ascending)
+                    - An OrderByExpression created with asc() or desc()
             
         Returns:
-            A new OrderByClause instance (when implemented)
+            A new OrderByClause instance
             
         Example:
+            >>> from super_sniffle import asc, desc
             >>> query = (
             ...     match(node("p", "Person"))
             ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age DESC", "p.name")
+            ...     .order_by("p.name", desc("p.age"))
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age DESC, p.name
+            >>> # ORDER BY p.name, p.age DESC
         """
-        # TODO: Implement OrderByClause when needed
-        raise NotImplementedError("ORDER BY clause will be implemented in upcoming releases")
+        from ..ast.expressions import OrderByExpression
+        from .order_by import OrderByClause
+        
+        # Convert string fields to OrderByExpression objects
+        expressions = []
+        for field in fields:
+            if isinstance(field, str):
+                expressions.append(OrderByExpression(field))
+            else:
+                expressions.append(field)
+        
+        return OrderByClause(expressions, preceding_clause=self)
     
     def limit(self, count: Union[int, str]):
         """

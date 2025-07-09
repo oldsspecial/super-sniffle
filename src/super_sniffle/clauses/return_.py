@@ -6,9 +6,12 @@ in Cypher queries and supports method chaining with other clauses.
 """
 
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING
 
 from .match import Clause
+
+if TYPE_CHECKING:
+    from ..ast.expressions import OrderByExpression
 
 
 @dataclass(frozen=True)
@@ -28,7 +31,7 @@ class ReturnClause(Clause):
     distinct: bool = False
     next_clause: Optional[Clause] = None
     
-    def order_by(self, *fields: str):
+    def order_by(self, *fields: Union[str, 'OrderByExpression']):
         """
         Add an ORDER BY clause to sort the results.
         
@@ -36,24 +39,37 @@ class ReturnClause(Clause):
         fields, with optional ASC/DESC modifiers.
         
         Args:
-            *fields: Fields to sort by, with optional ASC/DESC
+            *fields: Fields to sort by. Each field can be:
+                    - A string (field name, defaults to ascending)
+                    - An OrderByExpression created with asc() or desc()
             
         Returns:
-            A new OrderByClause instance (when implemented)
+            A new OrderByClause instance
             
         Example:
+            >>> from super_sniffle import asc, desc
             >>> query = (
             ...     match(node("p", "Person"))
             ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age DESC", "p.name")
+            ...     .order_by("p.name", desc("p.age"))
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age DESC, p.name
+            >>> # ORDER BY p.name, p.age DESC
         """
-        # TODO: Implement OrderByClause when needed
-        raise NotImplementedError("ORDER BY clause will be implemented in upcoming releases")
+        from ..ast.expressions import OrderByExpression
+        from .order_by import OrderByClause
+        
+        # Convert string fields to OrderByExpression objects
+        expressions = []
+        for field in fields:
+            if isinstance(field, str):
+                expressions.append(OrderByExpression(field))
+            else:
+                expressions.append(field)
+        
+        return OrderByClause(expressions, preceding_clause=self)
     
     def limit(self, count: Union[int, str]):
         """

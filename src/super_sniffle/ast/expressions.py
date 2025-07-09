@@ -449,3 +449,30 @@ class Literal(Expression):
             return "null"
         else:
             return str(self.value)
+
+
+@dataclass(frozen=True)
+class OrderByExpression:
+    """
+    Represents a field in an ORDER BY clause with direction.
+    
+    Attributes:
+        field: The field to sort by
+        descending: Whether to sort in descending order (defaults to False for ascending)
+    """
+    field: str
+    descending: bool = False
+    
+    def to_cypher(self) -> str:
+        """
+        Convert to Cypher string.
+        
+        Returns:
+            Cypher representation of the sort field with direction
+            
+        Example:
+            >>> OrderByExpression("p.age")  # Returns: "p.age"
+            >>> OrderByExpression("p.age", True)  # Returns: "p.age DESC"
+        """
+        direction = " DESC" if self.descending else ""
+        return f"{self.field}{direction}"

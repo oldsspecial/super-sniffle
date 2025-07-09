@@ -16,6 +16,7 @@ from .expressions import (
     Variable,
     Parameter,
     Literal,
+    OrderByExpression,
 )
 
 # Import pattern classes
@@ -41,6 +42,7 @@ __all__ = [
     "Variable",
     "Parameter",
     "Literal",
+    "OrderByExpression",
     # Pattern classes
     "NodePattern",
     "RelationshipPattern",

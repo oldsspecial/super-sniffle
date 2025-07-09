@@ -34,6 +34,8 @@ from .api import (
     relationship,
     path,
     match,
+    asc,
+    desc,
 )
 
 # AST components (for advanced usage)
@@ -61,6 +63,8 @@ __all__ = [
     "relationship",
     "path",
     "match",
+    "asc",
+    "desc",
     
     # AST classes
     "Property",

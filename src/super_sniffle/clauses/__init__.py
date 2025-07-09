@@ -11,7 +11,7 @@ from .match import MatchClause, Clause
 from .where import WhereClause
 from .return_ import ReturnClause
 from .with_ import WithClause
-# from .order import OrderByClause
+from .order_by import OrderByClause
 # from .limit import LimitClause
 # from .skip import SkipClause
 
@@ -20,7 +20,7 @@ __all__ = [
     "WhereClause",
     "ReturnClause",
     "WithClause",
-    # "OrderByClause",
+    "OrderByClause",
     # "LimitClause",
     # "SkipClause",
 ]

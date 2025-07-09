@@ -6,10 +6,11 @@ construct Cypher queries. It provides a functional interface for building
 query components and assembling them into complete queries.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 # Import expression and pattern classes
 from .ast import Property, Variable, Parameter, Literal, NodePattern, RelationshipPattern, PathPattern
+from .ast.expressions import OrderByExpression
 
 # TODO: Import from clause modules when implemented
 # from .clauses import MatchClause, WhereClause, ReturnClause
@@ -169,3 +170,37 @@ def literal(value: Any) -> Literal:
         >>> # Use in comparisons: prop("p", "name") == name_literal
     """
     return Literal(value)
+
+
+def asc(field: str) -> OrderByExpression:
+    """
+    Create an ascending sort expression for ORDER BY clauses.
+    
+    Args:
+        field: Field name to sort by in ascending order
+        
+    Returns:
+        An OrderByExpression object for ascending sort
+        
+    Example:
+        >>> age_asc = asc("p.age")
+        >>> # Use in ORDER BY: .order_by(asc("p.age"), desc("p.name"))
+    """
+    return OrderByExpression(field, False)
+
+
+def desc(field: str) -> OrderByExpression:
+    """
+    Create a descending sort expression for ORDER BY clauses.
+    
+    Args:
+        field: Field name to sort by in descending order
+        
+    Returns:
+        An OrderByExpression object for descending sort
+        
+    Example:
+        >>> age_desc = desc("p.age")
+        >>> # Use in ORDER BY: .order_by(asc("p.name"), desc("p.age"))
+    """
+    return OrderByExpression(field, True)
