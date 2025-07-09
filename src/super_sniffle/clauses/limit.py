@@ -128,7 +128,11 @@ class LimitClause(Clause):
             result += f"{clean_preceding.to_cypher()}\n"
         
         # Add LIMIT clause
-        result += f"LIMIT {self.count}"
+        count_str = (
+            self.count.to_cypher() if hasattr(self.count, 'to_cypher')
+            else str(self.count)
+        )
+        result += f"LIMIT {count_str}"
         
         # Add next clause if there is one
         if self.next_clause:

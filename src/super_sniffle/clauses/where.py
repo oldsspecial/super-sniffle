@@ -112,7 +112,7 @@ class WhereClause(Clause):
         # Otherwise, chain the return directly
         return replace(self, next_clause=return_clause)
     
-    def order_by(self, *fields: str):
+    def order_by(self, *fields):
         """
         Add an ORDER BY clause to sort the results.
         
@@ -120,10 +120,10 @@ class WhereClause(Clause):
         fields, with optional ASC/DESC modifiers.
         
         Args:
-            *fields: Fields to sort by, with optional ASC/DESC
+            *fields: Fields to sort by, can be strings or OrderByExpression objects
             
         Returns:
-            A new OrderByClause instance (when implemented)
+            A new OrderByClause instance
             
         Example:
             >>> query = (
@@ -138,8 +138,16 @@ class WhereClause(Clause):
             >>> # RETURN p.name, p.age
             >>> # ORDER BY p.age DESC, p.name
         """
-        # TODO: Implement OrderByClause when needed
-        raise NotImplementedError("ORDER BY clause will be implemented in upcoming releases")
+        from .order_by import OrderByClause
+        
+        order_by_clause = OrderByClause(list(fields), preceding_clause=self)
+        
+        # If this clause has a next clause, chain the order by before it
+        if self.next_clause:
+            return replace(self, next_clause=order_by_clause.with_next(self.next_clause))
+        
+        # Otherwise, chain the order by directly
+        return replace(self, next_clause=order_by_clause)
     
     def limit(self, count: Union[int, str]):
         """
@@ -151,7 +159,7 @@ class WhereClause(Clause):
             count: Maximum number of results to return
             
         Returns:
-            A new LimitClause instance (when implemented)
+            A new LimitClause instance
             
         Example:
             >>> query = (
@@ -166,8 +174,52 @@ class WhereClause(Clause):
             >>> # RETURN p.name
             >>> # LIMIT 10
         """
-        # TODO: Implement LimitClause when needed
-        raise NotImplementedError("LIMIT clause will be implemented in upcoming releases")
+        from .limit import LimitClause
+        
+        limit_clause = LimitClause(count, preceding_clause=self)
+        
+        # If this clause has a next clause, chain the limit before it
+        if self.next_clause:
+            return replace(self, next_clause=limit_clause.with_next(self.next_clause))
+        
+        # Otherwise, chain the limit directly
+        return replace(self, next_clause=limit_clause)
+    
+    def skip(self, count: Union[int, str]):
+        """
+        Add a SKIP clause to skip a number of results.
+        
+        The SKIP clause skips the specified number of results from the beginning.
+        
+        Args:
+            count: Number of results to skip
+            
+        Returns:
+            A new SkipClause instance
+            
+        Example:
+            >>> query = (
+            ...     match(node("p", "Person"))
+            ...     .where(prop("p", "age") > 30)
+            ...     .return_("p.name")
+            ...     .skip(10)
+            ... )
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # WHERE p.age > 30
+            >>> # RETURN p.name
+            >>> # SKIP 10
+        """
+        from .skip import SkipClause
+        
+        skip_clause = SkipClause(count, preceding_clause=self)
+        
+        # If this clause has a next clause, chain the skip before it
+        if self.next_clause:
+            return replace(self, next_clause=skip_clause.with_next(self.next_clause))
+        
+        # Otherwise, chain the skip directly
+        return replace(self, next_clause=skip_clause)
     
     def with_next(self, next_clause: Clause) -> 'WhereClause':
         """

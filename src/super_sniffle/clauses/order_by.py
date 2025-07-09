@@ -25,7 +25,7 @@ class OrderByClause(Clause):
         preceding_clause: Optional clause that comes before this ORDER BY clause
         next_clause: Optional next clause in the query chain
     """
-    expressions: List[OrderByExpression]
+    expressions: List[Union[str, OrderByExpression]]
     preceding_clause: Optional[Clause] = None
     next_clause: Optional[Clause] = None
     
@@ -164,7 +164,10 @@ class OrderByClause(Clause):
             result += f"{clean_preceding.to_cypher()}\n"
         
         # Add ORDER BY clause
-        expressions_str = ", ".join(expr.to_cypher() for expr in self.expressions)
+        expressions_str = ", ".join(
+            expr.to_cypher() if hasattr(expr, 'to_cypher') else str(expr) 
+            for expr in self.expressions
+        )
         result += f"ORDER BY {expressions_str}"
         
         # Add next clause if there is one

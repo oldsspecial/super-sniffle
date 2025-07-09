@@ -128,7 +128,11 @@ class SkipClause(Clause):
             result += f"{clean_preceding.to_cypher()}\n"
         
         # Add SKIP clause
-        result += f"SKIP {self.count}"
+        count_str = (
+            self.count.to_cypher() if hasattr(self.count, 'to_cypher')
+            else str(self.count)
+        )
+        result += f"SKIP {count_str}"
         
         # Add next clause if there is one
         if self.next_clause:
