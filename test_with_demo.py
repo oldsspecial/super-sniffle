@@ -12,7 +12,7 @@ import os
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from super_sniffle import match, node, prop, param, literal
+from super_sniffle import match, node, prop, var, param, literal
 
 
 def test_basic_with():
@@ -112,11 +112,11 @@ def test_with_aggregation():
     query = (
         match(person.relates_to("r", "KNOWS", ">", friend))
         .with_("p", "count(friend) AS friendCount")
-        .where(prop("friendCount", "friendCount") > literal(3))  # Using workaround for aliased variable
+        .where(var("friendCount") > literal(3))  # Using new var() function for variables
         .return_("p.name", "friendCount")
     )
     result = query.to_cypher()
-    expected = "MATCH (p:Person)-[r:KNOWS]->(friend:Person)\nWITH p, count(friend) AS friendCount\nWHERE friendCount.friendCount > 3\nRETURN p.name, friendCount"
+    expected = "MATCH (p:Person)-[r:KNOWS]->(friend:Person)\nWITH p, count(friend) AS friendCount\nWHERE friendCount > 3\nRETURN p.name, friendCount"
     print(f"Query: {result}")
     print(f"Expected: {expected}")
     assert result == expected, f"Expected '{expected}', got '{result}'"
@@ -134,7 +134,7 @@ def test_multiple_with_clauses():
         .with_("p")
         .match(person.relates_to("r", "KNOWS", ">", friend))
         .with_("p", "collect(friend) AS friends", "size(collect(friend)) AS friendCount")
-        .where(prop("friendCount", "friendCount") > literal(3))  # Using workaround for aliased variable
+        .where(var("friendCount") > literal(3))  # Using new var() function for variables
         .return_("p.name", "friendCount")
     )
     result = query.to_cypher()
@@ -143,7 +143,7 @@ def test_multiple_with_clauses():
                "WITH p\n"
                "MATCH (p:Person)-[r:KNOWS]->(friend:Person)\n"
                "WITH p, collect(friend) AS friends, size(collect(friend)) AS friendCount\n"
-               "WHERE friendCount.friendCount > 3\n"
+               "WHERE friendCount > 3\n"
                "RETURN p.name, friendCount")
     print(f"Query: {result}")
     print(f"Expected: {expected}")
@@ -182,7 +182,7 @@ def demonstrate_real_world_example():
     query = (
         match(person.relates_to("r1", "KNOWS", ">", friend))
         .with_("p", "count(f) AS friendCount")
-        .where(prop("friendCount", "friendCount") > literal(5))  # Using workaround for aliased variable
+        .where(var("friendCount") > literal(5))  # Using new var() function for variables
         .with_("p")
         .match(person.relates_to("r2", "KNOWS", ">", node("f2", "Person")))
         .return_("p.name", "f2.name")
@@ -195,7 +195,7 @@ def demonstrate_real_world_example():
     expected_parts = [
         "MATCH (p:Person)-[r1:KNOWS]->(f:Person)",
         "WITH p, count(f) AS friendCount",
-        "WHERE friendCount.friendCount > 5",
+        "WHERE friendCount > 5",
         "WITH p",
         "MATCH (p:Person)-[r2:KNOWS]->(f2:Person)",
         "RETURN p.name, f2.name"
@@ -242,7 +242,7 @@ def demonstrate_different_with_styles():
     query4 = (
         match(node("p", "Person"))
         .with_("p.name AS name", "p.salary AS salary")
-        .where(prop("salary", "salary") > literal(50000))  # Using workaround for aliased variable
+        .where(var("salary") > literal(50000))  # Using new var() function for variables
         .return_("name", "salary")
     )
     print("4. WITH followed by WHERE:")

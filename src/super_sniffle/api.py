@@ -9,7 +9,7 @@ query components and assembling them into complete queries.
 from typing import Any, Dict, List, Optional, Union
 
 # Import expression and pattern classes
-from .ast import Property, Parameter, Literal, NodePattern, RelationshipPattern, PathPattern
+from .ast import Property, Variable, Parameter, Literal, NodePattern, RelationshipPattern, PathPattern
 
 # TODO: Import from clause modules when implemented
 # from .clauses import MatchClause, WhereClause, ReturnClause
@@ -116,6 +116,24 @@ def prop(variable: str, property_name: str) -> Property:
         >>> # Can now use operators: age_prop > 30
     """
     return Property(variable, property_name)
+
+
+def var(name: str) -> Variable:
+    """
+    Create a variable reference.
+    
+    Args:
+        name: Variable name
+        
+    Returns:
+        A Variable object representing the variable reference
+        
+    Example:
+        >>> count_var = var("friendCount")
+        >>> # Can now use operators: count_var > 5
+        >>> # Use in WHERE clauses after WITH: .where(var("friendCount") > literal(3))
+    """
+    return Variable(name)
 
 
 def param(name: str) -> Parameter:

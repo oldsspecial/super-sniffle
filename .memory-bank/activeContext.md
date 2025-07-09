@@ -1,7 +1,7 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**Completing Basic Query Construction** - We just achieved a major milestone with the RETURN clause implementation! The core query building blocks (MATCH, WHERE, RETURN) are now fully functional with proper clause chaining. Next priority is completing the basic query functionality with ORDER BY, LIMIT, and SKIP clauses.
+**Successfully Completed Variable Reference Implementation** - Just completed implementing the `var()` function for clean variable reference handling in WITH clauses and other query constructs. The implementation provides a clear semantic distinction between properties (`prop()`) and variables (`var()`), solving the workaround issue we had with variable references.
 
 ## Recent Changes
 - ✅ Implemented complete operator-based expression system
@@ -10,8 +10,11 @@
 - ✅ **COMPLETED: Full MATCH clause implementation with chaining**
 - ✅ **COMPLETED: Enhanced WHERE clause with complex chaining support**
 - ✅ **COMPLETED: Full RETURN clause with projections, DISTINCT, and "return everything" (*) support**
-- ✅ Fixed complex clause ordering issues (MATCH → WHERE → RETURN)
-- ✅ Added comprehensive unit tests and real-world examples (test_return_demo.py)
+- ✅ **COMPLETED: Full WITH clause implementation with string-based projections**
+- ✅ **COMPLETED: Variable expression class and var() function implementation**
+- ✅ Fixed complex clause ordering issues (MATCH → WHERE → WITH → RETURN)
+- ✅ Added comprehensive unit tests and real-world examples
+- ✅ Updated all test cases to use proper var() function instead of workarounds
 - 📋 **NEXT PRIORITY**: ORDER BY, LIMIT, SKIP clauses to complete basic functionality
 
 ## Active Decisions
@@ -21,13 +24,14 @@
 - Method chaining for query construction
 - **Operator-based syntax for WHERE clauses** - Using Python operator overloading for intuitive condition building
 - **Inline pattern conditions** - Support for Cypher's native inline WHERE syntax: `(p:Person WHERE p.age > 20)`
+- **Clear semantic distinction**: `prop()` for properties vs `var()` for variables
 - Dual API support - both method-based and operator-based approaches
 - Clear separation between components and string generation
 - Type hints throughout for IDE support
 
 ### Implementation Strategy
 - Start with core AST components
-- Implement basic query clauses (MATCH, WHERE, RETURN)
+- Implement basic query clauses (MATCH, WHERE, RETURN, WITH)
 - Add string generation capabilities
 - Expand to more complex Cypher features
 
@@ -37,6 +41,22 @@
 - Regular refactoring to maintain clean architecture
 
 ## Current Patterns and Preferences
+
+### Expression System Design
+- **Property references**: Use `prop("variable", "property_name")` for node/relationship properties
+- **Variable references**: Use `var("variable_name")` for variables created by WITH, UNWIND, etc.
+- **Parameter references**: Use `param("parameter_name")` for query parameters
+- **Literal values**: Use `literal(value)` for inline values
+- All expression types support full operator overloading (==, !=, >, <, >=, <=)
+- All expression types support logical operations (&, |, ~)
+- String-specific operations (contains, starts_with, ends_with) available as methods
+
+### WITH Clause Design
+- String-based projections for maximum flexibility
+- Support for single and multiple projections
+- DISTINCT support via optional parameter
+- Full chaining support with WHERE and other clauses
+- Clean integration with variable references via var() function
 
 ### Naming Conventions
 - snake_case for functions and variables
@@ -54,15 +74,22 @@
 - Unit tests for individual components
 - Integration tests for complete queries
 - Property-based tests for edge cases
+- Demo scripts for real-world examples
 - High test coverage target (>90%)
 
 ## Project Insights
 
-### Key Challenges
-1. **Balancing flexibility and simplicity** - Making the API powerful enough for complex queries while keeping it intuitive
-2. **Cypher syntax complexity** - Handling all the edge cases and variations in Cypher syntax
-3. **String formatting** - Generating well-formatted, readable Cypher strings
-4. **Performance** - Ensuring efficient query generation for large, complex queries
+### Key Challenges Solved
+1. **Variable vs Property distinction** - Implemented semantic separation between variables and properties
+2. **WITH clause flexibility** - String-based projections provide maximum Cypher compatibility
+3. **Operator overloading** - Full expression system with Python operator support
+4. **Clause chaining** - Complex query construction with proper ordering
+
+### Recent Technical Insights
+- Variables created by WITH clauses are fundamentally different from properties
+- String-based projections offer more flexibility than structured objects for WITH clauses
+- Operator overloading provides intuitive expression building
+- Clear semantic APIs prevent common mistakes (prop vs var usage)
 
 ### Learning Resources
 - [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/current/)
@@ -70,68 +97,81 @@
 - [Python Dataclasses Documentation](https://docs.python.org/3/library/dataclasses.html)
 - [Visitor Pattern in Python](https://refactoring.guru/design-patterns/visitor/python/example)
 
-## Priority Feature: Global Conditions System
+## Current Implementation Status
+
+### Completed Components
+- ✅ **Expression System**: Property, Variable, Parameter, Literal classes with full operator support
+- ✅ **Pattern System**: NodePattern, RelationshipPattern, PathPattern with inline conditions
+- ✅ **MATCH Clause**: Full implementation with pattern support and chaining
+- ✅ **WHERE Clause**: Complex condition building with operator overloading
+- ✅ **RETURN Clause**: Projections, DISTINCT, and return-all (*) support
+- ✅ **WITH Clause**: String-based projections, DISTINCT, and chaining support
+- ✅ **API Functions**: match(), node(), relationship(), path(), prop(), var(), param(), literal()
+
+### Test Coverage
+- ✅ Unit tests for all expression types
+- ✅ Integration tests for clause combinations
+- ✅ Real-world example demonstrations
+- ✅ Edge case coverage for all operators
+- ✅ Variable vs property distinction validation
+
+## Next Steps
+
+### Immediate Tasks
+1. **Implement ORDER BY clause** - Sorting support for query results
+2. **Add LIMIT and SKIP clauses** - Pagination and result limiting
+3. **Create UNION support** - Combining multiple query results
+4. **Add aggregation functions** - Built-in functions like count(), sum(), avg()
+5. **Implement OPTIONAL MATCH** - Left join equivalent for graph queries
+
+### Short-term Goals
+1. Complete all basic Cypher READ clauses
+2. Add support for complex path patterns and variable-length relationships
+3. Develop comprehensive parameter handling
+4. Create migration guides from string-based queries
+5. Set up proper package distribution
+
+### Medium-term Goals
+1. Add support for WRITE operations (CREATE, UPDATE, DELETE)
+2. Implement query optimization hints
+3. Develop comprehensive documentation site
+4. Create VS Code extension for syntax highlighting
+5. Publish stable package to PyPI
+
+## Priority Feature: Function Support
 
 ### Requirements
-- **Problem**: Need to automatically apply conditions like `apoc.node.degree(n) < 1000` to prevent performance issues
-- **Solution**: Registry of global conditions that are automatically ANDed with explicit conditions
-- **Key Requirement**: Conditions must be applied **inline** for better readability when debugging
+- **Problem**: Need support for built-in Cypher functions (count(), sum(), avg()) and APOC functions
+- **Solution**: Function expression class with proper argument handling
+- **Key Features**: Type-safe function calls, aggregation support, custom function registration
 
 ### Implementation Approach
 ```python
 # Example Usage:
-context = QueryContext()
-context.add_node_condition(
-    func("apoc.node.degree", "n") < 1000, 
-    label="Person"
+from super_sniffle import func, match, node, var
+
+# Built-in functions
+query = (
+    match(node("p", "Person"))
+    .with_(func("count", "p").as_("personCount"))
+    .where(var("personCount") > literal(100))
 )
 
-# Query with explicit condition
-query = match(node("p", "Person").where(prop("p", "age") > 30))
-
-# Generated Cypher (with global conditions applied inline):
-# MATCH (p:Person WHERE p.age > 30 AND apoc.node.degree(p) < 1000)
+# APOC functions  
+query = (
+    match(node("n", "Node"))
+    .where(func("apoc.node.degree", "n") < literal(1000))
+)
 ```
 
 ### Core Components Needed
-1. **QueryContext class** - Registry for global conditions by label/type
-2. **Function expression support** - For APOC functions like `apoc.node.degree()`
-3. **Pattern integration** - Modify `to_cypher()` methods to accept context
-4. **Condition merging logic** - AND global conditions with explicit ones
-5. **API functions** - Clean interface for registering global conditions
-
-### Benefits
-- Prevent accidental performance issues
-- Centralized performance/business logic
-- Cleaner, more readable queries
-- Consistent condition application across codebase
-
-## Next Steps
-
-### Immediate Tasks (UPDATED PRIORITY)
-1. **Implement global conditions system** - QueryContext and function expressions
-2. **Add function call expressions** - Support for `func("apoc.node.degree", var)`
-3. **Integrate with pattern classes** - Update `to_cypher()` methods
-4. **Write comprehensive tests** - Cover all condition combinations
-5. **Create usage examples** - Real-world scenarios with global conditions
-6. Add simple MATCH clause implementation
-
-### Short-term Goals
-1. Implement all basic Cypher READ clauses
-2. Add support for complex path patterns
-3. Develop parameter handling
-4. Create comprehensive examples
-5. Set up CI/CD pipeline
-
-### Medium-term Goals
-1. Add support for all CYPHER25 READ features
-2. Implement query optimization
-3. Develop comprehensive documentation
-4. Create migration guides from string-based queries
-5. Publish initial package to PyPI
+1. **Function expression class** - Handle function calls with arguments
+2. **Built-in function registry** - Common Cypher functions
+3. **Aggregation support** - Special handling for GROUP BY semantics
+4. **Custom function support** - User-defined and APOC functions
 
 ## Open Questions
-1. How to handle custom functions and procedures in a type-safe way?
-2. What's the best approach for formatting complex nested queries?
-3. How to provide helpful error messages for invalid query constructions?
-4. What level of validation should happen at query construction vs. string generation time?
+1. How to handle function argument type validation?
+2. What's the best approach for aggregation function semantics?
+3. How to provide helpful error messages for invalid function usage?
+4. Should we support function composition and nesting?

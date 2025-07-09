@@ -13,6 +13,7 @@ from .expressions import (
     LogicalExpression,
     NotExpression,
     Property,
+    Variable,
     Parameter,
     Literal,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "LogicalExpression",
     "NotExpression",
     "Property",
+    "Variable",
     "Parameter",
     "Literal",
     # Pattern classes

@@ -27,6 +27,7 @@ __author__ = "super-sniffle contributors"
 # Main API exports
 from .api import (
     prop,
+    var,
     param, 
     literal,
     node,
@@ -53,6 +54,7 @@ from .clauses import (
 __all__ = [
     # Core functions
     "prop",
+    "var",
     "param",
     "literal", 
     "node",

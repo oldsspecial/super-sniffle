@@ -275,6 +275,125 @@ class Property(Expression):
 
 
 @dataclass(frozen=True)
+class Variable(Expression):
+    """
+    Represents a variable reference (not a property).
+    
+    Variables can be introduced by WITH clauses, UNWIND, function calls,
+    or other query constructs that create named values.
+    
+    Attributes:
+        name: Variable name
+    """
+    name: str
+    
+    def to_cypher(self) -> str:
+        """
+        Convert variable to Cypher string.
+        
+        Returns:
+            Cypher variable reference
+            
+        Example:
+            >>> Variable("friendCount")
+            >>> # Returns: "friendCount"
+        """
+        return self.name
+    
+    # Comparison operators
+    def __eq__(self, other: Any) -> ComparisonExpression:
+        """Equality comparison using == operator."""
+        return ComparisonExpression(self, "=", other)
+    
+    def __ne__(self, other: Any) -> ComparisonExpression:
+        """Inequality comparison using != operator."""
+        return ComparisonExpression(self, "<>", other)
+    
+    def __gt__(self, other: Any) -> ComparisonExpression:
+        """Greater than comparison using > operator."""
+        return ComparisonExpression(self, ">", other)
+    
+    def __lt__(self, other: Any) -> ComparisonExpression:
+        """Less than comparison using < operator."""
+        return ComparisonExpression(self, "<", other)
+    
+    def __ge__(self, other: Any) -> ComparisonExpression:
+        """Greater than or equal comparison using >= operator."""
+        return ComparisonExpression(self, ">=", other)
+    
+    def __le__(self, other: Any) -> ComparisonExpression:
+        """Less than or equal comparison using <= operator."""
+        return ComparisonExpression(self, "<=", other)
+    
+    # Method-based API for special operations
+    def contains(self, value: Any) -> ComparisonExpression:
+        """
+        String contains operation.
+        
+        Args:
+            value: Value to check if contained in the variable
+            
+        Returns:
+            ComparisonExpression using CONTAINS operator
+        """
+        return ComparisonExpression(self, "CONTAINS", value)
+    
+    def starts_with(self, value: Any) -> ComparisonExpression:
+        """
+        String starts with operation.
+        
+        Args:
+            value: Value to check if variable starts with
+            
+        Returns:
+            ComparisonExpression using STARTS WITH operator
+        """
+        return ComparisonExpression(self, "STARTS WITH", value)
+    
+    def ends_with(self, value: Any) -> ComparisonExpression:
+        """
+        String ends with operation.
+        
+        Args:
+            value: Value to check if variable ends with
+            
+        Returns:
+            ComparisonExpression using ENDS WITH operator
+        """
+        return ComparisonExpression(self, "ENDS WITH", value)
+    
+    def in_list(self, values: Any) -> ComparisonExpression:
+        """
+        List membership operation.
+        
+        Args:
+            values: List or parameter containing values to check
+            
+        Returns:
+            ComparisonExpression using IN operator
+        """
+        return ComparisonExpression(self, "IN", values)
+    
+    def is_null(self) -> ComparisonExpression:
+        """
+        NULL check operation.
+        
+        Returns:
+            ComparisonExpression checking if variable IS NULL
+        """
+        return ComparisonExpression(self, "IS", "NULL")
+    
+    def is_not_null(self) -> ComparisonExpression:
+        """
+        NOT NULL check operation.
+        
+        Returns:
+            ComparisonExpression checking if variable IS NOT NULL
+        """
+        return ComparisonExpression(self, "IS NOT", "NULL")
+
+
+@dataclass(frozen=True)
 class Parameter(Expression):
     """
     Represents a query parameter.
