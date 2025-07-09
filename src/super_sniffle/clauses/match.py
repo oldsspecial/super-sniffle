@@ -271,7 +271,7 @@ class MatchClause(Clause):
             count: Maximum number of results to return
             
         Returns:
-            A new LimitClause instance (when implemented)
+            A new LimitClause instance
             
         Example:
             >>> query = (
@@ -284,8 +284,35 @@ class MatchClause(Clause):
             >>> # RETURN p.name
             >>> # LIMIT 10
         """
-        # TODO: Implement LimitClause when needed
-        raise NotImplementedError("LIMIT clause will be implemented in upcoming releases")
+        from .limit import LimitClause
+        return LimitClause(count, preceding_clause=self)
+    
+    def skip(self, count: Union[int, str]):
+        """
+        Add a SKIP clause to skip a number of results.
+        
+        The SKIP clause skips a specified number of results before returning
+        the remaining ones. Often used with LIMIT for pagination.
+        
+        Args:
+            count: Number of results to skip
+            
+        Returns:
+            A new SkipClause instance
+            
+        Example:
+            >>> query = (
+            ...     match(node("p", "Person"))
+            ...     .return_("p.name")
+            ...     .skip(10)
+            ... )
+            >>> # Generates:
+            >>> # MATCH (p:Person)
+            >>> # RETURN p.name
+            >>> # SKIP 10
+        """
+        from .skip import SkipClause
+        return SkipClause(count, preceding_clause=self)
     
     def with_next(self, next_clause: Clause) -> 'MatchClause':
         """

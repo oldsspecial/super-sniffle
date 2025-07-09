@@ -1,61 +1,31 @@
 """
-ORDER BY clause implementation for Cypher queries.
+LIMIT clause implementation for Cypher queries.
 
-This module contains the OrderByClause class that represents ORDER BY clauses
+This module contains the LimitClause class that represents LIMIT clauses
 in Cypher queries and supports method chaining with other clauses.
 """
 
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
+from typing import Optional, Union
 
-from ..ast.expressions import OrderByExpression
 from .match import Clause
 
 
 @dataclass(frozen=True)
-class OrderByClause(Clause):
+class LimitClause(Clause):
     """
-    Represents an ORDER BY clause in a Cypher query.
+    Represents a LIMIT clause in a Cypher query.
     
-    The ORDER BY clause sorts the query results based on one or more
-    fields, with optional ASC/DESC modifiers.
+    The LIMIT clause restricts the number of results returned by the query.
     
     Attributes:
-        expressions: List of OrderByExpression objects defining sort criteria
-        preceding_clause: Optional clause that comes before this ORDER BY clause
+        count: Maximum number of results to return
+        preceding_clause: Optional clause that comes before this LIMIT clause
         next_clause: Optional next clause in the query chain
     """
-    expressions: List[OrderByExpression]
+    count: Union[int, str]
     preceding_clause: Optional[Clause] = None
     next_clause: Optional[Clause] = None
-    
-    def limit(self, count: Union[int, str]):
-        """
-        Add a LIMIT clause to limit the number of results.
-        
-        The LIMIT clause restricts the number of results returned by the query.
-        
-        Args:
-            count: Maximum number of results to return
-            
-        Returns:
-            A new LimitClause instance
-            
-        Example:
-            >>> query = (
-            ...     match(node("p", "Person"))
-            ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age")
-            ...     .limit(10)
-            ... )
-            >>> # Generates:
-            >>> # MATCH (p:Person)
-            >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age
-            >>> # LIMIT 10
-        """
-        from .limit import LimitClause
-        return LimitClause(count, preceding_clause=self)
     
     def skip(self, count: Union[int, str]):
         """
@@ -74,16 +44,14 @@ class OrderByClause(Clause):
             >>> query = (
             ...     match(node("p", "Person"))
             ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age")
-            ...     .skip(10)
-            ...     .limit(5)
+            ...     .limit(10)
+            ...     .skip(5)
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age
-            >>> # SKIP 10
-            >>> # LIMIT 5
+            >>> # LIMIT 10
+            >>> # SKIP 5
         """
         from .skip import SkipClause
         return SkipClause(count, preceding_clause=self)
@@ -106,12 +74,12 @@ class OrderByClause(Clause):
         Example:
             >>> query = (
             ...     match(node("p", "Person"))
-            ...     .order_by("p.age")
+            ...     .limit(10)
             ...     .return_("p.name", "p.age")
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
-            >>> # ORDER BY p.age
+            >>> # LIMIT 10
             >>> # RETURN p.name, p.age
         """
         from .return_ import ReturnClause
@@ -125,7 +93,7 @@ class OrderByClause(Clause):
         # Chain the return clause
         return replace(self, next_clause=return_clause)
     
-    def with_next(self, next_clause: Clause) -> 'OrderByClause':
+    def with_next(self, next_clause: Clause) -> 'LimitClause':
         """
         Set the next clause in the query.
         
@@ -135,25 +103,21 @@ class OrderByClause(Clause):
             next_clause: The next clause to execute
             
         Returns:
-            A new OrderByClause with the specified next clause
+            A new LimitClause with the specified next clause
         """
         return replace(self, next_clause=next_clause)
     
     def to_cypher(self) -> str:
         """
-        Convert the ORDER BY clause to a Cypher string.
+        Convert the LIMIT clause to a Cypher string.
         
         Returns:
-            Cypher representation of the ORDER BY clause and any chained clauses
+            Cypher representation of the LIMIT clause and any chained clauses
             
         Example:
-            >>> from super_sniffle.ast.expressions import OrderByExpression
-            >>> order_clause = OrderByClause([
-            ...     OrderByExpression("p.age", False),
-            ...     OrderByExpression("p.name", True)
-            ... ])
-            >>> order_clause.to_cypher()
-            >>> # Returns: "ORDER BY p.age, p.name DESC"
+            >>> limit_clause = LimitClause(10)
+            >>> limit_clause.to_cypher()
+            >>> # Returns: "LIMIT 10"
         """
         result = ""
         
@@ -163,9 +127,8 @@ class OrderByClause(Clause):
             clean_preceding = replace(self.preceding_clause, next_clause=None)
             result += f"{clean_preceding.to_cypher()}\n"
         
-        # Add ORDER BY clause
-        expressions_str = ", ".join(expr.to_cypher() for expr in self.expressions)
-        result += f"ORDER BY {expressions_str}"
+        # Add LIMIT clause
+        result += f"LIMIT {self.count}"
         
         # Add next clause if there is one
         if self.next_clause:

@@ -51,6 +51,8 @@ from .ast import (
 # Clause components (for advanced usage) 
 from .clauses import (
     MatchClause,
+    LimitClause,
+    SkipClause,
 )
 
 __all__ = [
@@ -76,4 +78,6 @@ __all__ = [
     
     # Clause classes
     "MatchClause",
+    "LimitClause",
+    "SkipClause",
 ]

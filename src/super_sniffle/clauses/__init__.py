@@ -6,14 +6,12 @@ types of Cypher clauses such as MATCH, WHERE, RETURN, ORDER BY, etc.
 """
 
 from .match import MatchClause, Clause
-
-# TODO: Import other clause classes when implemented
 from .where import WhereClause
 from .return_ import ReturnClause
 from .with_ import WithClause
 from .order_by import OrderByClause
-# from .limit import LimitClause
-# from .skip import SkipClause
+from .limit import LimitClause
+from .skip import SkipClause
 
 __all__ = [
     "MatchClause",
@@ -21,6 +19,6 @@ __all__ = [
     "ReturnClause",
     "WithClause",
     "OrderByClause",
-    # "LimitClause",
-    # "SkipClause",
+    "LimitClause",
+    "SkipClause",
 ]

@@ -62,42 +62,55 @@
 - 🔄 Development environment configuration
 - ✅ Initial package scaffolding (completed)
 
-## Current Status: ORDER BY Clause and Enhanced WITH Implemented! 🎉
+## Current Status: LIMIT and SKIP Clauses Completed! 🎉
 
-**Major Milestone Achieved**: ORDER BY clause implementation with asc/desc functions and enhanced WITH clause with tuple projections
+**Major Milestone Achieved**: LIMIT and SKIP clause implementation completes basic Cypher READ functionality with full pagination support
 
 ### Recently Completed (This Session)
-1. **ORDER BY clause implementation** (`src/super_sniffle/clauses/order_by.py`)
-   - Complete OrderByClause with ascending/descending sort support  
-   - OrderByExpression class for sort field definitions
-   - asc() and desc() helper functions for intuitive syntax
-   - Integration with all clause types (MATCH, WHERE, WITH, RETURN)
-   - Proper chaining support with return_() method
+1. **LIMIT clause implementation** (`src/super_sniffle/clauses/limit.py`)
+   - Complete LimitClause for result limiting
+   - Support for integer and string parameters
+   - Full method chaining with skip(), return_()
+   - Integration with all existing clause types
+   - Proper chaining support maintaining clause order
 
-2. **Enhanced WITH clause with tuple projections** (`src/super_sniffle/clauses/with_.py`)
-   - Support for tuple-based projections: (expression, alias)
-   - Mixed projections: strings and tuples in same clause
-   - Improved type annotations with Union[str, Tuple[str, str]]
-   - Backwards compatible with existing string projections
-   - Full integration with ORDER BY and other clauses
+2. **SKIP clause implementation** (`src/super_sniffle/clauses/skip.py`)
+   - Complete SkipClause for result offsetting
+   - Support for integer and string parameters  
+   - Full method chaining with limit(), return_()
+   - Integration with all existing clause types
+   - Proper chaining support maintaining clause order
 
-3. **Expression system improvements** (`src/super_sniffle/ast/expressions.py`)
-   - OrderByExpression class for sort field definitions
-   - Proper Cypher generation with ASC/DESC modifiers
-   - Integration with expression type hierarchy
+3. **Enhanced existing clauses with LIMIT/SKIP support**
+   - Updated MatchClause with limit() and skip() methods
+   - Updated OrderByClause with limit() and skip() methods
+   - Removed NotImplementedError placeholders
+   - Full integration across the entire clause system
 
-4. **API and package updates**
-   - Added asc() and desc() functions to public API
-   - Updated package exports in __init__.py files
-   - OrderByClause added to clause exports
+4. **Package and module updates**
+   - Added LimitClause and SkipClause to clauses/__init__.py
+   - Updated main package __init__.py with new exports
+   - Added to __all__ lists for proper public API exposure
    - Full type checking and import handling
 
-5. **Comprehensive testing**
-   - Created `test_order_by_demo.py` with complete test scenarios
-   - Demonstrates ORDER BY with RETURN, WITH, and complex chains
-   - Tests tuple projections in WITH clauses
-   - Real-world examples: ranking queries, aggregations
-   - All tests passing successfully
+5. **Comprehensive testing and validation**
+   - Created `test_limit_skip_demo.py` with extensive test scenarios
+   - Tests basic LIMIT and SKIP usage
+   - Demonstrates pagination patterns (SKIP + LIMIT)
+   - Complex query chains: MATCH → WHERE → WITH → ORDER BY → SKIP → LIMIT → RETURN
+   - Real-world examples: top N queries, pagination, batch processing
+   - All tests passing successfully with proper Cypher generation
+
+6. **Updated existing test files**
+   - Enabled LIMIT functionality in `test_order_by_demo.py`
+   - Updated "Top 5 most connected people" example to use .limit(5)
+   - All existing tests continue to pass
+
+### Previous Achievements
+1. **ORDER BY clause implementation** with asc/desc functions
+2. **Enhanced WITH clause with tuple projections**
+3. **Expression system improvements** with OrderByExpression
+4. **API and package updates** for ORDER BY functionality
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions + OrderByExpression
@@ -122,7 +135,7 @@
 - ✅ **WITH clause projections (COMPLETED!)** - String and tuple projections with full chaining support
 - ✅ **ORDER BY clause (COMPLETED!)** - Ascending/descending sorts with asc()/desc() functions
 - ✅ **RETURN clause projections (COMPLETED!)** - Full support including DISTINCT and return everything (*)
-- ⬜ LIMIT/SKIP clauses for pagination
+- ✅ **LIMIT/SKIP clauses for pagination (COMPLETED!)** - Full pagination support with method chaining
 
 ### Development Infrastructure
 - ⬜ Poetry configuration

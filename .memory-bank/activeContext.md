@@ -1,7 +1,7 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**Successfully Completed Variable Reference Implementation** - Just completed implementing the `var()` function for clean variable reference handling in WITH clauses and other query constructs. The implementation provides a clear semantic distinction between properties (`prop()`) and variables (`var()`), solving the workaround issue we had with variable references.
+**Successfully Completed LIMIT and SKIP Clauses** - Just completed implementing the LIMIT and SKIP clauses for pagination and result limiting. These clauses complete the basic Cypher READ functionality, providing full support for result pagination, limiting, and offsetting. The implementation includes proper method chaining, parameter support, and integration with all existing clauses.
 
 ## Recent Changes
 - ✅ Implemented complete operator-based expression system
@@ -10,12 +10,14 @@
 - ✅ **COMPLETED: Full MATCH clause implementation with chaining**
 - ✅ **COMPLETED: Enhanced WHERE clause with complex chaining support**
 - ✅ **COMPLETED: Full RETURN clause with projections, DISTINCT, and "return everything" (*) support**
-- ✅ **COMPLETED: Full WITH clause implementation with string-based projections**
+- ✅ **COMPLETED: Full WITH clause implementation with tuple projections**
 - ✅ **COMPLETED: Variable expression class and var() function implementation**
-- ✅ Fixed complex clause ordering issues (MATCH → WHERE → WITH → RETURN)
+- ✅ **COMPLETED: ORDER BY clause with asc/desc functions**
+- ✅ **COMPLETED: LIMIT and SKIP clauses for pagination**
+- ✅ Fixed complex clause ordering issues (MATCH → WHERE → WITH → ORDER BY → LIMIT/SKIP → RETURN)
 - ✅ Added comprehensive unit tests and real-world examples
 - ✅ Updated all test cases to use proper var() function instead of workarounds
-- 📋 **NEXT PRIORITY**: ORDER BY, LIMIT, SKIP clauses to complete basic functionality
+- 📋 **NEXT PRIORITY**: UNION support, aggregation functions, OPTIONAL MATCH
 
 ## Active Decisions
 

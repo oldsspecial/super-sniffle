@@ -148,10 +148,10 @@ def demo_real_world_examples():
         match(node("p", "Person").relates_to("-", "KNOWS", node("friend", "Person")))
         .with_(("p.name", "personName"), ("count(friend)", "friendCount"))
         .order_by(desc("friendCount"), "personName")
-        # .limit(5)  # TODO: Implement LIMIT
+        .limit(5)
         .return_("personName", "friendCount")
     )
-    print("Top most connected people:")
+    print("Top 5 most connected people:")
     print(query1.to_cypher())
     print()
     

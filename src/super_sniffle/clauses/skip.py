@@ -1,31 +1,30 @@
 """
-ORDER BY clause implementation for Cypher queries.
+SKIP clause implementation for Cypher queries.
 
-This module contains the OrderByClause class that represents ORDER BY clauses
+This module contains the SkipClause class that represents SKIP clauses
 in Cypher queries and supports method chaining with other clauses.
 """
 
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
+from typing import Optional, Union
 
-from ..ast.expressions import OrderByExpression
 from .match import Clause
 
 
 @dataclass(frozen=True)
-class OrderByClause(Clause):
+class SkipClause(Clause):
     """
-    Represents an ORDER BY clause in a Cypher query.
+    Represents a SKIP clause in a Cypher query.
     
-    The ORDER BY clause sorts the query results based on one or more
-    fields, with optional ASC/DESC modifiers.
+    The SKIP clause skips a specified number of results before returning
+    the remaining ones. Often used with LIMIT for pagination.
     
     Attributes:
-        expressions: List of OrderByExpression objects defining sort criteria
-        preceding_clause: Optional clause that comes before this ORDER BY clause
+        count: Number of results to skip
+        preceding_clause: Optional clause that comes before this SKIP clause
         next_clause: Optional next clause in the query chain
     """
-    expressions: List[OrderByExpression]
+    count: Union[int, str]
     preceding_clause: Optional[Clause] = None
     next_clause: Optional[Clause] = None
     
@@ -45,48 +44,17 @@ class OrderByClause(Clause):
             >>> query = (
             ...     match(node("p", "Person"))
             ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age")
+            ...     .skip(5)
             ...     .limit(10)
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
             >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age
+            >>> # SKIP 5
             >>> # LIMIT 10
         """
         from .limit import LimitClause
         return LimitClause(count, preceding_clause=self)
-    
-    def skip(self, count: Union[int, str]):
-        """
-        Add a SKIP clause to skip a number of results.
-        
-        The SKIP clause skips a specified number of results before returning
-        the remaining ones. Often used with LIMIT for pagination.
-        
-        Args:
-            count: Number of results to skip
-            
-        Returns:
-            A new SkipClause instance
-            
-        Example:
-            >>> query = (
-            ...     match(node("p", "Person"))
-            ...     .return_("p.name", "p.age")
-            ...     .order_by("p.age")
-            ...     .skip(10)
-            ...     .limit(5)
-            ... )
-            >>> # Generates:
-            >>> # MATCH (p:Person)
-            >>> # RETURN p.name, p.age
-            >>> # ORDER BY p.age
-            >>> # SKIP 10
-            >>> # LIMIT 5
-        """
-        from .skip import SkipClause
-        return SkipClause(count, preceding_clause=self)
     
     def return_(self, *projections: str, distinct: bool = False):
         """
@@ -106,12 +74,12 @@ class OrderByClause(Clause):
         Example:
             >>> query = (
             ...     match(node("p", "Person"))
-            ...     .order_by("p.age")
+            ...     .skip(10)
             ...     .return_("p.name", "p.age")
             ... )
             >>> # Generates:
             >>> # MATCH (p:Person)
-            >>> # ORDER BY p.age
+            >>> # SKIP 10
             >>> # RETURN p.name, p.age
         """
         from .return_ import ReturnClause
@@ -125,7 +93,7 @@ class OrderByClause(Clause):
         # Chain the return clause
         return replace(self, next_clause=return_clause)
     
-    def with_next(self, next_clause: Clause) -> 'OrderByClause':
+    def with_next(self, next_clause: Clause) -> 'SkipClause':
         """
         Set the next clause in the query.
         
@@ -135,25 +103,21 @@ class OrderByClause(Clause):
             next_clause: The next clause to execute
             
         Returns:
-            A new OrderByClause with the specified next clause
+            A new SkipClause with the specified next clause
         """
         return replace(self, next_clause=next_clause)
     
     def to_cypher(self) -> str:
         """
-        Convert the ORDER BY clause to a Cypher string.
+        Convert the SKIP clause to a Cypher string.
         
         Returns:
-            Cypher representation of the ORDER BY clause and any chained clauses
+            Cypher representation of the SKIP clause and any chained clauses
             
         Example:
-            >>> from super_sniffle.ast.expressions import OrderByExpression
-            >>> order_clause = OrderByClause([
-            ...     OrderByExpression("p.age", False),
-            ...     OrderByExpression("p.name", True)
-            ... ])
-            >>> order_clause.to_cypher()
-            >>> # Returns: "ORDER BY p.age, p.name DESC"
+            >>> skip_clause = SkipClause(5)
+            >>> skip_clause.to_cypher()
+            >>> # Returns: "SKIP 5"
         """
         result = ""
         
@@ -163,9 +127,8 @@ class OrderByClause(Clause):
             clean_preceding = replace(self.preceding_clause, next_clause=None)
             result += f"{clean_preceding.to_cypher()}\n"
         
-        # Add ORDER BY clause
-        expressions_str = ", ".join(expr.to_cypher() for expr in self.expressions)
-        result += f"ORDER BY {expressions_str}"
+        # Add SKIP clause
+        result += f"SKIP {self.count}"
         
         # Add next clause if there is one
         if self.next_clause:
