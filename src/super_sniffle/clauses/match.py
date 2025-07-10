@@ -8,20 +8,13 @@ in Cypher queries and supports method chaining with other clauses.
 from dataclasses import dataclass, field, replace
 from typing import List, Optional, Union, Any, TYPE_CHECKING, Tuple
 
+from super_sniffle.clauses.clause import Clause
+
 from ..ast.patterns import NodePattern, RelationshipPattern, PathPattern
 from ..ast.expressions import Expression
 
 if TYPE_CHECKING:
     from ..ast.expressions import OrderByExpression
-
-
-@dataclass(frozen=True)
-class Clause:
-    """Base class for all Cypher clauses."""
-    
-    def to_cypher(self) -> str:
-        """Convert clause to Cypher string."""
-        raise NotImplementedError("Subclasses must implement to_cypher()")
 
 
 @dataclass(frozen=True)

@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 from typing import Optional, Union
 
 from ..ast.expressions import Expression
-from .match import Clause
+from .clause import Clause
 
 
 @dataclass(frozen=True)

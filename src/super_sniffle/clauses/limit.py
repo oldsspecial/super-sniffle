@@ -8,7 +8,7 @@ in Cypher queries and supports method chaining with other clauses.
 from dataclasses import dataclass, replace
 from typing import Optional, Union
 
-from .match import Clause
+from .clause import Clause
 
 
 @dataclass(frozen=True)

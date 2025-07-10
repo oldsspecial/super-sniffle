@@ -8,8 +8,10 @@ in Cypher queries and supports method chaining with other clauses.
 from dataclasses import dataclass, replace
 from typing import List, Optional, Union, TYPE_CHECKING, Tuple
 
+from .clause import Clause
+
 from ..ast.expressions import Expression
-from .match import Clause, MatchClause
+from .match import MatchClause
 
 if TYPE_CHECKING:
     from ..ast.expressions import OrderByExpression
