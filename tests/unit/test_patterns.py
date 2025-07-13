@@ -145,6 +145,35 @@ class TestPathPattern:
         p = PathPattern(elements)
         assert p.to_cypher() == "(p1:Person)-[r:KNOWS]->(p2:Person)"
     
+    def test_implicit_relationship_insertion(self):
+        """Test that implicit relationships are inserted between consecutive nodes."""
+        elements = [
+            NodePattern("a", ("A",)),
+            NodePattern("b", ("B",))
+        ]
+        p = PathPattern(elements)
+        assert p.to_cypher() == "(a:A)-[]-(b:B)"
+        
+        # Test with three consecutive nodes
+        elements = [
+            NodePattern("a", ("A",)),
+            NodePattern("b", ("B",)),
+            NodePattern("c", ("C",))
+        ]
+        p = PathPattern(elements)
+        assert p.to_cypher() == "(a:A)-[]-(b:B)-[]-(c:C)"
+    
+    def test_mixed_explicit_and_implicit_relationships(self):
+        """Test paths with both explicit and implicit relationships."""
+        elements = [
+            NodePattern("a", ("A",)),
+            RelationshipPattern(">", "r1", ("REL1",)),
+            NodePattern("b", ("B",)),
+            NodePattern("c", ("C",))
+        ]
+        p = PathPattern(elements)
+        assert p.to_cypher() == "(a:A)-[r1:REL1]->(b:B)-[]-(c:C)"
+    
     def test_path_with_inline_conditions(self):
         """Test path with inline WHERE conditions on multiple elements."""
         elements = [
@@ -166,6 +195,13 @@ class TestPathPattern:
         assert isinstance(p, PathPattern)
         assert len(p.elements) == 3
         assert p.to_cypher() == "(p1:Person)-[r:KNOWS]->(p2:Person)"
+        
+        # Test with consecutive nodes
+        p = path(
+            node("a", "A"),
+            node("b", "B")
+        )
+        assert p.to_cypher() == "(a:A)-[]-(b:B)"
     
     def test_path_api_with_inline_conditions(self):
         """Test the path() API function with inline conditions."""
@@ -175,6 +211,14 @@ class TestPathPattern:
             node("p2", "Person")
         )
         expected = "(p1:Person WHERE p1.active = true)-[r:KNOWS WHERE r.recent = true]->(p2:Person)"
+        assert p.to_cypher() == expected
+        
+        # Test with consecutive nodes and conditions
+        p = path(
+            node("a", "A").where(prop("a", "active") == literal(True)),
+            node("b", "B").where(prop("b", "active") == literal(True))
+        )
+        expected = "(a:A WHERE a.active = true)-[]-(b:B WHERE b.active = true)"
         assert p.to_cypher() == expected
     
     def test_path_where_method(self):
@@ -189,6 +233,15 @@ class TestPathPattern:
         filtered_path = p.where(prop("p2", "age") > literal(18))
         expected = "(p1:Person)-[r:KNOWS]->(p2:Person WHERE p2.age > 18)"
         assert filtered_path.to_cypher() == expected
+        
+        # Test with consecutive nodes
+        p = path(
+            node("a", "A"),
+            node("b", "B")
+        )
+        filtered_path = p.where(prop("b", "active") == literal(True))
+        expected = "(a:A)-[]-(b:B WHERE b.active = true)"
+        assert filtered_path.to_cypher() == expected
     
     def test_empty_path_where_raises_error(self):
         """Test that where() on empty path raises ValueError."""
@@ -196,6 +249,95 @@ class TestPathPattern:
         
         with pytest.raises(ValueError, match="Cannot add WHERE condition to empty path"):
             empty_path.where(prop("x", "y") > literal(1))
+
+
+class TestPathConcatenation:
+    """Test path concatenation functionality."""
+    
+    def test_basic_concatenation(self):
+        """Test basic path concatenation."""
+        path1 = PathPattern([
+            node("a", "Person"),
+            relationship(">", "r", "KNOWS"),
+            node("b", "Person")
+        ])
+        
+        path2 = PathPattern([
+            node("c", "Company"),
+            relationship("<", "w", "WORKS_AT"),
+            node("b", "Person")
+        ])
+        
+        combined = path1.concat(path2)
+        cypher = combined.to_cypher()
+        # Should have implicit relationship between b and c
+        assert "(b:Person)-[]-(c:Company)" in cypher
+        assert "(a:Person)-[r:KNOWS]->(b:Person)" in cypher
+        assert "-[w:WORKS_AT]-(b:Person)" in cypher
+    
+    def test_operator_concatenation(self):
+        """Test path concatenation using + operator."""
+        part1 = path(
+            node("start", "Point"),
+            relationship(">", "r1", "ROAD"),
+            node("mid", "Point")
+        )
+        
+        part2 = path(
+            node("mid", "Point"),
+            relationship(">", "r2", "ROAD"),
+            node("end", "Point")
+        )
+        
+        full_path = part1 + part2
+        cypher = full_path.to_cypher()
+        assert "(start:Point)-[r1:ROAD]->(mid:Point)-[r2:ROAD]->(end:Point)" in cypher
+    
+    def test_variable_inheritance(self):
+        """Test that concatenated path inherits variable from first path."""
+        path1 = PathPattern([
+            node("a", "A")
+        ], variable="p1")
+        
+        path2 = PathPattern([
+            node("b", "B")
+        ], variable="p2")
+        
+        combined = path1.concat(path2)
+        assert combined.variable == "p1"
+        
+        # Test with operator
+        combined_op = path1 + path2
+        assert combined_op.variable == "p1"
+    
+    def test_concat_with_empty_path(self):
+        """Test concatenation with an empty path."""
+        empty = PathPattern([])
+        non_empty = PathPattern([node("a", "A")])
+        
+        # Concatenating with empty path should return the non-empty path
+        assert empty.concat(non_empty) == non_empty
+        assert non_empty.concat(empty) == non_empty
+        
+        # Test with operator
+        assert empty + non_empty == non_empty
+        assert non_empty + empty == non_empty
+    
+    def test_concatenation_with_quantified_paths(self):
+        """Test concatenation of quantified paths."""
+        base_path = path(
+            node("a", "A"),
+            node("b", "B")
+        )
+        
+        # Create another path to concatenate
+        end_path = path(
+            node("c", "C")
+        )
+        
+        # Concatenate first, then quantify
+        full_path = base_path.concat(end_path).one_or_more()
+        assert full_path.to_cypher() == "((a:A)-[]-(b:B)-[]-(c:C))+"
 
 
 class TestRealWorldScenarios:

@@ -39,9 +39,10 @@ class TestBasicLimit:
         query = (
             match(node("p", "Person"))
             .limit(10)
+            .return_("*")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nLIMIT 10\nRETURN *"
+        expected = "MATCH (p:Person)\nRETURN *\nLIMIT 10"
         assert result == expected
 
     def test_limit_with_return_after(self):
@@ -52,7 +53,7 @@ class TestBasicLimit:
             .return_("p.name")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nLIMIT 3\nRETURN p.name"
+        expected = "MATCH (p:Person)\nRETURN p.name\nLIMIT 3"
         assert result == expected
 
 
@@ -86,9 +87,10 @@ class TestBasicSkip:
         query = (
             match(node("p", "Person"))
             .skip(5)
+            .return_("*")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nSKIP 5\nRETURN *"
+        expected = "MATCH (p:Person)\nRETURN *\nSKIP 5"
         assert result == expected
 
     def test_skip_with_return_after(self):
@@ -99,7 +101,7 @@ class TestBasicSkip:
             .return_("p.name")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nSKIP 20\nRETURN p.name"
+        expected = "MATCH (p:Person)\nRETURN p.name\nSKIP 20"
         assert result == expected
 
 
@@ -151,7 +153,7 @@ class TestSkipLimitPagination:
             .return_("p.name")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nSKIP 20\nLIMIT 10\nRETURN p.name"
+        expected = "MATCH (p:Person)\nRETURN p.name\nSKIP 20\nLIMIT 10"
         assert result == expected
 
 
@@ -168,7 +170,7 @@ class TestLimitSkipWithOtherClauses:
             .return_("p.name", "p.age")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nWHERE p.age > 25\nSKIP 5\nLIMIT 10\nRETURN p.name, p.age"
+        expected = "MATCH (p:Person)\nWHERE p.age > 25\nRETURN p.name, p.age\nSKIP 5\nLIMIT 10"
         assert result == expected
 
     def test_with_order_by_clause(self):
@@ -195,7 +197,7 @@ class TestLimitSkipWithOtherClauses:
             .return_("name", "age")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nWITH p.name AS name, p.age AS age\nWHERE age > 30\nSKIP 2\nLIMIT 5\nRETURN name, age"
+        expected = "MATCH (p:Person)\nWITH p.name AS name, p.age AS age\nWHERE age > 30\nRETURN name, age\nSKIP 2\nLIMIT 5"
         assert result == expected
 
 
@@ -338,7 +340,7 @@ class TestEdgeCases:
             .return_("p.name")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nLIMIT 5\nRETURN p.name"
+        expected = "MATCH (p:Person)\nRETURN p.name\nLIMIT 5"
         assert result == expected
 
     def test_multiple_skip_calls(self):
@@ -350,7 +352,7 @@ class TestEdgeCases:
             .return_("p.name")
         )
         result = query.to_cypher()
-        expected = "MATCH (p:Person)\nSKIP 20\nRETURN p.name"
+        expected = "MATCH (p:Person)\nRETURN p.name\nSKIP 20"
         assert result == expected
 
     def test_limit_with_large_number(self):

@@ -87,7 +87,7 @@ class TestOrderByWithTupleProjections:
     def test_complex_aggregation_with_order_by(self):
         """Test complex aggregation with ORDER BY."""
         query = (
-            match(node("p", "Person").relates_to(">", "KNOWS", node("f", "Person")))
+            match(node("p", "Person").relates_to(">", "KNOWS", target_node=node("f", "Person")))
             .with_(("p.name", "personName"), ("count(f)", "friendCount"))
             .order_by(desc("friendCount"), "personName")
         )
@@ -155,7 +155,7 @@ class TestImprovedWithClause:
     def test_complex_expressions_in_tuples(self):
         """Test complex expressions in tuple projections."""
         query = (
-            match(node("p", "Person").relates_to(">", "WORKS_FOR", node("c", "Company")))
+            match(node("p", "Person").relates_to(">", "WORKS_FOR", target_node=node("c", "Company")))
             .with_(("p.name", "employeeName"), ("c.name", "companyName"), ("p.salary * 12", "annualSalary"))
             .order_by(desc("annualSalary"))
             .return_("employeeName", "companyName", "annualSalary")
@@ -172,7 +172,7 @@ class TestRealWorldExamples:
     def test_top_most_connected_people(self):
         """Test finding top 5 most connected people."""
         query = (
-            match(node("p", "Person").relates_to("-", "KNOWS", node("friend", "Person")))
+            match(node("p", "Person").relates_to("-", "KNOWS", target_node=node("friend", "Person")))
             .with_(("p.name", "personName"), ("count(friend)", "friendCount"))
             .order_by(desc("friendCount"), "personName")
             .limit(5)
@@ -188,7 +188,7 @@ class TestRealWorldExamples:
     def test_employee_rankings_by_salary(self):
         """Test employee rankings by salary within departments."""
         query = (
-            match(node("e", "Employee").relates_to(">", "WORKS_IN", node("d", "Department")))
+            match(node("e", "Employee").relates_to(">", "WORKS_IN", target_node=node("d", "Department")))
             .with_(("e.name", "employeeName"), ("d.name", "deptName"), ("e.salary", "salary"))
             .order_by("deptName", desc("salary"))
             .return_("deptName", "employeeName", "salary")

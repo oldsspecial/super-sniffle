@@ -7,7 +7,7 @@ pattern-based filtering.
 """
 
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any, Union, Sequence
 from .expressions import Expression
 
 
@@ -39,9 +39,14 @@ class NodePattern:
         condition: Optional inline WHERE condition
     """
     variable: str
-    labels: Tuple[str, ...] = ()
+    labels: Union[str, Tuple[str, ...]] = ()
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
+
+    def __post_init__(self):
+        # Convert single string label to tuple
+        if isinstance(self.labels, str):
+            object.__setattr__(self, "labels", (self.labels,))
     
     def where(self, condition: Expression) -> 'NodePattern':
         """
@@ -216,8 +221,24 @@ class PathPattern:
     
     Attributes:
         elements: List of NodePattern and RelationshipPattern objects
+        variable: Optional variable name for the path
     """
-    elements: List[Union[NodePattern, RelationshipPattern]]
+    elements: Sequence[Union[NodePattern, RelationshipPattern]]
+    variable: Optional[str] = None
+    
+    def __post_init__(self):
+        """Automatically insert implicit relationships between consecutive nodes."""
+        new_elements = []
+        for i, elem in enumerate(self.elements):
+            new_elements.append(elem)
+            
+            # Check if next element exists and both are nodes
+            if i < len(self.elements) - 1 and isinstance(elem, NodePattern) and isinstance(self.elements[i+1], NodePattern):
+                # Insert implicit relationship: no variable, no type, undirected
+                new_elements.append(RelationshipPattern(direction="-"))
+        
+        # Update elements with implicit relationships
+        object.__setattr__(self, "elements", new_elements)
     
     def to_cypher(self) -> str:
         """
@@ -229,13 +250,51 @@ class PathPattern:
         Example:
             >>> path = PathPattern([
             ...     NodePattern("p1", ("Person",)),
-            ...     RelationshipPattern(">", "r", ("KNOWS",)),
             ...     NodePattern("p2", ("Person",))
-            ... ])
+            ... ]).as_("p")
             >>> path.to_cypher()
-            >>> # Returns: "(p1:Person)-[r:KNOWS]->(p2:Person)"
+            >>> # Returns: "p = (p1:Person)--(p2:Person)"
         """
-        return "".join(elem.to_cypher() for elem in self.elements)
+        path_str = "".join(elem.to_cypher() for elem in self.elements)
+        if self.variable:
+            return f"{self.variable} = {path_str}"
+        return path_str
+        
+    def as_(self, variable: str) -> 'PathPattern':
+        """Assign the path to a variable"""
+        return replace(self, variable=variable)
+
+    def quantify(self, min_hops: Optional[int] = None, max_hops: Optional[int] = None) -> "QuantifiedPathPattern":
+        """
+        Applies a quantifier to the path pattern.
+        
+        Args:
+            min_hops: Minimum number of hops.
+            max_hops: Maximum number of hops.
+            
+        Returns:
+            A QuantifiedPathPattern object.
+        """
+        if min_hops is None and max_hops is None:
+            raise ValueError("At least one of min_hops or max_hops must be specified.")
+        
+        if min_hops is not None and max_hops is not None and min_hops > max_hops:
+            raise ValueError("min_hops cannot be greater than max_hops.")
+
+        quantifier = f"{{{min_hops or ''}, {max_hops or ''}}}"
+        return QuantifiedPathPattern(self, quantifier)
+
+    def one_or_more(self) -> "QuantifiedPathPattern":
+        """
+        Applies a '+' quantifier to the path pattern (one or more hops).
+        """
+        return QuantifiedPathPattern(self, "+")
+
+    def zero_or_more(self) -> "QuantifiedPathPattern":
+        """
+        Applies a '*' quantifier to the path pattern (zero or more hops).
+        """
+        return QuantifiedPathPattern(self, "*")
     
     def where(self, condition: Expression) -> 'PathPattern':
         """
@@ -257,8 +316,83 @@ class PathPattern:
         new_last = last_element.where(condition)
         
         # Create new path with updated last element
-        new_elements = self.elements[:-1] + [new_last]
+        new_elements = list(self.elements[:-1]) + [new_last]
         return replace(self, elements=new_elements)
+
+    def concat(self, other: 'PathPattern') -> 'PathPattern':
+        """
+        Concatenate this path with another path.
+        
+        The resulting path will have the elements of this path followed by the elements of the other path.
+        If the last element of this path and the first element of the other path are both nodes, 
+        an implicit relationship (--) will be inserted between them.
+        
+        The variable of the resulting path is set to the variable of the first path (if any).
+        
+        Args:
+            other: The path to concatenate to this path.
+            
+        Returns:
+            A new PathPattern representing the concatenated path.
+        """
+        if not self.elements:
+            return other
+        if not other.elements:
+            return self
+            
+        # Skip duplicate node if last of first path and first of second path are the same node
+        last_elem = self.elements[-1]
+        first_elem = other.elements[0]
+        if (isinstance(last_elem, NodePattern) and 
+            isinstance(first_elem, NodePattern) and 
+            last_elem.variable == first_elem.variable):
+            new_elements = list(self.elements) + list(other.elements[1:])
+        else:
+            new_elements = list(self.elements) + list(other.elements)
+            
+        return PathPattern(new_elements, variable=self.variable)
+        
+    def __add__(self, other: 'PathPattern') -> 'PathPattern':
+        """
+        Concatenate this path with another path using the '+' operator.
+        
+        This is equivalent to calling `self.concat(other)`.
+        
+        Args:
+            other: The path to concatenate to this path.
+            
+        Returns:
+            A new PathPattern representing the concatenated path.
+        """
+        return self.concat(other)
+
+
+@dataclass(frozen=True)
+class QuantifiedPathPattern:
+    """
+    Represents a quantified path pattern, e.g., `((p)-[:KNOWS]->(f))+`.
+    
+    Attributes:
+        path: The PathPattern to quantify.
+        quantifier: The quantifier string (e.g., "*", "+", "{1,5}").
+        variable: Optional variable name for the quantified path
+    """
+    path: "PathPattern"
+    quantifier: str
+    variable: Optional[str] = None
+
+    def to_cypher(self) -> str:
+        """
+        Converts the quantified path pattern to a Cypher string.
+        """
+        base = f"({self.path.to_cypher()}){self.quantifier}"
+        if self.variable:
+            return f"{self.variable} = {base}"
+        return base
+        
+    def as_(self, variable: str) -> 'QuantifiedPathPattern':
+        """Assign the quantified path to a variable"""
+        return replace(self, variable=variable)
 
 
 # Convenience functions for creating common patterns

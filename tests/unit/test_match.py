@@ -7,6 +7,8 @@ relationships, inline conditions, and complex path construction.
 
 import pytest
 from super_sniffle import match, node, relationship, path, prop, param, literal
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 class TestBasicMatch:
@@ -133,13 +135,17 @@ class TestRealWorldExamples:
     
     def test_complex_nested_relationships(self):
         """Test finding active people who know someone in a specific city."""
-        query = match(
-            node("p", "Person").where(prop("p", "active") == literal(True))
-            .relates_to("r", "KNOWS", ">", 
-                       node("f", "Person")
-                       .relates_to("lives", "LIVES_IN", ">", 
-                                  node("c", "City").where(prop("c", "name") == param("city_name"))))
-        )
+        p_node = node("p", "Person").where(prop("p", "active") == literal(True))
+        f_node = node("f", "Person")
+        c_node = node("c", "City").where( prop("c", "name") == param("city_name"))
+
+        # Create relationships
+        knows_rel = relationship(">", "r", "KNOWS")
+        lives_in_rel = relationship(">", "lives", "LIVES_IN")
+
+        # Build path pattern
+        query = match(path(p_node, knows_rel, f_node, lives_in_rel, c_node) )
+
         
         result = query.to_cypher()
         
@@ -151,10 +157,15 @@ class TestRealWorldExamples:
             "-[lives:LIVES_IN]->",
             "(c:City WHERE c.name = $city_name)"
         ]
-        
+        import sys
+        logging.info("\n\n\n\n\n")
+        logging.info('\n'.join(expected_parts))
+        logging.info(result)
+        logging.info("\n\n\n\n\n")
+        sys.stdout.flush()
         for part in expected_parts:
             assert part in result, f"Expected '{part}' to be in the result"
-
+        
     def test_simple_friend_relationship(self):
         """Test simple friend relationship query."""
         query = match(

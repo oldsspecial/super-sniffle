@@ -1,22 +1,119 @@
-"""
-Public API for super-sniffle.
+# Public API for super-sniffle.
 
-This module contains the main functions that users will interact with to
-construct Cypher queries. It provides a functional interface for building
-query components and assembling them into complete queries.
-"""
+# This module contains the main functions that users will interact with to
+# construct Cypher queries. It provides a functional interface for building
+# query components and assembling them into complete queries.
+
 
 from typing import Any, Dict, List, Optional, Union, Tuple
+from dataclasses import dataclass, field
 
 # Import expression and pattern classes
-from .ast import Property, Variable, Parameter, Literal, NodePattern, RelationshipPattern, PathPattern
-from .ast.expressions import OrderByExpression
+from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal
+from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
+from .clauses.clause import Clause
+from .compound_query import CompoundQuery
+from .clauses.match import MatchClause
 
-# TODO: Import from clause modules when implemented
-# from .clauses import MatchClause, WhereClause, ReturnClause
+
+@dataclass(frozen=True)
+class QueryBuilder:
+    """
+    A builder for constructing Cypher queries in a fluent, chainable manner.
+    """
+    clauses: List[Clause] = field(default_factory=list)
+
+    def match(self, *patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]) -> 'QueryBuilder':
+        from .clauses.match import MatchClause
+        return QueryBuilder(self.clauses + [MatchClause(list(patterns))])
+
+    def where(self, condition: Expression) -> 'QueryBuilder':
+        from .clauses.where import WhereClause
+        return QueryBuilder(self.clauses + [WhereClause(condition)])
+
+    def with_(self, *projections: Union[str, Tuple[str, str]], distinct: bool = False) -> 'QueryBuilder':
+        from .clauses.with_ import WithClause
+        return QueryBuilder(self.clauses + [WithClause(list(projections), distinct)])
+
+    def return_(self, *projections: str, distinct: bool = False) -> 'QueryBuilder':
+        from .clauses.return_ import ReturnClause
+        projections_list = list(projections)
+        if not projections_list or (len(projections_list) == 1 and projections_list[0] == "*"):
+            projections_list = ["*"]
+        return QueryBuilder(self.clauses + [ReturnClause(projections_list, distinct)])
+
+    def order_by(self, *fields: Union[str, OrderByExpression]) -> 'QueryBuilder':
+        from .clauses.order_by import OrderByClause
+        from .ast.expressions import OrderByExpression as OrderByExpr
+        expressions: List[Union[str, OrderByExpression]] = [OrderByExpr(field) if isinstance(field, str) else field for field in fields]
+        return QueryBuilder(self.clauses + [OrderByClause(expressions)])
+
+    def skip(self, count: Union[int, str]) -> 'QueryBuilder':
+        from .clauses.skip import SkipClause
+        # Remove existing skip clauses to ensure the last one takes precedence
+        new_clauses = [c for c in self.clauses if not isinstance(c, SkipClause)]
+        return QueryBuilder(new_clauses + [SkipClause(count)])
+
+    def limit(self, count: Union[int, str]) -> 'QueryBuilder':
+        from .clauses.limit import LimitClause
+        # Remove existing limit clauses to ensure the last one takes precedence
+        new_clauses = [c for c in self.clauses if not isinstance(c, LimitClause)]
+        return QueryBuilder(new_clauses + [LimitClause(count)])
+
+    def union(self, other: "QueryBuilder") -> "CompoundQuery":
+        """
+        Combines this query with another using UNION.
+        """
+        return CompoundQuery(queries=[self, other], union_operators=["UNION"])
+
+    def union_all(self, other: "QueryBuilder") -> "CompoundQuery":
+        """
+        Combines this query with another using UNION ALL.
+        """
+        return CompoundQuery(queries=[self, other], union_operators=["UNION ALL"])
+
+    def to_cypher(self) -> str:
+        """
+        Converts the constructed query to a Cypher string.
+        """
+        from .clauses.return_ import ReturnClause
+        from .clauses.with_ import WithClause
+        from .clauses.limit import LimitClause
+        from .clauses.skip import SkipClause
+        from .clauses.order_by import OrderByClause
+
+        # Separate pagination clauses from the rest
+        pagination_clauses = []
+        other_clauses = []
+        for c in self.clauses:
+            if isinstance(c, (OrderByClause, SkipClause, LimitClause)):
+                pagination_clauses.append(c)
+            else:
+                other_clauses.append(c)
+
+        # Define the correct order for pagination clauses
+        pagination_order = {
+            "OrderByClause": 0,
+            "SkipClause": 1,
+            "LimitClause": 2,
+        }
+
+        # Sort the pagination clauses
+        sorted_pagination_clauses = sorted(
+            pagination_clauses,
+            key=lambda c: pagination_order.get(c.__class__.__name__, 99)
+        )
+
+        # A special case for queries that end with LIMIT/SKIP without a RETURN or WITH.
+        # A RETURN * should be implicitly added.
+        if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause)) for c in other_clauses):
+            other_clauses.append(ReturnClause(["*"]))
+
+        all_clauses = other_clauses + sorted_pagination_clauses
+        return "\n".join(c.to_cypher() for c in all_clauses)
 
 
-def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern]):
+def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]) -> QueryBuilder:
     """
     Create a MATCH clause with the given patterns.
     
@@ -24,13 +121,12 @@ def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern]):
         *patterns: Pattern objects to match against
         
     Returns:
-        A MatchClause object that can be chained with other clauses
+        A QueryBuilder object that can be chained with other clauses
         
     Example:
         >>> query = match(node("p", "Person")).where(prop("p", "age") > 30)
     """
-    from .clauses.match import MatchClause
-    return MatchClause(list(patterns))
+    return QueryBuilder([MatchClause(list(patterns))])
 
 
 def node(variable: str, *labels: str, **properties: Any) -> NodePattern:
@@ -64,7 +160,7 @@ def relationship(direction: str = "-", variable: Optional[str] = None,
         *types: Relationship types
         **properties: Relationship properties
         
-    Returns:
+Returns:
         A RelationshipPattern object representing the relationship pattern
         
     Example:

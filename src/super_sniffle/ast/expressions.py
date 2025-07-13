@@ -64,7 +64,14 @@ class Expression:
             >>> ~expr  # Generates: NOT (expr)
         """
         return NotExpression(self)
-
+    
+    def __eq__(self, other: Any) -> "ComparisonExpression":
+        """Equality comparison using == operator."""
+        return ComparisonExpression(self, "=", other)
+    
+    def __ne__(self, other: Any) -> "ComparisonExpression":
+        """Inequality comparison using != operator."""
+        return ComparisonExpression(self, "<>", other)
 
 @dataclass(frozen=True)
 class ComparisonExpression(Expression):

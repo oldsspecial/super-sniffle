@@ -284,8 +284,7 @@ class TestRealWorldScenarios:
         expr = (name_search | category_filter) & price_filter & stock_filter
         
         expected = (
-            "((product.name CONTAINS $search_term) OR (product.category = 'electronics')) "
-            "AND (product.price <= $max_price) AND (product.in_stock = true)"
+            "(((product.name CONTAINS $search_term) OR (product.category = 'electronics')) AND (product.price <= $max_price)) AND (product.in_stock = true)"
         )
         assert expr.to_cypher() == expected
     
