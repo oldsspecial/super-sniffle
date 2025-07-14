@@ -66,39 +66,39 @@ class TestRelationshipPattern:
     
     def test_basic_relationship_creation(self):
         """Test basic relationship pattern creation."""
-        r = RelationshipPattern(">", "r", ("KNOWS",))
+        r = RelationshipPattern(">", "r", "KNOWS")
         assert r.direction == ">"
         assert r.variable == "r"
-        assert r.types == ("KNOWS",)
+        assert r.type == "KNOWS"
         assert r.to_cypher() == "-[r:KNOWS]->"
     
     def test_relationship_directions(self):
         """Test all relationship directions."""
         # Outgoing
-        r_out = RelationshipPattern(">", "r", ("KNOWS",))
+        r_out = RelationshipPattern(">", "r", "KNOWS")
         assert r_out.to_cypher() == "-[r:KNOWS]->"
         
         # Incoming
-        r_in = RelationshipPattern("<", "r", ("KNOWS",))
+        r_in = RelationshipPattern("<", "r", "KNOWS")
         assert r_in.to_cypher() == "<-[r:KNOWS]-"
         
         # Undirected
-        r_undir = RelationshipPattern("-", "r", ("KNOWS",))
+        r_undir = RelationshipPattern("-", "r", "KNOWS")
         assert r_undir.to_cypher() == "-[r:KNOWS]-"
     
     def test_relationship_without_variable(self):
         """Test relationship without variable name."""
-        r = RelationshipPattern(">", None, ("KNOWS",))
+        r = RelationshipPattern(">", None, "KNOWS")
         assert r.to_cypher() == "-[:KNOWS]->"
     
-    def test_relationship_with_multiple_types(self):
-        """Test relationship with multiple types."""
-        r = RelationshipPattern(">", "r", ("KNOWS", "FRIENDS"))
-        assert r.to_cypher() == "-[r:KNOWS:FRIENDS]->"
+    def test_relationship_with_single_type(self):
+        """Test relationship with single type."""
+        r = RelationshipPattern(">", "r", "KNOWS")
+        assert r.to_cypher() == "-[r:KNOWS]->"
     
     def test_relationship_with_properties(self):
         """Test relationship with properties."""
-        r = RelationshipPattern(">", "r", ("KNOWS",), {"since": 2020, "weight": 0.8})
+        r = RelationshipPattern(">", "r", "KNOWS", {"since": 2020, "weight": 0.8})
         cypher = r.to_cypher()
         assert cypher.startswith("-[r:KNOWS {")
         assert "since: 2020" in cypher
@@ -107,23 +107,23 @@ class TestRelationshipPattern:
     
     def test_relationship_with_inline_where_condition(self):
         """Test relationship with inline WHERE condition."""
-        r = RelationshipPattern(">", "r", ("KNOWS",)).where(prop("r", "since") > literal(2020))
+        r = RelationshipPattern(">", "r", "KNOWS").where(prop("r", "since") > literal(2020))
         assert r.to_cypher() == "-[r:KNOWS WHERE r.since > 2020]->"
     
     def test_relationship_with_complex_where_condition(self):
         """Test relationship with complex WHERE condition."""
         condition = (prop("r", "weight") > literal(0.5)) & (prop("r", "active") == literal(True))
-        r = RelationshipPattern(">", "r", ("KNOWS",)).where(condition)
+        r = RelationshipPattern(">", "r", "KNOWS").where(condition)
         expected = "-[r:KNOWS WHERE (r.weight > 0.5) AND (r.active = true)]->"
         assert r.to_cypher() == expected
     
     def test_relationship_api_function(self):
         """Test the relationship() API function."""
-        r = relationship(">", "r", "KNOWS", "FRIENDS", since=2020)
+        r = relationship(">", "r", "KNOWS", since=2020)
         assert isinstance(r, RelationshipPattern)
         assert r.direction == ">"
         assert r.variable == "r"
-        assert r.types == ("KNOWS", "FRIENDS")
+        assert r.type == "KNOWS"
         assert r.properties == {"since": 2020}
     
     def test_relationship_api_with_where(self):
@@ -139,7 +139,7 @@ class TestPathPattern:
         """Test basic path pattern creation."""
         elements = [
             NodePattern("p1", ("Person",)),
-            RelationshipPattern(">", "r", ("KNOWS",)),
+            RelationshipPattern(">", "r", "KNOWS"),
             NodePattern("p2", ("Person",))
         ]
         p = PathPattern(elements)
@@ -167,7 +167,7 @@ class TestPathPattern:
         """Test paths with both explicit and implicit relationships."""
         elements = [
             NodePattern("a", ("A",)),
-            RelationshipPattern(">", "r1", ("REL1",)),
+            RelationshipPattern(">", "r1", "REL1"),
             NodePattern("b", ("B",)),
             NodePattern("c", ("C",))
         ]
@@ -178,7 +178,7 @@ class TestPathPattern:
         """Test path with inline WHERE conditions on multiple elements."""
         elements = [
             NodePattern("p1", ("Person",)).where(prop("p1", "active") == literal(True)),
-            RelationshipPattern(">", "r", ("KNOWS",)).where(prop("r", "since") > literal(2020)),
+            RelationshipPattern(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
             NodePattern("p2", ("Person",)).where(prop("p2", "age") > literal(18))
         ]
         p = PathPattern(elements)
@@ -432,9 +432,9 @@ class TestEdgeCases:
         n = NodePattern("x")
         assert n.to_cypher() == "(x)"
     
-    def test_relationship_with_no_types(self):
-        """Test relationship with no types."""
-        r = RelationshipPattern(">", "r")
+    def test_relationship_with_no_type(self):
+        """Test relationship with no type."""
+        r = RelationshipPattern(">", "r", "")
         assert r.to_cypher() == "-[r]->"
     
     def test_relationship_with_no_variable_or_types(self):

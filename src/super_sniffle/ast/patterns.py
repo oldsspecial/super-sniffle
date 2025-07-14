@@ -6,7 +6,8 @@ include inline WHERE conditions, supporting Cypher's native syntax for
 pattern-based filtering.
 """
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
+from dataclasses import replace
 from typing import Dict, List, Optional, Tuple, Any, Union, Sequence
 from .expressions import Expression
 
@@ -96,7 +97,7 @@ class NodePattern:
             raise ValueError("rel_type is required")
         
         # Create the relationship with a single type
-        rel = RelationshipPattern(direction, variable, (rel_type,), properties)
+        rel = RelationshipPattern(direction, variable, rel_type, properties)
         
         # If no target node, return just the relationship
         if target_node is None:
@@ -116,7 +117,7 @@ class NodePattern:
             >>> node("p", "Person").where(prop("p", "age") > 18).to_cypher()
             >>> # Returns: "(p:Person WHERE p.age > 18)"
         """
-        result = f"({self.variable}"
+        result = f"({self.variable if self.variable else ''}"
         
         # Add labels
         if self.labels:
@@ -146,13 +147,13 @@ class RelationshipPattern:
     Attributes:
         direction: Relationship direction ("<", ">", or "-" for undirected)
         variable: Optional variable name for the relationship
-        types: Tuple of relationship types (e.g., ("KNOWS", "FRIENDS_WITH"))
+        type: Relationship type (e.g., "KNOWS")
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
     """
     direction: str  # "<", ">", or "-" for undirected
     variable: Optional[str] = None
-    types: Tuple[str, ...] = ()
+    type: str = ""
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
     
@@ -190,8 +191,8 @@ class RelationshipPattern:
         if self.variable:
             rel_content += self.variable
         
-        if self.types:
-            rel_content += ":" + ":".join(self.types)
+        if self.type:
+            rel_content += ":" + self.type
         
         if self.properties:
             props_str = ", ".join(f"{k}: {_format_value(v)}" 
@@ -413,20 +414,20 @@ def simple_node_pattern(variable: str, *labels: str, **properties: Any) -> NodeP
 
 
 def simple_relationship_pattern(direction: str = "-", variable: Optional[str] = None, 
-                               *types: str, **properties: Any) -> RelationshipPattern:
+                               type: str = "", **properties: Any) -> RelationshipPattern:
     """
     Create a simple relationship pattern.
     
     Args:
         direction: Relationship direction ("<", ">", or "-")
         variable: Optional variable name
-        *types: Relationship types
+        type: Relationship type
         **properties: Relationship properties
         
     Returns:
         RelationshipPattern object
     """
-    return RelationshipPattern(direction, variable, types, properties)
+    return RelationshipPattern(direction, variable, type, properties)
 
 
 def simple_path(*elements: Union[NodePattern, RelationshipPattern]) -> PathPattern:

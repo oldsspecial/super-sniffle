@@ -146,18 +146,18 @@ def node(variable: str, *labels: str, **properties: Any) -> NodePattern:
         >>> # With inline condition:
         >>> adult = node("p", "Person").where(prop("p", "age") > 18)
     """
-    return NodePattern(variable, labels, properties)
+    return NodePattern(variable=variable, labels=labels, properties=properties)
 
 
 def relationship(direction: str = "-", variable: Optional[str] = None, 
-                *types: str, **properties: Any) -> RelationshipPattern:
+                type: str = "", **properties: Any) -> RelationshipPattern:
     """
     Create a relationship pattern.
     
     Args:
         direction: Relationship direction ("<", ">", or "-" for undirected)
         variable: Optional variable name for the relationship
-        *types: Relationship types
+        type: Relationship type
         **properties: Relationship properties
         
 Returns:
@@ -168,7 +168,7 @@ Returns:
         >>> # With inline condition:
         >>> recent = relationship(">", "r", "KNOWS").where(prop("r", "since") > 2022)
     """
-    return RelationshipPattern(direction, variable, types, properties)
+    return RelationshipPattern(direction, variable, type, properties)
 
 
 def path(*elements: Union[NodePattern, RelationshipPattern]) -> PathPattern:
