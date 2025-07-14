@@ -9,6 +9,11 @@
 
 ## What Works
 
+### RelationshipPattern Type Constraint
+- ✅ Enforced single relationship type per Cypher specification
+- ✅ Updated API functions to match new interface
+- ✅ Comprehensive test coverage for relationship patterns
+
 ### Path API Improvements
 - ✅ Automatic insertion of implicit relationships ("--") between consecutive nodes
 - ✅ Fixed path concatenation to handle duplicate nodes
@@ -75,6 +80,7 @@
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions
 - **Pattern System**: Nodes, relationships, paths with inline WHERE conditions  
+- **RelationshipPattern**: Enforced single relationship type per Cypher specification
 - **Path Construction**: Automatic handling of consecutive nodes
 - **Path Concatenation**: Correct handling of duplicate nodes
 - **MATCH Clause**: Single patterns, multiple patterns, chaining

@@ -11,6 +11,57 @@ from dataclasses import replace
 from typing import Dict, List, Optional, Tuple, Any, Union, Sequence
 from .expressions import Expression
 
+# Label expression classes for advanced label matching
+class BaseLabelExpr:
+    """Base class for label expressions."""
+    def __and__(self, other: 'BaseLabelExpr') -> 'LabelAnd':
+        return LabelAnd(self, other)
+    
+    def __or__(self, other: 'BaseLabelExpr') -> 'LabelOr':
+        return LabelOr(self, other)
+    
+    def __invert__(self) -> 'LabelNot':
+        return LabelNot(self)
+
+class LabelAtom(BaseLabelExpr):
+    """Represents a single label atom."""
+    def __init__(self, label: str):
+        self.label = label
+        
+    def __str__(self) -> str:
+        return self.label
+
+class LabelAnd(BaseLabelExpr):
+    """Represents a logical AND of label expressions."""
+    def __init__(self, left: BaseLabelExpr, right: BaseLabelExpr):
+        self.left = left
+        self.right = right
+        
+    def __str__(self) -> str:
+        return f"({self.left} & {self.right})"
+
+class LabelOr(BaseLabelExpr):
+    """Represents a logical OR of label expressions."""
+    def __init__(self, left: BaseLabelExpr, right: BaseLabelExpr):
+        self.left = left
+        self.right = right
+        
+    def __str__(self) -> str:
+        return f"({self.left} | {self.right})"
+
+class LabelNot(BaseLabelExpr):
+    """Represents a logical NOT for a label expression."""
+    def __init__(self, expr: BaseLabelExpr):
+        self.expr = expr
+        
+    def __str__(self) -> str:
+        return f"!{self.expr}"
+
+# Helper function for cleaner syntax
+def L(label: str) -> LabelAtom:
+    """Create a label atom from a string."""
+    return LabelAtom(label)
+
 
 def _format_value(value: Any) -> str:
     """Format a value for Cypher output."""
@@ -34,13 +85,13 @@ class NodePattern:
     Supports both basic node patterns and patterns with inline WHERE conditions.
     
     Attributes:
-        variable: Variable name for the node (e.g., "p", "user")
-        labels: Tuple of node labels (e.g., ("Person", "User"))
+        variable: Optional variable name for the node (e.g., "p", "user")
+        labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = Labels or expressions
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
     """
-    variable: str
-    labels: Union[str, Tuple[str, ...]] = ()
+    variable: Optional[str] = None
+    labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = ()
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
 
@@ -48,6 +99,25 @@ class NodePattern:
         # Convert single string label to tuple
         if isinstance(self.labels, str):
             object.__setattr__(self, "labels", (self.labels,))
+        # If we have a tuple of labels, check if we need to convert to expression
+        elif isinstance(self.labels, tuple):
+            # Convert all strings in tuple to LabelAtom
+            converted = []
+            for item in self.labels:
+                if isinstance(item, str):
+                    converted.append(L(item))
+                else:
+                    converted.append(item)
+            
+            # If we have any expressions, combine them with AND
+            if any(isinstance(item, BaseLabelExpr) for item in converted):
+                expr = converted[0]
+                for label in converted[1:]:
+                    expr = expr & label
+                object.__setattr__(self, "labels", expr)
+            else:
+                # Otherwise keep as tuple of strings
+                object.__setattr__(self, "labels", tuple(item.label if isinstance(item, LabelAtom) else item for item in converted))
     
     def where(self, condition: Expression) -> 'NodePattern':
         """
@@ -114,14 +184,21 @@ class NodePattern:
             Cypher representation of the node pattern
             
         Example:
-            >>> node("p", "Person").where(prop("p", "age") > 18).to_cypher()
-            >>> # Returns: "(p:Person WHERE p.age > 18)"
+            >>> node("Person").where(prop("age") > 18).to_cypher()
+            >>> # Returns: "(:Person WHERE age > 18)"
         """
         result = f"({self.variable if self.variable else ''}"
         
-        # Add labels
+        # Add labels or expressions
         if self.labels:
-            result += ":" + ":".join(self.labels)
+            if isinstance(self.labels, BaseLabelExpr):
+                result += ":" + str(self.labels)
+            elif isinstance(self.labels, tuple):
+                # Handle tuple of strings or BaseLabelExpr
+                labels_str = ":".join(str(label) for label in self.labels)
+                result += ":" + labels_str
+            else:
+                result += ":" + str(self.labels)
         
         # Add properties
         if self.properties:

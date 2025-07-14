@@ -24,7 +24,7 @@ def test_basic_functionality():
         print("✅ All imports successful")
         
         # Test basic MATCH
-        query1 = match(node("p", "Person")).return_("p.name")
+        query1 = match(node("Person", variable="p")).return_("p.name")
         result1 = query1.to_cypher()
         expected1 = "MATCH (p:Person)\nRETURN p.name"
         assert result1 == expected1
@@ -32,7 +32,7 @@ def test_basic_functionality():
         
         # Test WHERE clause
         query2 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(25))
             .return_("p.name", "p.age")
         )
@@ -42,7 +42,7 @@ def test_basic_functionality():
         
         # Test WITH clause
         query3 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_("p.name AS name", "p.age AS age")
             .return_("name", "age")
         )
@@ -52,7 +52,7 @@ def test_basic_functionality():
         
         # Test ORDER BY clause
         query4 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .order_by(desc("p.age"))
         )
@@ -62,7 +62,7 @@ def test_basic_functionality():
         
         # Test LIMIT and SKIP
         query5 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .skip(10)
             .limit(5)
@@ -74,7 +74,7 @@ def test_basic_functionality():
         
         # Test complex query chain
         query6 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "active") == literal(True))
             .with_("p.name AS name", "p.age AS age")
             .order_by(desc("age"))
@@ -98,7 +98,7 @@ def test_basic_functionality():
         
         # Test relationships
         query7 = (
-            match(node("p", "Person").relates_to("r", "KNOWS", ">", node("f", "Person")))
+            match(node("Person", variable="p").relates_to("r", "KNOWS", ">", node("Person", variable="f")))
             .return_("p.name", "f.name")
         )
         result7 = query7.to_cypher()
@@ -107,7 +107,7 @@ def test_basic_functionality():
         
         # Test tuple projections in WITH
         query8 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_(("p.name", "personName"), ("p.age", "personAge"))
             .return_("personName", "personAge")
         )
@@ -136,7 +136,7 @@ def test_real_world_examples():
         
         # Example 1: Find top friends
         query1 = (
-            match(node("p", "Person").relates_to("r", "KNOWS", ">", node("f", "Person")))
+            match(node("Person", variable="p").relates_to("r", "KNOWS", ">", node("Person", variable="f")))
             .with_(("p.name", "personName"), ("count(f)", "friendCount"))
             .order_by(desc("friendCount"), "personName")
             .limit(10)
@@ -147,12 +147,12 @@ def test_real_world_examples():
         
         # Example 2: Employee pagination
         query2 = (
-            match(node("e", "Employee"))
+            match(node("Employee", variable="e"))
             .where(prop("e", "department") == param("dept_name"))
             .return_("e.name", "e.salary", "e.startDate")
             .order_by("e.name")
-            .skip(param("offset"))
-            .limit(param("page_size"))
+            .skip("$offset")
+            .limit("$page_size")
         )
         result2 = query2.to_cypher()
         print(f"DEBUG: Employee pagination query result:\n{result2}\n")
@@ -163,7 +163,7 @@ def test_real_world_examples():
         
         # Example 3: Complex aggregation
         query3 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(18))
             .with_("p.department AS dept", "count(p) AS count", "avg(p.salary) AS avgSalary")
             .where(var("count") > literal(5))

@@ -31,7 +31,7 @@ poetry install
 
 ## Quick Start
 
-> **Note**: super-sniffle is currently in early development. The API shown below represents the planned interface and is not yet implemented.
+> **Note**: super-sniffle is currently in active development. The API is stable for basic Cypher READ operations.
 
 ```python
 from super_sniffle import match, node, relationship, prop, param
@@ -93,9 +93,9 @@ def build_person_query(min_age, city_name):
 def build_person_query():
     return (
         match(
-            node("p", "Person")
-            .relates_to(">", "KNOWS", node("f", "Person"))
-            .relates_to(">", "LIVES_IN", node("c", "City"))
+            node("Person", variable="p")
+            .relates_to("r1", "KNOWS", ">", node("Person", variable="f"))
+            .relates_to("r2", "LIVES_IN", ">", node("City", variable="c"))
         )
         .where(
             prop("p", "age").gt(param("min_age"))
@@ -107,16 +107,17 @@ def build_person_query():
 
 ## Development Status
 
-super-sniffle is currently in the initial planning and development phase. The project structure and architecture have been established, and we're working on implementing the core components.
+super-sniffle is currently in active development. We've implemented all basic Cypher READ clauses and have comprehensive test coverage.
 
 ### Current Progress
 - ✅ Project structure and configuration
 - ✅ Architecture design and documentation
-- 🔄 Core AST components (in progress)
-- ⬜ Basic query clauses (MATCH, WHERE, RETURN)
-- ⬜ String generation
-- ⬜ Advanced Cypher features
-- ⬜ Documentation and examples
+- ✅ Core AST components
+- ✅ Basic query clauses (MATCH, WHERE, RETURN, WITH, ORDER BY, LIMIT, SKIP, UNION)
+- ✅ String generation
+- ✅ Advanced Cypher features (quantified path patterns, variable-length relationships)
+- ✅ Documentation and examples
+- ✅ Comprehensive test coverage
 
 ## Scope
 
@@ -133,6 +134,7 @@ super-sniffle is currently in the initial planning and development phase. The pr
 - Write operations (CREATE, MERGE, DELETE, etc.)
 - Administrative commands
 - Database management features
+- Multiple relationship types per relationship (now enforces single type per Cypher specification)
 
 ## Contributing
 

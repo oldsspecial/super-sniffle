@@ -4,6 +4,7 @@
 **Completed Path API Improvements** - Implemented automatic implicit relationship insertion between consecutive nodes and fixed path concatenation logic.
 
 ## Recent Changes
+- ✅ **COMPLETED: RelationshipPattern Type Constraint** - Updated to enforce single relationship type per Cypher specification
 - ✅ **COMPLETED: Path API improvements**:
   - Automatically insert implicit relationships ("--") between consecutive nodes
   - Fixed path concatenation to handle duplicate nodes at connection points
@@ -27,6 +28,10 @@
 ## Active Decisions
 
 ### API Design
+- **RelationshipPattern Type Constraint**:
+  - Enforce single relationship type instead of multiple types
+  - Update API functions to match new interface
+  - Ensure Cypher compliance
 - **Path API Improvements**:
   - Automatically insert implicit relationships between consecutive nodes
   - Skip duplicate nodes during path concatenation

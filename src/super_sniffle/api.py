@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 # Import expression and pattern classes
 from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal
-from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
+from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L
 from .clauses.clause import Clause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
@@ -129,22 +129,30 @@ def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern, Quanti
     return QueryBuilder([MatchClause(list(patterns))])
 
 
-def node(variable: str, *labels: str, **properties: Any) -> NodePattern:
+def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **properties: Any) -> NodePattern:
     """
-    Create a node pattern.
+    Create a node pattern with optional variable, labels or expressions, and properties.
     
     Args:
-        variable: Variable name for the node
-        *labels: Node labels
+        *labels: Node labels (strings) or label expressions (using L() helper)
+        variable: Optional variable name for the node
         **properties: Node properties
         
     Returns:
         A NodePattern object representing the node pattern
         
     Example:
-        >>> person = node("p", "Person", age=30, name="Alice")
-        >>> # With inline condition:
-        >>> adult = node("p", "Person").where(prop("p", "age") > 18)
+        # Simple node with variable and label
+        >>> person = node("Person", variable="p", age=30, name="Alice")
+        
+        # Node with complex label expression
+        >>> admin = node(L("Person") & L("Admin"), variable="a")
+        
+        # Node without variable
+        >>> anonymous = node("User")
+        
+        # With inline condition:
+        >>> adult = node("Person", variable="p").where(prop("p", "age") > 18)
     """
     return NodePattern(variable=variable, labels=labels, properties=properties)
 
