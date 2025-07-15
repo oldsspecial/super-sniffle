@@ -26,9 +26,6 @@ from .patterns import (
     PathPattern,
     QuantifiedPathPattern,
     L,
-    simple_node_pattern,
-    simple_relationship_pattern,
-    simple_path,
 )
 
 # TODO: Import other AST classes when implemented
@@ -51,9 +48,6 @@ __all__ = [
     "PathPattern",
     "QuantifiedPathPattern",
     "L",
-    "simple_node_pattern",
-    "simple_relationship_pattern",
-    "simple_path",
     # TODO: Add other classes when implemented
     # "Clause",
     # "MatchClause",

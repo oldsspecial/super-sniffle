@@ -9,6 +9,12 @@
 
 ## What Works
 
+### Path Operator Overloading
+- ✅ Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
+- ✅ Enhanced path() function to accept mixed pattern types
+- ✅ Implemented WHERE condition chaining for paths
+- ✅ Comprehensive test coverage for operator functionality
+
 ### RelationshipPattern Type Constraint
 - ✅ Enforced single relationship type per Cypher specification
 - ✅ Updated API functions to match new interface
@@ -69,13 +75,14 @@
 - ⬜ Built-in function registry
 - ⬜ Aggregation support for GROUP BY semantics
 
-## Current Status: Path API Improvements Completed! 🚀
+## Current Status: Path Operator Overloading Implemented! 🚀
 
 **Recent Achievements**:
-1. Implemented complex label expressions for advanced node matching
-2. Added quantifiers for variable-length path patterns
-3. Verified all unit tests pass (as per activeContext)
-4. Updated memory bank documentation
+1. Implemented operator overloading for intuitive path construction
+2. Enhanced path() function to accept mixed pattern types
+3. Added WHERE condition chaining for paths
+4. Verified all unit tests pass (including new operator tests)
+5. Updated memory bank documentation
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions

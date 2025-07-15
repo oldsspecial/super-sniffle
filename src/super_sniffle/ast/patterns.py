@@ -213,6 +213,17 @@ class NodePattern:
         result += ")"
         return result
 
+    def __add__(self, other: Union['NodePattern', 'RelationshipPattern', 'PathPattern']) -> 'PathPattern':
+        """Enable operator overloading for path construction."""
+        if isinstance(other, NodePattern):
+            return PathPattern([self, other])  # Will automatically insert implicit relationship
+        elif isinstance(other, RelationshipPattern):
+            return PathPattern([self, other])
+        elif isinstance(other, PathPattern):
+            return PathPattern([self]).concat(other)
+        else:
+            raise TypeError(f"Cannot add NodePattern to {type(other)}")
+
 
 @dataclass(frozen=True)
 class RelationshipPattern:
@@ -224,13 +235,13 @@ class RelationshipPattern:
     Attributes:
         direction: Relationship direction ("<", ">", or "-" for undirected)
         variable: Optional variable name for the relationship
-        type: Relationship type (e.g., "KNOWS")
+        type: Optional relationship type (e.g., "KNOWS")
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
     """
     direction: str  # "<", ">", or "-" for undirected
     variable: Optional[str] = None
-    type: str = ""
+    type: Optional[str] = None
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
     
@@ -280,6 +291,15 @@ class RelationshipPattern:
         if self.condition:
             rel_content += f" WHERE {self.condition.to_cypher()}"
         
+        # If there's no content (anonymous relationship), use shorthand
+        if not rel_content:
+            if self.direction == "<":
+                return "<--"
+            elif self.direction == ">":
+                return "-->"
+            else:
+                return "--"
+        
         # Build the full relationship pattern with direction
         if self.direction == "<":
             return f"<-[{rel_content}]-"
@@ -287,6 +307,15 @@ class RelationshipPattern:
             return f"-[{rel_content}]->"
         else:  # undirected
             return f"-[{rel_content}]-"
+
+    def __add__(self, other: Union['NodePattern', 'PathPattern']) -> 'PathPattern':
+        """Enable operator overloading for path construction."""
+        if isinstance(other, NodePattern):
+            return PathPattern([self, other])
+        elif isinstance(other, PathPattern):
+            return PathPattern([self]).concat(other)
+        else:
+            raise TypeError(f"Cannot add RelationshipPattern to {type(other)}")
 
 
 @dataclass(frozen=True)
@@ -298,20 +327,30 @@ class PathPattern:
     a traversal pattern in the graph.
     
     Attributes:
-        elements: List of NodePattern and RelationshipPattern objects
+        elements: List of NodePattern, RelationshipPattern, or PathPattern objects
         variable: Optional variable name for the path
+        condition: Optional WHERE condition for the entire path
     """
-    elements: Sequence[Union[NodePattern, RelationshipPattern]]
+    elements: Sequence[Union[NodePattern, RelationshipPattern, 'PathPattern']]
     variable: Optional[str] = None
+    condition: Optional[Expression] = None
     
     def __post_init__(self):
         """Automatically insert implicit relationships between consecutive nodes."""
+        # First, flatten any PathPattern elements
+        flattened_elements = []
+        for elem in self.elements:
+            if isinstance(elem, PathPattern):
+                flattened_elements.extend(elem.elements)
+            else:
+                flattened_elements.append(elem)
+        
         new_elements = []
-        for i, elem in enumerate(self.elements):
+        for i, elem in enumerate(flattened_elements):
             new_elements.append(elem)
             
             # Check if next element exists and both are nodes
-            if i < len(self.elements) - 1 and isinstance(elem, NodePattern) and isinstance(self.elements[i+1], NodePattern):
+            if i < len(flattened_elements) - 1 and isinstance(elem, NodePattern) and isinstance(flattened_elements[i+1], NodePattern):
                 # Insert implicit relationship: no variable, no type, undirected
                 new_elements.append(RelationshipPattern(direction="-"))
         
@@ -335,8 +374,14 @@ class PathPattern:
         """
         path_str = "".join(elem.to_cypher() for elem in self.elements)
         if self.variable:
-            return f"{self.variable} = {path_str}"
-        return path_str
+            base = f"{self.variable} = {path_str}"
+        else:
+            base = path_str
+        
+        # Add WHERE condition if present
+        if self.condition:
+            return f"{base} WHERE {self.condition.to_cypher()}"
+        return base
         
     def as_(self, variable: str) -> 'PathPattern':
         """Assign the path to a variable"""
@@ -376,47 +421,56 @@ class PathPattern:
     
     def where(self, condition: Expression) -> 'PathPattern':
         """
-        Add a WHERE condition to the last element in the path.
-        
-        This is a convenience method for adding conditions to path patterns.
+        Add a WHERE condition to the entire path pattern.
         
         Args:
             condition: Expression representing the WHERE condition
             
         Returns:
-            New PathPattern with the condition added to the last element
+            New PathPattern with the condition added
+            
+        Raises:
+            ValueError: If attempting to add condition to an incomplete path
         """
-        if not self.elements:
-            raise ValueError("Cannot add WHERE condition to empty path")
-        
-        # Apply condition to the last element
-        last_element = self.elements[-1]
-        new_last = last_element.where(condition)
-        
-        # Create new path with updated last element
-        new_elements = list(self.elements[:-1]) + [new_last]
-        return replace(self, elements=new_elements)
+        # Cannot add condition to incomplete path (ending with relationship)
+        if self.elements and isinstance(self.elements[-1], RelationshipPattern):
+            raise ValueError("Cannot add condition to incomplete path")
+        return replace(self, condition=condition)
 
-    def concat(self, other: 'PathPattern') -> 'PathPattern':
+    def concat(self, other: Union['PathPattern', NodePattern, RelationshipPattern]) -> 'PathPattern':
         """
-        Concatenate this path with another path.
+        Concatenate this path with another path, node, or relationship.
         
-        The resulting path will have the elements of this path followed by the elements of the other path.
-        If the last element of this path and the first element of the other path are both nodes, 
+        The resulting path will have the elements of this path followed by the elements of the other pattern.
+        If the last element of this path and the first element of the other pattern are both nodes, 
         an implicit relationship (--) will be inserted between them.
         
         The variable of the resulting path is set to the variable of the first path (if any).
         
         Args:
-            other: The path to concatenate to this path.
+            other: The pattern to concatenate to this path.
             
         Returns:
             A new PathPattern representing the concatenated path.
+            
+        Raises:
+            ValueError: If trying to append a relationship to a path ending with a relationship
         """
         if not self.elements:
-            return other
-        if not other.elements:
+            if isinstance(other, PathPattern):
+                return other
+            return PathPattern([other])
+        if not other:
             return self
+            
+        # Convert other to a PathPattern if it's a single pattern
+        if not isinstance(other, PathPattern):
+            other = PathPattern([other])
+            
+        # Check for invalid concatenation: path ending with relationship + relationship
+        if isinstance(self.elements[-1], RelationshipPattern) and other.elements:
+            if isinstance(other.elements[0], RelationshipPattern):
+                raise ValueError("Cannot append a relationship to a path ending with a relationship")
             
         # Skip duplicate node if last of first path and first of second path are the same node
         last_elem = self.elements[-1]
@@ -430,19 +484,70 @@ class PathPattern:
             
         return PathPattern(new_elements, variable=self.variable)
         
-    def __add__(self, other: 'PathPattern') -> 'PathPattern':
+    def __add__(self, other: Union['PathPattern', NodePattern, RelationshipPattern]) -> 'PathPattern':
         """
-        Concatenate this path with another path using the '+' operator.
+        Concatenate this path with another path, node, or relationship using the '+' operator.
         
         This is equivalent to calling `self.concat(other)`.
         
         Args:
-            other: The path to concatenate to this path.
+            other: The pattern to concatenate to this path.
             
         Returns:
             A new PathPattern representing the concatenated path.
         """
         return self.concat(other)
+
+
+def node(*labels: str, variable: Optional[str] = None, **properties: Any) -> NodePattern:
+    """
+    Create a node pattern with the given labels and properties.
+    
+    Args:
+        *labels: Labels for the node
+        variable: Optional variable name
+        **properties: Properties for the node
+        
+    Returns:
+        NodePattern object
+    """
+    return NodePattern(variable, labels, properties)
+
+
+def relationship(direction: str, type: Optional[str] = None, variable: Optional[str] = None, **properties: Any) -> RelationshipPattern:
+    """
+    Create a relationship pattern with the given type and properties.
+    
+    Args:
+        direction: Relationship direction ("<", ">", or "-" for undirected)
+        type: Relationship type (optional)
+        variable: Optional variable name
+        **properties: Properties for the relationship
+        
+    Returns:
+        RelationshipPattern object
+    """
+    return RelationshipPattern(direction, variable, type, properties)
+
+
+def path(*elements: Union[NodePattern, RelationshipPattern, PathPattern]) -> PathPattern:
+    """
+    Create a path pattern from nodes, relationships, and paths.
+    
+    Args:
+        *elements: Alternating NodePattern, RelationshipPattern, and PathPattern objects
+        
+    Returns:
+        PathPattern object
+    """
+    # Flatten any PathPattern elements
+    flat_elements = []
+    for elem in elements:
+        if isinstance(elem, PathPattern):
+            flat_elements.extend(elem.elements)
+        else:
+            flat_elements.append(elem)
+    return PathPattern(flat_elements)
 
 
 @dataclass(frozen=True)
@@ -471,50 +576,3 @@ class QuantifiedPathPattern:
     def as_(self, variable: str) -> 'QuantifiedPathPattern':
         """Assign the quantified path to a variable"""
         return replace(self, variable=variable)
-
-
-# Convenience functions for creating common patterns
-
-def simple_node_pattern(variable: str, *labels: str, **properties: Any) -> NodePattern:
-    """
-    Create a simple node pattern.
-    
-    Args:
-        variable: Variable name for the node
-        *labels: Node labels
-        **properties: Node properties
-        
-    Returns:
-        NodePattern object
-    """
-    return NodePattern(variable, labels, properties)
-
-
-def simple_relationship_pattern(direction: str = "-", variable: Optional[str] = None, 
-                               type: str = "", **properties: Any) -> RelationshipPattern:
-    """
-    Create a simple relationship pattern.
-    
-    Args:
-        direction: Relationship direction ("<", ">", or "-")
-        variable: Optional variable name
-        type: Relationship type
-        **properties: Relationship properties
-        
-    Returns:
-        RelationshipPattern object
-    """
-    return RelationshipPattern(direction, variable, type, properties)
-
-
-def simple_path(*elements: Union[NodePattern, RelationshipPattern]) -> PathPattern:
-    """
-    Create a path pattern from nodes and relationships.
-    
-    Args:
-        *elements: Alternating NodePattern and RelationshipPattern objects
-        
-    Returns:
-        PathPattern object
-    """
-    return PathPattern(list(elements))

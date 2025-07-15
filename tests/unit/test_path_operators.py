@@ -1,16 +1,12 @@
 """
-Unit tests for pattern classes.
-
-Tests the node, relationship, and path pattern classes with inline WHERE
-conditions, ensuring proper Cypher generation and method chaining.
+Unit tests for path operator overloading functionality.
 """
 
 import pytest
-from super_sniffle.ast import NodePattern, RelationshipPattern, PathPattern
-from super_sniffle.api import node, relationship, path, prop, param, literal
+from super_sniffle.api import node, relationship, path, prop, literal
+from super_sniffle.ast import PathPattern
 
-
-class TestPatternOperators:
+class TestPathOperators:
     """Test operator overloading for path construction."""
     
     def test_node_plus_relationship(self):
@@ -86,9 +82,9 @@ class TestPatternOperators:
     def test_path_function_with_mixed_types(self):
         """Test path() function with mixed pattern types."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", type="KNOWS", variable="r")
+        r = relationship(">", variable="r", type= "KNOWS")
         n2 = node("Person", variable="n2")
-        existing_path = path(node("Company", variable="c"), relationship(">", type="WORKS_AT", variable="w"))
+        existing_path = path(node("Company", variable="c"), relationship(">", variable="w", type="WORKS_AT"))
         
         # All valid combinations
         path1 = path(n1, r, existing_path)

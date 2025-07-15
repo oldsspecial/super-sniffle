@@ -13,7 +13,7 @@ class TestQuantifiedPaths:
         p = path(node("Person", variable="p"), node("Person", variable="f")).one_or_more()
         query = match(p).return_("p", "f")
         result = query.to_cypher()
-        expected = "MATCH ((p:Person)-[]-(f:Person))+\nRETURN p, f"
+        expected = "MATCH ((p:Person)--(f:Person))+\nRETURN p, f"
         assert result == expected
 
     def test_zero_or_more(self):
@@ -21,7 +21,7 @@ class TestQuantifiedPaths:
         p = path(node("Person", variable="p"), node("Person", variable="f")).zero_or_more()
         query = match(p).return_("p", "f")
         result = query.to_cypher()
-        expected = "MATCH ((p:Person)-[]-(f:Person))*\nRETURN p, f"
+        expected = "MATCH ((p:Person)--(f:Person))*\nRETURN p, f"
         assert result == expected
 
     def test_fixed_quantifier(self):
@@ -29,7 +29,7 @@ class TestQuantifiedPaths:
         p = path(node("Person", variable="p"), node("Person", variable="f")).quantify(min_hops=2, max_hops=2)
         query = match(p).return_("p", "f")
         result = query.to_cypher()
-        expected = "MATCH ((p:Person)-[]-(f:Person)){2, 2}\nRETURN p, f"
+        expected = "MATCH ((p:Person)--(f:Person)){2, 2}\nRETURN p, f"
         assert result == expected
 
     def test_bounded_quantifier(self):
@@ -37,7 +37,7 @@ class TestQuantifiedPaths:
         p = path(node("Person", variable="p"), node("Person", variable="f")).quantify(min_hops=2, max_hops=5)
         query = match(p).return_("p", "f")
         result = query.to_cypher()
-        expected = "MATCH ((p:Person)-[]-(f:Person)){2, 5}\nRETURN p, f"
+        expected = "MATCH ((p:Person)--(f:Person)){2, 5}\nRETURN p, f"
         assert result == expected
 
     def test_unbounded_quantifier(self):
@@ -45,5 +45,5 @@ class TestQuantifiedPaths:
         p = path(node("Person", variable="p"), node("Person", variable="f")).quantify(min_hops=2)
         query = match(p).return_("p", "f")
         result = query.to_cypher()
-        expected = "MATCH ((p:Person)-[]-(f:Person)){2, }\nRETURN p, f"
+        expected = "MATCH ((p:Person)--(f:Person)){2, }\nRETURN p, f"
         assert result == expected

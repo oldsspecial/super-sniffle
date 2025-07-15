@@ -4,6 +4,11 @@
 **Completed Path API Improvements** - Implemented automatic implicit relationship insertion between consecutive nodes and fixed path concatenation logic.
 
 ## Recent Changes
+- ✅ **COMPLETED: Operator Overloading for Path Construction**:
+  - Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
+  - Enhanced path() function to accept mixed pattern types
+  - Implemented WHERE condition chaining for paths
+  - Added comprehensive test coverage
 - ✅ **COMPLETED: RelationshipPattern Type Constraint** - Enforced single relationship type per Cypher specification
 - ✅ **COMPLETED: Path API improvements**:
   - Automatic insertion of implicit relationships ("--") between consecutive nodes

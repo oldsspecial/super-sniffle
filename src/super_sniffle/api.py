@@ -187,30 +187,29 @@ Returns:
     return RelationshipPattern(direction, variable, type, properties)
 
 
-def path(*elements: Union[NodePattern, RelationshipPattern]) -> PathPattern:
+def path(*elements: Union[NodePattern, RelationshipPattern, PathPattern]) -> PathPattern:
     """
-    Create a path pattern from nodes and relationships.
+    Create a path pattern from nodes, relationships, or existing paths.
     
     Args:
-        *elements: Alternating NodePattern and RelationshipPattern objects
+        *elements: Alternating NodePattern, RelationshipPattern, or PathPattern objects.
+                   PathPattern objects will be flattened into their elements.
         
     Returns:
-        A PathPattern object representing the path pattern
+        A PathPattern object representing the combined path pattern
         
     Example:
-        >>> friends = path(
-        ...     node("p1", "Person"),
-        ...     relationship(">", "r", "KNOWS"),
-        ...     node("p2", "Person")
-        ... )
-        >>> # With inline conditions:
-        >>> active_friends = path(
-        ...     node("p1", "Person").where(prop("p1", "active") == True),
-        ...     relationship(">", "r", "KNOWS").where(prop("r", "since") > 2020),
-        ...     node("p2", "Person")
-        ... )
+        >>> base_path = path(node("a"), relationship(">", "r"), node("b"))
+        >>> extended_path = path(base_path, node("c"))
+        >>> # Results in: (a)-[r]->(b)--(c)
     """
-    return PathPattern(list(elements))
+    flattened = []
+    for elem in elements:
+        if isinstance(elem, PathPattern):
+            flattened.extend(elem.elements)
+        else:
+            flattened.append(elem)
+    return PathPattern(flattened)
 
 
 def prop(variable: str, property_name: str) -> Property:
