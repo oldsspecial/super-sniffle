@@ -47,6 +47,7 @@ from .ast import (
     RelationshipPattern,
     PathPattern,
     QuantifiedPathPattern,
+    L,
 )
 
 # Clause components (for advanced usage) 
@@ -77,6 +78,7 @@ __all__ = [
     "RelationshipPattern",
     "PathPattern",
     "QuantifiedPathPattern",
+    "L",
     # Clause classes
     "MatchClause",
     "LimitClause",

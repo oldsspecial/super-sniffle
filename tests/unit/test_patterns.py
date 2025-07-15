@@ -15,15 +15,18 @@ class TestNodePattern:
     
     def test_basic_node_creation(self):
         """Test basic node pattern creation."""
-        n = NodePattern("p", ("Person",))
+        from super_sniffle.ast.patterns import LabelAtom
+        n = NodePattern("p", LabelAtom("Person"))
         assert n.variable == "p"
-        assert n.labels == ("Person",)
+        assert isinstance(n.labels, LabelAtom)
+        assert n.labels.label == "Person"
         assert n.to_cypher() == "(p:Person)"
     
     def test_node_with_multiple_labels(self):
         """Test node with multiple labels."""
-        n = NodePattern("u", ("User", "Admin"))
-        assert n.to_cypher() == "(u:User:Admin)"
+        from super_sniffle.ast.patterns import LabelAnd, LabelAtom
+        n = NodePattern("u", LabelAnd(LabelAtom("User"), LabelAtom("Admin")))
+        assert n.to_cypher() == "(u:(User & Admin))"
     
     def test_node_with_properties(self):
         """Test node with properties."""
@@ -49,15 +52,20 @@ class TestNodePattern:
     
     def test_node_api_function(self):
         """Test the node() API function."""
-        n = node("p", "Person", "User", age=30)
+        from super_sniffle.ast.patterns import LabelAnd, LabelAtom
+        n = node("Person", "User", variable="p", age=30)
         assert isinstance(n, NodePattern)
         assert n.variable == "p"
-        assert n.labels == ("Person", "User")
+        assert isinstance(n.labels, LabelAnd)
+        assert isinstance(n.labels.left, LabelAtom)
+        assert n.labels.left.label == "Person"
+        assert isinstance(n.labels.right, LabelAtom)
+        assert n.labels.right.label == "User"
         assert n.properties == {"age": 30}
     
     def test_node_api_with_where(self):
         """Test the node() API function with where method."""
-        n = node("p", "Person").where(prop("p", "age") > param("min_age"))
+        n = node("Person", variable="p").where(prop("p", "age") > param("min_age"))
         assert n.to_cypher() == "(p:Person WHERE p.age > $min_age)"
 
 
@@ -188,35 +196,36 @@ class TestPathPattern:
     def test_path_api_function(self):
         """Test the path() API function."""
         p = path(
-            node("p1", "Person"),
+            node("Person", variable="p1"),
             relationship(">", "r", "KNOWS"),
-            node("p2", "Person")
+            node("Person", variable="p2"),
+            node("Person", variable="p2")
         )
         assert isinstance(p, PathPattern)
-        assert len(p.elements) == 3
-        assert p.to_cypher() == "(p1:Person)-[r:KNOWS]->(p2:Person)"
+        assert len(p.elements) == 5
+        assert p.to_cypher() == "(p1:Person)-[r:KNOWS]->(p2:Person)-[]-(p2:Person)"
         
         # Test with consecutive nodes
         p = path(
-            node("a", "A"),
-            node("b", "B")
+            node("A", variable="a"),
+            node("B", variable="b")
         )
         assert p.to_cypher() == "(a:A)-[]-(b:B)"
     
     def test_path_api_with_inline_conditions(self):
         """Test the path() API function with inline conditions."""
         p = path(
-            node("p1", "Person").where(prop("p1", "active") == literal(True)),
+            node("Person", variable="p1").where(prop("p1", "active") == literal(True)),
             relationship(">", "r", "KNOWS").where(prop("r", "recent") == literal(True)),
-            node("p2", "Person")
+            node("Person", variable="p2")
         )
         expected = "(p1:Person WHERE p1.active = true)-[r:KNOWS WHERE r.recent = true]->(p2:Person)"
         assert p.to_cypher() == expected
         
         # Test with consecutive nodes and conditions
         p = path(
-            node("a", "A").where(prop("a", "active") == literal(True)),
-            node("b", "B").where(prop("b", "active") == literal(True))
+            node("A", variable="a").where(prop("a", "active") == literal(True)),
+            node("B", variable="b").where(prop("b", "active") == literal(True))
         )
         expected = "(a:A WHERE a.active = true)-[]-(b:B WHERE b.active = true)"
         assert p.to_cypher() == expected
@@ -224,9 +233,9 @@ class TestPathPattern:
     def test_path_where_method(self):
         """Test the where method on PathPattern."""
         p = path(
-            node("p1", "Person"),
+            node("Person", variable="p1"),
             relationship(">", "r", "KNOWS"),
-            node("p2", "Person")
+            node("Person", variable="p2")
         )
         
         # Apply condition to the last element (p2)
@@ -236,8 +245,8 @@ class TestPathPattern:
         
         # Test with consecutive nodes
         p = path(
-            node("a", "A"),
-            node("b", "B")
+            node("A", variable="a"),
+            node("B", variable="b")
         )
         filtered_path = p.where(prop("b", "active") == literal(True))
         expected = "(a:A)-[]-(b:B WHERE b.active = true)"
@@ -257,15 +266,15 @@ class TestPathConcatenation:
     def test_basic_concatenation(self):
         """Test basic path concatenation."""
         path1 = PathPattern([
-            node("a", "Person"),
+            node("Person", variable="a"),
             relationship(">", "r", "KNOWS"),
-            node("b", "Person")
+            node("Person", variable="b")
         ])
         
         path2 = PathPattern([
-            node("c", "Company"),
+            node("Company", variable="c"),
             relationship("<", "w", "WORKS_AT"),
-            node("b", "Person")
+            node("Person", variable="b")
         ])
         
         combined = path1.concat(path2)
@@ -278,15 +287,15 @@ class TestPathConcatenation:
     def test_operator_concatenation(self):
         """Test path concatenation using + operator."""
         part1 = path(
-            node("start", "Point"),
+            node("Point", variable="start"),
             relationship(">", "r1", "ROAD"),
-            node("mid", "Point")
+            node("Point", variable="mid")
         )
         
         part2 = path(
-            node("mid", "Point"),
+            node("Point", variable="mid"),
             relationship(">", "r2", "ROAD"),
-            node("end", "Point")
+            node("Point", variable="end")
         )
         
         full_path = part1 + part2
@@ -296,11 +305,11 @@ class TestPathConcatenation:
     def test_variable_inheritance(self):
         """Test that concatenated path inherits variable from first path."""
         path1 = PathPattern([
-            node("a", "A")
+            node("A", variable="a")
         ], variable="p1")
         
         path2 = PathPattern([
-            node("b", "B")
+            node("B", variable="b")
         ], variable="p2")
         
         combined = path1.concat(path2)
@@ -313,7 +322,7 @@ class TestPathConcatenation:
     def test_concat_with_empty_path(self):
         """Test concatenation with an empty path."""
         empty = PathPattern([])
-        non_empty = PathPattern([node("a", "A")])
+        non_empty = PathPattern([node("A", variable="a")])
         
         # Concatenating with empty path should return the non-empty path
         assert empty.concat(non_empty) == non_empty
@@ -326,13 +335,13 @@ class TestPathConcatenation:
     def test_concatenation_with_quantified_paths(self):
         """Test concatenation of quantified paths."""
         base_path = path(
-            node("a", "A"),
-            node("b", "B")
+            node("A", variable="a"),
+            node("B", variable="b")
         )
         
         # Create another path to concatenate
         end_path = path(
-            node("c", "C")
+            node("C", variable="c")
         )
         
         # Concatenate first, then quantify
@@ -347,7 +356,7 @@ class TestRealWorldScenarios:
         """Test a social network query pattern."""
         # Find active users connected by confirmed friendships
         pattern = path(
-            node("user1", "User").where(
+            node("User", variable="user1").where(
                 (prop("user1", "active") == literal(True)) & 
                 (prop("user1", "privacy") != literal("private"))
             ),
@@ -355,7 +364,7 @@ class TestRealWorldScenarios:
                 (prop("friendship", "status") == literal("confirmed")) &
                 (prop("friendship", "created") > param("min_date"))
             ),
-            node("user2", "User").where(prop("user2", "active") == literal(True))
+            node("User", variable="user2").where(prop("user2", "active") == literal(True))
         )
         
         cypher = pattern.to_cypher()
@@ -371,14 +380,14 @@ class TestRealWorldScenarios:
         """Test an employee hierarchy query pattern."""
         # Find managers with direct reports
         pattern = path(
-            node("manager", "Employee").where(
+            node("Employee", variable="manager").where(
                 (prop("manager", "role") == literal("manager")) &
                 (prop("manager", "department") == param("dept"))
             ),
             relationship(">", "manages", "MANAGES").where(
                 prop("manages", "direct") == literal(True)
             ),
-            node("employee", "Employee").where(
+            node("Employee", variable="employee").where(
                 (prop("employee", "active") == literal(True)) &
                 (prop("employee", "performance") >= literal(3))
             )
@@ -397,18 +406,18 @@ class TestRealWorldScenarios:
         """Test a product recommendation query pattern."""
         # Find products bought together
         pattern = path(
-            node("user", "User").where(prop("user", "segment") == param("target_segment")),
+            node("User", variable="user").where(prop("user", "segment") == param("target_segment")),
             relationship(">", "bought1", "BOUGHT").where(
                 prop("bought1", "date") > param("recent_date")
             ),
-            node("product1", "Product").where(
+            node("Product", variable="product1").where(
                 (prop("product1", "category") == param("category")) &
                 (prop("product1", "rating") >= literal(4.0))
             ),
             relationship("<", "bought2", "BOUGHT"),
-            node("other_user", "User").where(prop("other_user", "id") != prop("user", "id")),
+            node("User", variable="other_user").where(prop("other_user", "id") != prop("user", "id")),
             relationship(">", "bought3", "BOUGHT"),
-            node("product2", "Product").where(
+            node("Product", variable="product2").where(
                 (prop("product2", "category") == param("category")) &
                 (prop("product2", "available") == literal(True))
             )

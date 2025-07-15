@@ -14,7 +14,7 @@ class TestBasicReturn:
     
     def test_basic_return_projections(self):
         """Test basic RETURN clause with projections."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_("p.name", "p.age")
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN p.name, p.age"
@@ -22,7 +22,7 @@ class TestBasicReturn:
 
     def test_return_everything_no_args(self):
         """Test RETURN * clause using no arguments."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_()
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN *"
@@ -30,7 +30,7 @@ class TestBasicReturn:
 
     def test_return_everything_explicit(self):
         """Test RETURN * clause using explicit asterisk."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_("*")
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN *"
@@ -38,7 +38,7 @@ class TestBasicReturn:
 
     def test_return_single_projection(self):
         """Test RETURN clause with single projection."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_("p.name")
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN p.name"
@@ -50,7 +50,7 @@ class TestReturnDistinct:
     
     def test_return_distinct_projections(self):
         """Test RETURN DISTINCT with projections."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_("p.name", distinct=True)
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN DISTINCT p.name"
@@ -58,7 +58,7 @@ class TestReturnDistinct:
 
     def test_return_distinct_everything(self):
         """Test RETURN DISTINCT everything."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_(distinct=True)
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN DISTINCT *"
@@ -66,7 +66,7 @@ class TestReturnDistinct:
 
     def test_return_distinct_multiple_projections(self):
         """Test RETURN DISTINCT with multiple projections."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = match(person).return_("p.name", "p.age", distinct=True)
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN DISTINCT p.name, p.age"
@@ -78,7 +78,7 @@ class TestReturnWithWhere:
     
     def test_return_after_where(self):
         """Test RETURN clause after WHERE."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = (
             match(person)
             .where(prop("p", "age") > literal(30))
@@ -90,7 +90,7 @@ class TestReturnWithWhere:
 
     def test_return_with_complex_where(self):
         """Test RETURN with complex WHERE conditions."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = (
             match(person)
             .where(
@@ -114,8 +114,8 @@ class TestReturnWithRelationships:
     
     def test_return_with_relationship_pattern(self):
         """Test RETURN clause with relationship patterns."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = (
             match(person.relates_to("r", "KNOWS", ">", friend))
             .where(prop("p", "age") > literal(25))
@@ -127,9 +127,9 @@ class TestReturnWithRelationships:
 
     def test_return_with_multiple_relationships(self):
         """Test RETURN with multiple relationship paths."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
-        company = node("c", "Company")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
+        company = node("Company", variable="c")
         query = (
             match(person.relates_to("knows", "KNOWS", ">", friend))
             .match(person.relates_to("works", "WORKS_FOR", ">", company))
@@ -148,8 +148,8 @@ class TestReturnWithMultipleMatch:
     def test_return_with_multiple_match(self):
         """Test RETURN clause with multiple MATCH clauses."""
         query = (
-            match(node("p", "Person"))
-            .match(node("c", "Company"))
+            match(node("Person", variable="p"))
+            .match(node("Company", variable="c"))
             .where(prop("p", "works_at") == prop("c", "id"))
             .return_("p.name", "c.name")
         )
@@ -160,9 +160,9 @@ class TestReturnWithMultipleMatch:
     def test_return_with_multiple_match_and_conditions(self):
         """Test RETURN with multiple MATCH clauses and conditions."""
         query = (
-            match(node("p", "Person"))
-            .match(node("c", "Company"))
-            .match(node("d", "Department"))
+            match(node("Person", variable="p"))
+            .match(node("Company", variable="c"))
+            .match(node("Department", variable="d"))
             .where(
                 (prop("p", "company_id") == prop("c", "id")) &
                 (prop("p", "dept_id") == prop("d", "id"))
@@ -183,7 +183,7 @@ class TestReturnWithParameters:
     
     def test_return_with_parameters(self):
         """Test RETURN clause with parameters and expressions."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = (
             match(person)
             .where(prop("p", "name").contains(param("search_term")))
@@ -195,7 +195,7 @@ class TestReturnWithParameters:
 
     def test_return_with_parameter_conditions(self):
         """Test RETURN with parameter-based conditions."""
-        person = node("p", "Person")
+        person = node("Person", variable="p")
         query = (
             match(person)
             .where(prop("p", "age") >= param("min_age"))
@@ -211,8 +211,8 @@ class TestRealWorldExamples:
     
     def test_complex_query_with_complete_clause_chain(self):
         """Test complex query with complete clause chain."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = (
             match(person.relates_to("r", "KNOWS", ">", friend))
             .where(
@@ -243,8 +243,8 @@ class TestRealWorldExamples:
 
     def test_employee_search_example(self):
         """Test employee search real-world example."""
-        employee = node("e", "Employee")
-        department = node("d", "Department")
+        employee = node("Employee", variable="e")
+        department = node("Department", variable="d")
         query = (
             match(employee.relates_to("works_in", "WORKS_IN", ">", department))
             .where(
@@ -265,21 +265,21 @@ class TestReturnStyles:
     
     def test_basic_projections_style(self):
         """Test basic projections style."""
-        query = match(node("p", "Person")).return_("p.name", "p.age")
+        query = match(node("Person", variable="p")).return_("p.name", "p.age")
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN p.name, p.age"
         assert result == expected
 
     def test_return_everything_style(self):
         """Test return everything style."""
-        query = match(node("p", "Person")).return_()
+        query = match(node("Person", variable="p")).return_()
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN *"
         assert result == expected
 
     def test_return_distinct_projections_style(self):
         """Test return distinct projections style."""
-        query = match(node("p", "Person")).return_("p.name", distinct=True)
+        query = match(node("Person", variable="p")).return_("p.name", distinct=True)
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nRETURN DISTINCT p.name"
         assert result == expected
@@ -287,7 +287,7 @@ class TestReturnStyles:
     def test_complex_return_with_where_and_distinct(self):
         """Test complex return with WHERE and DISTINCT."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(30))
             .return_("p.name", "p.age", "p.email", distinct=True)
         )
@@ -301,7 +301,7 @@ class TestReturnEdgeCases:
     
     def test_return_with_minimal_match(self):
         """Test RETURN with minimal MATCH."""
-        query = match(node("n")).return_("n")
+        query = match(node(variable="n")).return_("n")
         result = query.to_cypher()
         expected = "MATCH (n)\nRETURN n"
         assert result == expected
@@ -309,7 +309,7 @@ class TestReturnEdgeCases:
     def test_return_with_complex_property_access(self):
         """Test RETURN with complex property access."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.address.city", "p.contact.email")
         )
         result = query.to_cypher()
@@ -319,7 +319,7 @@ class TestReturnEdgeCases:
     def test_return_with_aggregation_functions(self):
         """Test RETURN with aggregation functions."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("count(p)", "avg(p.age)", "max(p.salary)")
         )
         result = query.to_cypher()

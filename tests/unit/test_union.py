@@ -10,8 +10,8 @@ class TestUnion:
 
     def test_simple_union(self):
         """Test a simple UNION of two queries."""
-        query1 = match(node("p", "Person")).return_("p.name")
-        query2 = match(node("m", "Movie")).return_("m.title")
+        query1 = match(node("Person", variable="p")).return_("p.name")
+        query2 = match(node("Movie", variable="m")).return_("m.title")
         
         union_query = query1.union(query2)
         
@@ -21,8 +21,8 @@ class TestUnion:
 
     def test_simple_union_all(self):
         """Test a simple UNION ALL of two queries."""
-        query1 = match(node("p", "Person")).return_("p.name")
-        query2 = match(node("m", "Movie")).return_("m.title")
+        query1 = match(node("Person", variable="p")).return_("p.name")
+        query2 = match(node("Movie", variable="m")).return_("m.title")
         
         union_query = query1.union_all(query2)
         
@@ -32,9 +32,9 @@ class TestUnion:
 
     def test_multiple_unions(self):
         """Test chaining multiple UNION clauses."""
-        query1 = match(node("p", "Person")).return_("p.name AS name")
-        query2 = match(node("m", "Movie")).return_("m.title AS name")
-        query3 = match(node("c", "Company")).return_("c.name AS name")
+        query1 = match(node("Person", variable="p")).return_("p.name AS name")
+        query2 = match(node("Movie", variable="m")).return_("m.title AS name")
+        query3 = match(node("Company", variable="c")).return_("c.name AS name")
 
         union_query = query1.union(query2).union_all(query3)
 
@@ -51,12 +51,12 @@ class TestUnion:
     def test_union_with_where_clauses(self):
         """Test UNION with WHERE clauses in subqueries."""
         query1 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(30))
             .return_("p.name")
         )
         query2 = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") < literal(20))
             .return_("p.name")
         )

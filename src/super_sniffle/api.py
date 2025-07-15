@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 # Import expression and pattern classes
 from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal
-from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L
+from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
 from .clauses.clause import Clause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
@@ -154,7 +154,15 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
         # With inline condition:
         >>> adult = node("Person", variable="p").where(prop("p", "age") > 18)
     """
-    return NodePattern(variable=variable, labels=labels, properties=properties)
+    # Convert simple string labels to label atoms
+    processed_labels = []
+    for label in labels:
+        if isinstance(label, str):
+            processed_labels.append(LabelAtom(label))
+        else:
+            processed_labels.append(label)
+    
+    return NodePattern(variable=variable, labels=tuple(processed_labels), properties=properties)
 
 
 def relationship(direction: str = "-", variable: Optional[str] = None, 

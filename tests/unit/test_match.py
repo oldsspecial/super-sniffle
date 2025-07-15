@@ -16,15 +16,15 @@ class TestBasicMatch:
     
     def test_basic_match_single_node(self):
         """Test basic MATCH clause with a single node."""
-        query = match(node("p", "Person"))
+        query = match(node("Person", variable="p"))
         result = query.to_cypher()
         expected = "MATCH (p:Person)"
         assert result == expected
 
     def test_match_with_relates_to(self):
         """Test MATCH with relates_to method."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = match(person.relates_to("r", "KNOWS", ">", friend))
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
@@ -32,7 +32,7 @@ class TestBasicMatch:
 
     def test_match_with_inline_conditions(self):
         """Test MATCH with inline WHERE conditions."""
-        person = node("p", "Person").where(prop("p", "age") > literal(18))
+        person = node("Person", variable="p").where(prop("p", "age") > literal(18))
         query = match(person)
         result = query.to_cypher()
         expected = "MATCH (p:Person WHERE p.age > 18)"
@@ -41,8 +41,8 @@ class TestBasicMatch:
     def test_multiple_match_clauses(self):
         """Test chaining multiple MATCH clauses."""
         query = (
-            match(node("p", "Person"))
-            .match(node("c", "Company"))
+            match(node("Person", variable="p"))
+            .match(node("Company", variable="c"))
         )
         result = query.to_cypher()
         expected = "MATCH (p:Person)\nMATCH (c:Company)"
@@ -55,9 +55,9 @@ class TestComplexPaths:
     def test_complex_path_with_conditions(self):
         """Test complex path with inline conditions."""
         complex_path = path(
-            node("p1", "Person").where(prop("p1", "active") == literal(True)),
+            node("Person", variable="p1").where(prop("p1", "active") == literal(True)),
             relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
-            node("p2", "Person")
+            node("Person", variable="p2")
         )
         query = match(complex_path)
         result = query.to_cypher()
@@ -66,8 +66,8 @@ class TestComplexPaths:
 
     def test_relates_to_with_properties(self):
         """Test relates_to with relationship properties."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = match(person.relates_to("r", "KNOWS", ">", friend, since=2020))
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS {since: 2020}]->(f:Person)"
@@ -79,8 +79,8 @@ class TestRelationshipDirections:
     
     def test_outgoing_relationship(self):
         """Test outgoing relationship direction."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = match(person.relates_to("r", "KNOWS", ">", friend))
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
@@ -88,8 +88,8 @@ class TestRelationshipDirections:
     
     def test_incoming_relationship(self):
         """Test incoming relationship direction."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = match(person.relates_to("r", "KNOWS", "<", friend))
         result = query.to_cypher()
         expected = "MATCH (p:Person)<-[r:KNOWS]-(f:Person)"
@@ -97,8 +97,8 @@ class TestRelationshipDirections:
     
     def test_undirected_relationship(self):
         """Test undirected relationship (using default)."""
-        person = node("p", "Person")
-        friend = node("f", "Person")
+        person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         query = match(person.relates_to("r", "KNOWS", target_node=friend))
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]-(f:Person)"
@@ -110,8 +110,8 @@ class TestImmutability:
     
     def test_node_pattern_immutability_with_relates_to(self):
         """Test NodePattern immutability with relates_to."""
-        original_person = node("p", "Person")
-        friend = node("f", "Person")
+        original_person = node("Person", variable="p")
+        friend = node("Person", variable="f")
         path_result = original_person.relates_to("r", "KNOWS", ">", friend)
         
         # Original should be unchanged
@@ -121,8 +121,8 @@ class TestImmutability:
     
     def test_match_clause_immutability(self):
         """Test MatchClause immutability."""
-        original_query = match(node("p", "Person"))
-        new_query = original_query.match(node("c", "Company"))
+        original_query = match(node("Person", variable="p"))
+        new_query = original_query.match(node("Company", variable="c"))
         
         # Original should be unchanged
         assert original_query.to_cypher() == "MATCH (p:Person)"
@@ -135,9 +135,9 @@ class TestRealWorldExamples:
     
     def test_complex_nested_relationships(self):
         """Test finding active people who know someone in a specific city."""
-        p_node = node("p", "Person").where(prop("p", "active") == literal(True))
-        f_node = node("f", "Person")
-        c_node = node("c", "City").where( prop("c", "name") == param("city_name"))
+        p_node = node("Person", variable="p").where(prop("p", "active") == literal(True))
+        f_node = node("Person", variable="f")
+        c_node = node("City", variable="c").where( prop("c", "name") == param("city_name"))
 
         # Create relationships
         knows_rel = relationship(">", "r", "KNOWS")
@@ -169,7 +169,7 @@ class TestRealWorldExamples:
     def test_simple_friend_relationship(self):
         """Test simple friend relationship query."""
         query = match(
-            node("user", "Person").relates_to("friendship", "FRIENDS_WITH", "-", node("friend", "Person"))
+            node("Person", variable="user").relates_to("friendship", "FRIENDS_WITH", "-", node("Person", variable="friend"))
         )
         result = query.to_cypher()
         expected = "MATCH (user:Person)-[friendship:FRIENDS_WITH]-(friend:Person)"
@@ -178,7 +178,7 @@ class TestRealWorldExamples:
     def test_employee_company_relationship(self):
         """Test employee-company relationship query."""
         query = match(
-            node("emp", "Employee").relates_to("employment", "WORKS_FOR", ">", node("comp", "Company"))
+            node("Employee", variable="emp").relates_to("employment", "WORKS_FOR", ">", node("Company", variable="comp"))
         )
         result = query.to_cypher()
         expected = "MATCH (emp:Employee)-[employment:WORKS_FOR]->(comp:Company)"
@@ -191,7 +191,7 @@ class TestMatchWithConditions:
     def test_match_with_property_condition(self):
         """Test MATCH with property-based condition."""
         query = match(
-            node("p", "Person").where(prop("p", "age") >= literal(21))
+            node("Person", variable="p").where(prop("p", "age") >= literal(21))
         )
         result = query.to_cypher()
         expected = "MATCH (p:Person WHERE p.age >= 21)"
@@ -200,7 +200,7 @@ class TestMatchWithConditions:
     def test_match_with_parameter_condition(self):
         """Test MATCH with parameter-based condition."""
         query = match(
-            node("p", "Person").where(prop("p", "name") == param("user_name"))
+            node("Person", variable="p").where(prop("p", "name") == param("user_name"))
         )
         result = query.to_cypher()
         expected = "MATCH (p:Person WHERE p.name = $user_name)"
@@ -209,7 +209,7 @@ class TestMatchWithConditions:
     def test_match_with_complex_condition(self):
         """Test MATCH with complex logical condition."""
         query = match(
-            node("p", "Person").where(
+            node("Person", variable="p").where(
                 (prop("p", "age") > literal(18)) & (prop("p", "active") == literal(True))
             )
         )
@@ -224,9 +224,9 @@ class TestMatchChaining:
     def test_multiple_match_different_patterns(self):
         """Test multiple MATCH clauses with different patterns."""
         query = (
-            match(node("p", "Person"))
-            .match(node("c", "Company").where(prop("c", "industry") == literal("Technology")))
-            .match(node("d", "Department"))
+            match(node("Person", variable="p"))
+            .match(node("Company", variable="c").where(prop("c", "industry") == literal("Technology")))
+            .match(node("Department", variable="d"))
         )
         result = query.to_cypher()
         
@@ -236,9 +236,9 @@ class TestMatchChaining:
 
     def test_match_with_relationship_chaining(self):
         """Test MATCH clauses that can be chained with relationships."""
-        first_match = match(node("p", "Person"))
+        first_match = match(node("Person", variable="p"))
         second_match = first_match.match(
-            node("p").relates_to("works", "WORKS_FOR", ">", node("c", "Company"))
+            node(variable="p").relates_to("works", "WORKS_FOR", ">", node("Company", variable="c"))
         )
         
         result = second_match.to_cypher()
@@ -252,14 +252,14 @@ class TestEdgeCases:
     
     def test_match_with_no_label(self):
         """Test MATCH with node that has no label."""
-        query = match(node("n"))
+        query = match(node(variable="n"))
         result = query.to_cypher()
         expected = "MATCH (n)"
         assert result == expected
 
     def test_match_with_empty_variable_name(self):
         """Test MATCH with minimal variable name."""
-        query = match(node("a", "Person"))
+        query = match(node("Person", variable="a"))
         result = query.to_cypher()
         expected = "MATCH (a:Person)"
         assert result == expected
@@ -267,7 +267,7 @@ class TestEdgeCases:
     def test_match_relationship_no_variable(self):
         """Test relationship without variable name."""
         query = match(
-            node("p", "Person").relates_to("", "KNOWS", ">", node("f", "Person"))
+            node("Person", variable="p").relates_to("", "KNOWS", ">", node("Person", variable="f"))
         )
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[:KNOWS]->(f:Person)"

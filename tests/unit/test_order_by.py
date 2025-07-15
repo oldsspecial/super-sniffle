@@ -17,7 +17,7 @@ class TestOrderByClause:
     def test_basic_ascending_sort(self):
         """Test basic ascending sort with string."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .order_by("p.age")
         )
@@ -29,7 +29,7 @@ class TestOrderByClause:
     def test_mixed_string_and_expression_sorts(self):
         """Test mixed string and expression sorts."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .order_by("p.name", desc("p.age"))
         )
@@ -39,7 +39,7 @@ class TestOrderByClause:
     def test_multiple_expression_sorts(self):
         """Test multiple expression sorts."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age", "p.city")
             .order_by(asc("p.city"), desc("p.age"), asc("p.name"))
         )
@@ -49,7 +49,7 @@ class TestOrderByClause:
     def test_order_by_with_limit(self):
         """Test ORDER BY with LIMIT functionality."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .order_by(desc("p.age"))
             .limit(5)
@@ -65,7 +65,7 @@ class TestOrderByWithTupleProjections:
     def test_with_tuple_projections_then_order_by(self):
         """Test WITH using tuple projections, then ORDER BY."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_(("p.name", "name"), ("p.age", "age"), ("p.city", "city"))
             .order_by("name", desc("age"))
         )
@@ -76,7 +76,7 @@ class TestOrderByWithTupleProjections:
     def test_mixed_string_and_tuple_projections(self):
         """Test mixed string and tuple projections in WITH."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_("p", ("count(*)", "total"))
             .order_by(desc("total"))
         )
@@ -87,7 +87,7 @@ class TestOrderByWithTupleProjections:
     def test_complex_aggregation_with_order_by(self):
         """Test complex aggregation with ORDER BY."""
         query = (
-            match(node("p", "Person").relates_to(">", "KNOWS", target_node=node("f", "Person")))
+            match(node("Person", variable="p").relates_to(">", "KNOWS", target_node=node("Person", variable="f")))
             .with_(("p.name", "personName"), ("count(f)", "friendCount"))
             .order_by(desc("friendCount"), "personName")
         )
@@ -102,7 +102,7 @@ class TestOrderByInComplexChains:
     def test_match_where_with_order_return_chain(self):
         """Test MATCH → WHERE → WITH → ORDER BY → RETURN chain."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(18))
             .with_(("p.name", "name"), ("p.age", "age"))
             .order_by(desc("age"))
@@ -122,7 +122,7 @@ class TestImprovedWithClause:
     def test_simple_tuple_projections(self):
         """Test simple tuple projections."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_(("p.name", "personName"), ("p.age", "personAge"))
             .return_("personName", "personAge")
         )
@@ -133,7 +133,7 @@ class TestImprovedWithClause:
     def test_mixed_projections(self):
         """Test mixed string and tuple projections."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_("p", ("p.name", "name"), ("p.age", "age"))
             .return_("p.id", "name", "age")
         )
@@ -144,7 +144,7 @@ class TestImprovedWithClause:
     def test_with_distinct_using_tuples(self):
         """Test WITH DISTINCT using tuples."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_(("p.department", "dept"), distinct=True)
             .return_("dept")
         )
@@ -155,7 +155,7 @@ class TestImprovedWithClause:
     def test_complex_expressions_in_tuples(self):
         """Test complex expressions in tuple projections."""
         query = (
-            match(node("p", "Person").relates_to(">", "WORKS_FOR", target_node=node("c", "Company")))
+            match(node("Person", variable="p").relates_to(">", "WORKS_FOR", target_node=node("Company", variable="c")))
             .with_(("p.name", "employeeName"), ("c.name", "companyName"), ("p.salary * 12", "annualSalary"))
             .order_by(desc("annualSalary"))
             .return_("employeeName", "companyName", "annualSalary")
@@ -172,7 +172,7 @@ class TestRealWorldExamples:
     def test_top_most_connected_people(self):
         """Test finding top 5 most connected people."""
         query = (
-            match(node("p", "Person").relates_to("-", "KNOWS", target_node=node("friend", "Person")))
+            match(node("Person", variable="p").relates_to("-", "KNOWS", target_node=node("Person", variable="friend")))
             .with_(("p.name", "personName"), ("count(friend)", "friendCount"))
             .order_by(desc("friendCount"), "personName")
             .limit(5)
@@ -188,7 +188,7 @@ class TestRealWorldExamples:
     def test_employee_rankings_by_salary(self):
         """Test employee rankings by salary within departments."""
         query = (
-            match(node("e", "Employee").relates_to(">", "WORKS_IN", target_node=node("d", "Department")))
+            match(node("Employee", variable="e").relates_to(">", "WORKS_IN", target_node=node("Department", variable="d")))
             .with_(("e.name", "employeeName"), ("d.name", "deptName"), ("e.salary", "salary"))
             .order_by("deptName", desc("salary"))
             .return_("deptName", "employeeName", "salary")
@@ -206,7 +206,7 @@ class TestAscDescFunctions:
     def test_asc_function(self):
         """Test the asc() function."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name")
             .order_by(asc("p.name"))
         )
@@ -216,7 +216,7 @@ class TestAscDescFunctions:
     def test_desc_function(self):
         """Test the desc() function."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name")
             .order_by(desc("p.name"))
         )
@@ -226,7 +226,7 @@ class TestAscDescFunctions:
     def test_mixed_asc_desc(self):
         """Test mixed asc() and desc() in same ORDER BY."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age")
             .order_by(asc("p.name"), desc("p.age"))
         )
@@ -240,7 +240,7 @@ class TestOrderByEdgeCases:
     def test_order_by_with_single_field(self):
         """Test ORDER BY with single field."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name")
             .order_by("p.name")
         )
@@ -250,7 +250,7 @@ class TestOrderByEdgeCases:
     def test_order_by_with_many_fields(self):
         """Test ORDER BY with many fields."""
         query = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .return_("p.name", "p.age", "p.city", "p.country")
             .order_by("p.country", "p.city", desc("p.age"), asc("p.name"))
         )
