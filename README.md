@@ -1,6 +1,6 @@
 # super-sniffle
 
-A Python library for generating Neo4j Cypher queries in a functional and flexible way.
+A Python library for generating Neo4j Cypher queries in a functional and flexible way using an AST-based approach.
 
 ## Overview
 
@@ -14,6 +14,8 @@ super-sniffle provides a clean, type-safe, and maintainable way to generate comp
 - **Immutable Objects**: Safe composition without side effects
 - **Well-Formatted Output**: Generates readable, properly indented Cypher queries
 - **Zero Dependencies**: Minimal external dependencies for easy installation
+- **Label Expressions**: Complex label matching using &, |, and ! operators
+- **Quantified Path Patterns**: Variable-length paths with *, +, and {min,max} quantifiers
 
 ## Installation
 
@@ -58,18 +60,24 @@ print(query)
 ### Complex Patterns
 
 ```python
-# Build queries with relationships
+# Basic relationship pattern
 query = (
     match(
         node("p", "Person")
         .relates_to(">", "KNOWS", node("f", "Person"))
-        .relates_to(">", "LIVES_IN", node("c", "City"))
     )
-    .where(
-        prop("p", "age").between(25, 40)
-        .and_(prop("c", "name").equals(param("city_name")))
+    .return_("p.name", "f.name")
+    .to_cypher()
+)
+
+# Label expressions and quantified paths
+query = (
+    match(
+        node("p", L("Person") & L("Employee"))
+        .relates_to("r", "KNOWS*1..5", ">", node("f", "Person"))
     )
-    .return_("p.name", "f.name", "c.name")
+    .where(prop("p", "department").equals("Engineering"))
+    .return_("p.name", "f.name")
     .to_cypher()
 )
 ```
@@ -115,9 +123,12 @@ super-sniffle is currently in active development. We've implemented all basic Cy
 - ✅ Core AST components
 - ✅ Basic query clauses (MATCH, WHERE, RETURN, WITH, ORDER BY, LIMIT, SKIP, UNION)
 - ✅ String generation
-- ✅ Advanced Cypher features (quantified path patterns, variable-length relationships)
+- ✅ Advanced Cypher features:
+  - Quantified path patterns with *, +, and {min,max} quantifiers
+  - Label expressions for complex node matching
+  - Automatic implicit relationship insertion
 - ✅ Documentation and examples
-- ✅ Comprehensive test coverage
+- ✅ Comprehensive test coverage (100% pass rate)
 
 ## Scope
 

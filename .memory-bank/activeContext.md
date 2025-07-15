@@ -4,14 +4,15 @@
 **Completed Path API Improvements** - Implemented automatic implicit relationship insertion between consecutive nodes and fixed path concatenation logic.
 
 ## Recent Changes
-- ✅ **COMPLETED: RelationshipPattern Type Constraint** - Updated to enforce single relationship type per Cypher specification
+- ✅ **COMPLETED: RelationshipPattern Type Constraint** - Enforced single relationship type per Cypher specification
 - ✅ **COMPLETED: Path API improvements**:
-  - Automatically insert implicit relationships ("--") between consecutive nodes
+  - Automatic insertion of implicit relationships ("--") between consecutive nodes
   - Fixed path concatenation to handle duplicate nodes at connection points
-- ✅ **COMPLETED: Quantified Path Patterns** - Allowing variable-length path matching in Cypher queries
+- ✅ **COMPLETED: Quantified Path Patterns** - Implemented variable-length path matching with quantifiers
+- ✅ **COMPLETED: Label Expression System** - Added support for complex label expressions (&, |, !)
 - ✅ Implemented complete operator-based expression system
 - ✅ Built inline pattern conditions with native Cypher syntax support
-- ✅ Created NodePattern, RelationshipPattern, and PathPattern classes
+- ✅ Created NodePattern, RelationshipPattern, PathPattern, and QuantifiedPathPattern classes
 - ✅ **COMPLETED: Full MATCH clause implementation with chaining**
 - ✅ **COMPLETED: Enhanced WHERE clause with complex chaining support**
 - ✅ **COMPLETED: Full RETURN clause with projections, DISTINCT, and "return everything" (*) support**
@@ -36,6 +37,15 @@
   - Automatically insert implicit relationships between consecutive nodes
   - Skip duplicate nodes during path concatenation
   - Maintain immutable pattern throughout
+- **Label Expression System**:
+  - Implemented complex label expressions using &, |, and ! operators
+  - Added L() helper function for cleaner syntax
+- **Quantified Path Patterns**:
+  - Added quantifiers like *, +, and {min,max} for variable-length paths
+  - Implemented one_or_more() and zero_or_more() convenience methods
+- **Variable Naming**:
+  - Consistent use of variable names for nodes (p, n) and relationships (r)
+  - Clear distinction between variables and properties
 - Functional approach with immutable objects
 - Method chaining for query construction
 - **Operator-based syntax for WHERE clauses** - Using Python operator overloading for intuitive condition building
@@ -80,12 +90,19 @@
 ### Completed Components
 - ✅ **Path API**: Automatic implicit relationships, fixed concatenation logic
 - ✅ **Expression System**: Property, Variable, Parameter, Literal classes with full operator support
-- ✅ **Pattern System**: NodePattern, RelationshipPattern, PathPattern with inline conditions
+- ✅ **Pattern System**: 
+  - NodePattern with label expressions and inline conditions
+  - RelationshipPattern with direction and type constraints
+  - PathPattern with automatic relationship insertion
+  - QuantifiedPathPattern for variable-length paths
 - ✅ **MATCH Clause**: Full implementation with pattern support and chaining
 - ✅ **WHERE Clause**: Complex condition building with operator overloading
 - ✅ **RETURN Clause**: Projections, DISTINCT, and return-all (*) support
 - ✅ **WITH Clause**: String-based projections, DISTINCT, and chaining support
-- ✅ **API Functions**: match(), node(), relationship(), path(), prop(), var(), param(), literal()
+- ✅ **API Functions**: 
+  - match(), node(), relationship(), path(), prop(), var(), param(), literal()
+  - L() helper for label expressions
+  - Quantifier methods: one_or_more(), zero_or_more()
 
 ### Test Coverage
 - ✅ 100% pass rate on all unit tests (37 tests)

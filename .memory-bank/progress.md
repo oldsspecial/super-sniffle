@@ -1,7 +1,7 @@
 # Progress: super-sniffle
 
 ## Project Status
-**Current Phase**: Core Pattern System Complete - Ready for Aggregation Functions
+**Current Phase**: Core Pattern System with Label Expressions Complete - Ready for Aggregation Functions
 
 **Overall Progress**: 30%
 
@@ -52,12 +52,12 @@
 - ✅ Working demo and examples
 
 ### Pattern System
-- ✅ NodePattern class with inline WHERE support
+- ✅ NodePattern class with label expressions and inline WHERE support
 - ✅ RelationshipPattern class with inline WHERE support
-- ✅ PathPattern class for complex traversals
-- ✅ QuantifiedPathPattern for variable-length paths
+- ✅ PathPattern class for complex traversals with automatic relationship insertion
+- ✅ QuantifiedPathPattern for variable-length paths with quantifiers
 - ✅ Support for Cypher's native inline syntax: (p:Person WHERE p.age > 20)
-- ✅ API functions: node(), relationship(), path()
+- ✅ API functions: node(), relationship(), path(), L() for label expressions
 - ✅ Integration with operator-based expressions
 - ✅ Comprehensive unit tests for all patterns
 - ✅ Real-world scenario examples and demos
@@ -72,9 +72,9 @@
 ## Current Status: Path API Improvements Completed! 🚀
 
 **Recent Achievements**:
-1. Implemented automatic implicit relationship insertion between consecutive nodes
-2. Fixed path concatenation to handle duplicate nodes at connection points
-3. Verified all unit tests pass (37/37)
+1. Implemented complex label expressions for advanced node matching
+2. Added quantifiers for variable-length path patterns
+3. Verified all unit tests pass (as per activeContext)
 4. Updated memory bank documentation
 
 ### What Works Now ✅

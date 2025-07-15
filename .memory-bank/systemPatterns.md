@@ -68,17 +68,24 @@ Using dataclasses to represent the query structure:
 
 ```python
 @dataclass(frozen=True)
-class Node:
-    variable: str
-    labels: List[str]
+class NodePattern:
+    variable: Optional[str] = None
+    labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = ()
     properties: Dict[str, Any] = field(default_factory=dict)
+    condition: Optional[Expression] = None
 
 @dataclass(frozen=True)
-class Relationship:
-    variable: Optional[str]
-    types: List[str]
+class RelationshipPattern:
+    direction: str  # "<", ">", or "-" for undirected
+    variable: Optional[str] = None
+    type: str = ""
     properties: Dict[str, Any] = field(default_factory=dict)
-    direction: Direction = Direction.OUTGOING
+    condition: Optional[Expression] = None
+
+@dataclass(frozen=True)
+class PathPattern:
+    elements: Sequence[Union[NodePattern, RelationshipPattern]]
+    variable: Optional[str] = None
 ```
 
 ### Visitor Pattern
@@ -147,10 +154,12 @@ This allows for:
 
 ### Pattern Construction
 The most complex part of the system, handling:
-- Variable-length paths
-- Quantified path patterns
-- Named paths
-- Pattern comprehensions
+- **Label Expressions**: Complex label matching using &, |, and ! operators
+- **Quantified Path Patterns**: Variable-length paths with *, +, and {min,max} quantifiers
+- **Automatic Relationship Insertion**: Implicit "--" relationships between consecutive nodes
+- **Path Concatenation**: Handling duplicate nodes at connection points
+- **Inline Conditions**: WHERE clauses within pattern elements
+- **Pattern Comprehensions**: Advanced Cypher pattern matching
 
 ### Parameter Handling
 Safe parameterization of values to prevent injection:
