@@ -165,26 +165,49 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
     return NodePattern(variable=variable, labels=tuple(processed_labels), properties=properties)
 
 
-def relationship(direction: str = "-", variable: Optional[str] = None, 
-                type: str = "", **properties: Any) -> RelationshipPattern:
-    """
-    Create a relationship pattern.
-    
+def relationship(
+    *types: str,
+    direction: str = "-",
+    variable: Optional[str] = None,
+    **properties: Any,
+) -> RelationshipPattern:
+    """Create a relationship pattern with support for multiple types.
+
     Args:
-        direction: Relationship direction ("<", ">", or "-" for undirected)
-        variable: Optional variable name for the relationship
-        type: Relationship type
-        **properties: Relationship properties
-        
-Returns:
-        A RelationshipPattern object representing the relationship pattern
-        
+        *types: One or more relationship types (will be OR'ed together with |)
+        direction: The relationship direction ("-", "->", or "<-")
+        variable: The variable name for the relationship (optional)
+        properties: Key-value pairs for properties (optional)
+
+    Returns:
+        A RelationshipPattern instance
+
     Example:
-        >>> knows = relationship(">", "r", "KNOWS", since=2020)
-        >>> # With inline condition:
-        >>> recent = relationship(">", "r", "KNOWS").where(prop("r", "since") > 2022)
+        # Single type
+        >>> knows = relationship("KNOWS", direction=">", variable="r", since=2020)
+        # Multiple types (KNOWS|LIKES)
+        >>> knows_or_likes = relationship("KNOWS", "LIKES", direction=">", variable="r")
     """
-    return RelationshipPattern(direction, variable, type, properties)
+    # Map direction to RelationshipPattern's internal representation
+    if direction in ("->", ">"):
+        direction = ">"
+    elif direction in ("<-", "<"):
+        direction = "<"
+    elif direction not in ("-", "--"):
+        direction = "-"
+    else:
+        # Already in correct format
+        pass
+
+    # Join the types with | for Cypher OR syntax
+    type_str = "|".join(types) if types else ""
+
+    return RelationshipPattern(
+        direction=direction,
+        variable=variable,
+        type=type_str,
+        properties=properties,
+    )
 
 
 def path(*elements: Union[NodePattern, RelationshipPattern, PathPattern]) -> PathPattern:

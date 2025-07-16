@@ -16,7 +16,7 @@ class TestPatternOperators:
     def test_node_plus_relationship(self):
         """Test node + relationship operator."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         path_pattern = n1 + r
         assert isinstance(path_pattern, PathPattern)
         assert path_pattern.to_cypher() == "(n1:Person)-[r:KNOWS]->"
@@ -33,7 +33,7 @@ class TestPatternOperators:
         n1 = node("Person", variable="n1")
         existing_path = path(
             node("Person", variable="n2"),
-            relationship(">", "r", "KNOWS"),
+            relationship("KNOWS", direction=">", variable="r"),
             node("Person", variable="n3")
         )
         path_result = n1 + existing_path
@@ -41,17 +41,17 @@ class TestPatternOperators:
     
     def test_relationship_plus_node(self):
         """Test relationship + node operator."""
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         n2 = node("Person", variable="n2")
         path = r + n2
         assert path.to_cypher() == "-[r:KNOWS]->(n2:Person)"
     
     def test_relationship_plus_path(self):
         """Test relationship + path operator."""
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         existing_path = path(
             node("Person", variable="n2"),
-            relationship(">", "s", "FRIENDS"),
+            relationship("FRIENDS", direction=">", variable="s"),
             node("Person", variable="n3")
         )
         path_result = r + existing_path
@@ -60,7 +60,7 @@ class TestPatternOperators:
     def test_where_chaining_on_path(self):
         """Test where condition chaining on path."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         n2 = node("Person", variable="n2")
         condition = (prop("n1", "age") > literal(30)) & (prop("n2", "age") < literal(40))
         
@@ -71,7 +71,7 @@ class TestPatternOperators:
     def test_invalid_combinations(self):
         """Test invalid operator combinations."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         
         # Should raise errors
         with pytest.raises(TypeError, match="Cannot add NodePattern to <class 'str'>"):
@@ -86,9 +86,9 @@ class TestPatternOperators:
     def test_path_function_with_mixed_types(self):
         """Test path() function with mixed pattern types."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", type="KNOWS", variable="r")
+        r = relationship("KNOWS", direction=">", variable="r")
         n2 = node("Person", variable="n2")
-        existing_path = path(node("Company", variable="c"), relationship(">", type="WORKS_AT", variable="w"))
+        existing_path = path(node("Company", variable="c"), relationship("WORKS_AT", direction=">", variable="w"))
         
         # All valid combinations
         path1 = path(n1, r, existing_path)
@@ -110,22 +110,22 @@ class TestQuantifiedPatterns:
     
     def test_relationship_quantify_shorthand(self):
         """Test shorthand syntax for quantified relationships."""
-        rel = relationship(">", type="KNOWS").quantify(1, 5)
+        rel = relationship("KNOWS", direction=">").quantify(1, 5)
         assert rel.to_cypher() == "-[:KNOWS]->{1,5}"
         
-        rel_with_var = relationship(">", type="KNOWS", variable="r").quantify(1, 5)
+        rel_with_var = relationship("KNOWS", direction=">", variable="r").quantify(1, 5)
         assert rel_with_var.to_cypher() == "-[r:KNOWS]->{1,5}"
         
-        rel_with_props = relationship(">", type="KNOWS", variable="r", since=2020).quantify(1, 5)
+        rel_with_props = relationship("KNOWS", direction=">", variable="r", since=2020).quantify(1, 5)
         assert rel_with_props.to_cypher() == "-[r:KNOWS {since: 2020}]->{1,5}"
         
-        rel_with_condition = relationship(">", type="KNOWS", variable="r").where(prop("r", "since") > 2020).quantify(1, 5)
+        rel_with_condition = relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > 2020).quantify(1, 5)
         assert rel_with_condition.to_cypher() == "-[r:KNOWS WHERE r.since > 2020]->{1,5}"
     
     def test_quantified_path_pattern_rendering(self):
         """Test that quantified path pattern always renders with parentheses."""
         # Simple anonymous path
-        rel = relationship(">", type="KNOWS")
+        rel = relationship("KNOWS", direction=">")
         q_path = rel.quantify(1, 5)
         assert q_path.to_cypher() == "-[:KNOWS]->{1,5}"
         
@@ -138,11 +138,11 @@ class TestQuantifiedPatterns:
         
     def test_quantify_with_zero_hops(self):
         """Test quantifiers that allow zero hops."""
-        rel = relationship("-", type="LINK").quantify(0, 10)
+        rel = relationship("LINK", direction="-").quantify(0, 10)
         assert rel.to_cypher() == "-[:LINK]-{0,10}"
 
         # Use PathPattern for convenience methods like zero_or_more
         # Use anonymous relationship without type for shorthand
-        path = node() + relationship("-") + node()
+        path = node() + relationship(direction="-") + node()
         rel2 = path.zero_or_more()
         assert rel2.to_cypher() == "(()--())*"
