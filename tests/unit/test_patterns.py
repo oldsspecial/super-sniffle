@@ -6,7 +6,7 @@ conditions, ensuring proper Cypher generation and method chaining.
 """
 
 import pytest
-from super_sniffle.ast import NodePattern, RelationshipPattern, PathPattern
+from super_sniffle.ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
 from super_sniffle.api import node, relationship, path, prop, param, literal
 
 
@@ -103,3 +103,46 @@ class TestPatternOperators:
         # With automatic implicit relationship
         path4 = path(n1, existing_path)
         assert path4.to_cypher() == "(n1:Person)--(c:Company)-[w:WORKS_AT]->"
+
+
+class TestQuantifiedPatterns:
+    """Test quantified relationship patterns."""
+    
+    def test_relationship_quantify_shorthand(self):
+        """Test shorthand syntax for quantified relationships."""
+        rel = relationship(">", type="KNOWS").quantify(1, 5)
+        assert rel.to_cypher() == "-[:KNOWS]->{1,5}"
+        
+        rel_with_var = relationship(">", type="KNOWS", variable="r").quantify(1, 5)
+        assert rel_with_var.to_cypher() == "-[r:KNOWS]->{1,5}"
+        
+        rel_with_props = relationship(">", type="KNOWS", variable="r", since=2020).quantify(1, 5)
+        assert rel_with_props.to_cypher() == "-[r:KNOWS {since: 2020}]->{1,5}"
+        
+        rel_with_condition = relationship(">", type="KNOWS", variable="r").where(prop("r", "since") > 2020).quantify(1, 5)
+        assert rel_with_condition.to_cypher() == "-[r:KNOWS WHERE r.since > 2020]->{1,5}"
+    
+    def test_quantified_path_pattern_rendering(self):
+        """Test that quantified path pattern always renders with parentheses."""
+        # Simple anonymous path
+        rel = relationship(">", type="KNOWS")
+        q_path = rel.quantify(1, 5)
+        assert q_path.to_cypher() == "-[:KNOWS]->{1,5}"
+        
+        # Path with named nodes
+        n1 = node("Person", variable="n1")
+        n2 = node("Person", variable="n2")
+        path_pattern = PathPattern([n1, rel, n2])
+        q_path2 = QuantifiedPathPattern(path_pattern, "{1,5}")
+        assert q_path2.to_cypher() == "((n1:Person)-[:KNOWS]->(n2:Person)){1,5}"
+        
+    def test_quantify_with_zero_hops(self):
+        """Test quantifiers that allow zero hops."""
+        rel = relationship("-", type="LINK").quantify(0, 10)
+        assert rel.to_cypher() == "-[:LINK]-{0,10}"
+
+        # Use PathPattern for convenience methods like zero_or_more
+        # Use anonymous relationship without type for shorthand
+        path = node() + relationship("-") + node()
+        rel2 = path.zero_or_more()
+        assert rel2.to_cypher() == "(()--())*"

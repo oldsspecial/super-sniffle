@@ -280,6 +280,7 @@ class RelationshipPattern:
             rel_content += self.variable
         
         if self.type:
+            # Always include colon before relationship type
             rel_content += ":" + self.type
         
         if self.properties:
@@ -316,6 +317,35 @@ class RelationshipPattern:
             return PathPattern([self]).concat(other)
         else:
             raise TypeError(f"Cannot add RelationshipPattern to {type(other)}")
+            
+    def quantify(self, min_hops: Optional[int] = None, max_hops: Optional[int] = None) -> "QuantifiedPathPattern":
+        """
+        Create a quantified relationship pattern (shorthand syntax).
+        
+        Generates: -[:REL_TYPE]->{min,max}
+        
+        Args:
+            min_hops: Minimum number of hops
+            max_hops: Maximum number of hops
+            
+        Returns:
+            QuantifiedPathPattern object
+            
+        Example:
+            >>> relationship(">", "KNOWS").quantify(1, 5)
+            -[:KNOWS]->{1,5}
+        """
+        # Create quantifier string with proper 0 handling
+        if min_hops is None and max_hops is None:
+            raise ValueError("At least one of min_hops or max_hops must be specified")
+        
+        min_str = str(min_hops) if min_hops is not None else ''
+        max_str = str(max_hops) if max_hops is not None else ''
+        quantifier = f"{{{min_str},{max_str}}}"
+        
+        # Create a path pattern containing just this relationship
+        path_pattern = PathPattern([self])
+        return QuantifiedPathPattern(path_pattern, quantifier)
 
 
 @dataclass(frozen=True)
@@ -372,7 +402,23 @@ class PathPattern:
             >>> path.to_cypher()
             >>> # Returns: "p = (p1:Person)--(p2:Person)"
         """
-        path_str = "".join(elem.to_cypher() for elem in self.elements)
+        parts = []
+        for elem in self.elements:
+            # Handle anonymous elements efficiently
+            if isinstance(elem, NodePattern) and elem.variable is None and not elem.labels and not elem.properties and elem.condition is None:
+                parts.append("()")
+            elif isinstance(elem, RelationshipPattern) and elem.variable is None and elem.type is None and not elem.properties and elem.condition is None:
+                # Handle anonymous relationships
+                if elem.direction == "<":
+                    parts.append("<--")
+                elif elem.direction == ">":
+                    parts.append("-->")
+                else:
+                    parts.append("--")
+            else:
+                parts.append(elem.to_cypher())
+                
+        path_str = "".join(parts)
         if self.variable:
             base = f"{self.variable} = {path_str}"
         else:
@@ -568,7 +614,14 @@ class QuantifiedPathPattern:
         """
         Converts the quantified path pattern to a Cypher string.
         """
-        base = f"({self.path.to_cypher()}){self.quantifier}"
+        # For single relationship patterns, don't wrap in parentheses
+        if len(self.path.elements) == 1 and isinstance(self.path.elements[0], RelationshipPattern):
+            base = self.path.to_cypher()
+        else:
+            base = f"({self.path.to_cypher()})"
+        
+        base += self.quantifier
+        
         if self.variable:
             return f"{self.variable} = {base}"
         return base
