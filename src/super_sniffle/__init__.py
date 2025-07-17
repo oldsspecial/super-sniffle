@@ -36,6 +36,11 @@ from .api import (
     match,
     asc,
     desc,
+    count,
+    sum,
+    avg,
+    min,
+    max,
 )
 
 # AST components (for advanced usage)
@@ -69,6 +74,11 @@ __all__ = [
     "match",
     "asc",
     "desc",
+    "count",
+    "sum",
+    "avg",
+    "min",
+    "max",
     
     # AST classes
     "Property",
@@ -80,7 +90,7 @@ __all__ = [
     "QuantifiedPathPattern",
     "L",
     # Clause classes
-    "MatchClause",
+    "Match极ause",
     "LimitClause",
     "SkipClause",
 ]

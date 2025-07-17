@@ -286,11 +286,17 @@ class RelationshipPattern:
         if self.properties:
             props_str = ", ".join(f"{k}: {_format_value(v)}" 
                                 for k, v in self.properties.items())
-            rel_content += f" {{{props_str}}}"
+            # Add space if there's existing content
+            if rel_content:
+                rel_content += " "
+            rel_content += f"{{{props_str}}}"
         
         # Add inline WHERE condition
         if self.condition:
-            rel_content += f" WHERE {self.condition.to_cypher()}"
+            # Add space if there's existing content
+            if rel_content:
+                rel_content += " "
+            rel_content += f"WHERE {self.condition.to_cypher()}"
         
         # If there's no content (anonymous relationship), use shorthand
         if not rel_content:
@@ -306,7 +312,7 @@ class RelationshipPattern:
             return f"<-[{rel_content}]-"
         elif self.direction == ">":
             return f"-[{rel_content}]->"
-        else:  # undirected
+        else:
             return f"-[{rel_content}]-"
 
     def __add__(self, other: Union['NodePattern', 'PathPattern']) -> 'PathPattern':

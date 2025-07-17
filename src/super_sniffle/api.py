@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass, field
 
 # Import expression and pattern classes
-from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal
+from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal, FunctionExpression
 from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
 from .clauses.clause import Clause
 from .compound_query import CompoundQuery
@@ -41,6 +41,22 @@ class QueryBuilder:
         if not projections_list or (len(projections_list) == 1 and projections_list[0] == "*"):
             projections_list = ["*"]
         return QueryBuilder(self.clauses + [ReturnClause(projections_list, distinct)])
+        
+    def group_by(self, *expressions: str) -> 'QueryBuilder':
+        """
+        Add a GROUP BY clause to the query.
+        
+        Args:
+            *expressions: Expressions to group by
+            
+        Returns:
+            QueryBuilder object with the GROUP BY clause added
+            
+        Example:
+            >>> query = match(node("p", "Person")).return_("p.department", count().as_("employees")).group_by("p.department")
+        """
+        from .clauses.group_by import GroupByClause
+        return QueryBuilder(self.clauses + [GroupByClause(list(expressions))])
 
     def order_by(self, *fields: Union[str, OrderByExpression]) -> 'QueryBuilder':
         from .clauses.order_by import OrderByClause
@@ -338,3 +354,89 @@ def desc(field: str) -> OrderByExpression:
         >>> # Use in ORDER BY: .order_by(asc("p.name"), desc("p.age"))
     """
     return OrderByExpression(field, True)
+
+
+# Aggregation functions
+def count(expression: Optional[Expression] = None, distinct: bool = False) -> FunctionExpression:
+    """
+    Create a count function expression.
+    
+    Args:
+        expression: Optional expression to count (if None, counts all records)
+        distinct: Whether to count distinct values
+        
+    Returns:
+        A FunctionExpression representing the count function
+        
+    Example:
+        >>> count()  # Returns: count(*)
+        >>> count(prop("p", "name"), distinct=True)  # Returns: count(DISTINCT p.name)
+    """
+    args = [expression] if expression is not None else []
+    return FunctionExpression("count", args, distinct)
+
+
+def sum(expression: Expression, distinct: bool = False) -> FunctionExpression:
+    """
+    Create a sum function expression.
+    
+    Args:
+        expression: Expression to sum
+        distinct: Whether to sum distinct values
+        
+    Returns:
+        A FunctionExpression representing the sum function
+        
+    Example:
+        >>> sum(prop("p", "age"))  # Returns: sum(p.age)
+    """
+    return FunctionExpression("sum", [expression], distinct)
+
+
+def avg(expression: Expression, distinct: bool = False) -> FunctionExpression:
+    """
+    Create an average function expression.
+    
+    Args:
+        expression: Expression to average
+        distinct: Whether to average distinct values
+        
+    Returns:
+        A FunctionExpression representing the avg function
+        
+    Example:
+        >>> avg(prop("p", "age"))  # Returns: avg(p.age)
+    """
+    return FunctionExpression("avg", [expression], distinct)
+
+
+def min(expression: Expression) -> FunctionExpression:
+    """
+    Create a min function expression.
+    
+    Args:
+        expression: Expression to find the minimum of
+        
+    Returns:
+        A FunctionExpression representing the min function
+        
+    Example:
+        >>> min(prop("p", "age"))  # Returns: min(p.age)
+    """
+    return FunctionExpression("min", [expression])
+
+
+def max(expression: Expression) -> FunctionExpression:
+    """
+    Create a max function expression.
+    
+    Args:
+        expression: Expression to find the maximum of
+        
+    Returns:
+        A FunctionExpression representing the max function
+        
+    Example:
+        >>> max(prop("p", "age"))  # Returns: max(p.age)
+    """
+    return FunctionExpression("max", [expression])

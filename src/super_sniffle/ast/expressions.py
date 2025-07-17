@@ -65,13 +65,27 @@ class Expression:
         """
         return NotExpression(self)
     
-    def __eq__(self, other: Any) -> "ComparisonExpression":
-        """Equality comparison using == operator."""
-        return ComparisonExpression(self, "=", other)
+    def __eq__(self, other: Any) -> Any:
+        """
+        Equality comparison using == operator.
+        
+        Returns:
+            ComparisonExpression for query building or bool for actual comparisons
+        """
+        if isinstance(other, Expression):
+            return ComparisonExpression(self, "=", other)
+        return NotImplemented
     
-    def __ne__(self, other: Any) -> "ComparisonExpression":
-        """Inequality comparison using != operator."""
-        return ComparisonExpression(self, "<>", other)
+    def __ne__(self, other: Any) -> Any:
+        """
+        Inequality comparison using != operator.
+        
+        Returns:
+            ComparisonExpression for query building or bool for actual comparisons
+        """
+        if isinstance(other, Expression):
+            return ComparisonExpression(self, "<>", other)
+        return NotImplemented
 
 @dataclass(frozen=True)
 class ComparisonExpression(Expression):
@@ -428,19 +442,19 @@ class Parameter(Expression):
 class Literal(Expression):
     """
     Represents a literal value in a query.
-    
+
     Attributes:
         value: The literal value (string, number, boolean, etc.)
     """
     value: Any
-    
+
     def to_cypher(self) -> str:
         """
         Convert literal to Cypher string.
-        
+
         Returns:
             Cypher representation of the literal value
-            
+
         Example:
             >>> Literal("Alice")  # Returns: "'Alice'"
             >>> Literal(42)       # Returns: "42"
@@ -456,6 +470,53 @@ class Literal(Expression):
             return "null"
         else:
             return str(self.value)
+            
+@dataclass(frozen=True)
+class FunctionExpression(Expression):
+    """
+    Represents a function call in Cypher.
+
+    Attributes:
+        function_name: The name of the function (e.g., "count", "sum")
+        arguments: List of arguments to the function (each an Expression)
+        distinct: Whether the DISTINCT keyword is used (default: False)
+    """
+    function_name: str
+    arguments: list
+    distinct: bool = False
+
+    def to_cypher(self) -> str:
+        """
+        Convert function call to Cypher string.
+
+        Returns:
+            Cypher representation of the function call
+
+        Example:
+            >>> FunctionExpression("count", [Property("p", "name")], distinct=True)
+            >>> # Returns: "count(DISTINCT p.name)"
+        """
+        if self.function_name.lower() == "count" and len(self.arguments) == 0:
+            return "count(*)"
+        args_str = ", ".join(arg.to_cypher() for arg in self.arguments)
+        distinct_str = "DISTINCT " if self.distinct else ""
+        return f"{self.function_name}({distinct_str}{args_str})"
+        
+    def as_(self, alias: str) -> str:
+        """
+        Create an alias for the function expression.
+        
+        Args:
+            alias: The alias name
+            
+        Returns:
+            A string representation of the function expression with alias
+            
+        Example:
+            >>> count_expr = count().as_("total")
+            >>> # Returns: "count(*) AS total"
+        """
+        return f"{self.to_cypher()} AS {alias}"
 
 
 @dataclass(frozen=True)

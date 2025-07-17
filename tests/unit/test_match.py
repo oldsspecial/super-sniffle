@@ -54,11 +54,10 @@ class TestComplexPaths:
     
     def test_complex_path_with_conditions(self):
         """Test complex path with inline conditions."""
-        complex_path = path(
-            node("Person", variable="p1").where(prop("p1", "active") == literal(True)),
-            relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
-            node("Person", variable="p2")
-        )
+        p1 = node("Person", variable="p1").where(prop("p1", "active") == literal(True))
+        p2 = node("Person", variable="p2")
+        rel = relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > literal(2020))
+        complex_path = path(p1, rel, p2)
         query = match(complex_path)
         result = query.to_cypher()
         expected = "MATCH (p1:Person WHERE p1.active = true)-[r:KNOWS WHERE r.since > 2020]->(p2:Person)"
@@ -137,14 +136,15 @@ class TestRealWorldExamples:
         """Test finding active people who know someone in a specific city."""
         p_node = node("Person", variable="p").where(prop("p", "active") == literal(True))
         f_node = node("Person", variable="f")
-        c_node = node("City", variable="c").where( prop("c", "name") == param("city_name"))
+        c_node = node("City", variable="c").where(prop("c", "name") == param("city_name"))
 
         # Create relationships
-        knows_rel = relationship(">", "r", "KNOWS")
-        lives_in_rel = relationship(">", "lives", "LIVES_IN")
+        knows_rel = relationship("KNOWS", direction=">", variable="r")
+        lives_in_rel = relationship("LIVES_IN", direction=">", variable="lives")
 
         # Build path pattern
-        query = match(path(p_node, knows_rel, f_node, lives_in_rel, c_node) )
+        path_pattern = path(p_node, knows_rel, f_node, lives_in_rel, c_node)
+        query = match(path_pattern)
 
         
         result = query.to_cypher()
@@ -266,9 +266,11 @@ class TestEdgeCases:
 
     def test_match_relationship_no_variable(self):
         """Test relationship without variable name."""
-        query = match(
-            node("Person", variable="p").relates_to("", "KNOWS", ">", node("Person", variable="f"))
-        )
+        p_node = node("Person", variable="p")
+        f_node = node("Person", variable="f")
+        rel = relationship("KNOWS", direction=">")
+        path_pattern = path(p_node, rel, f_node)
+        query = match(path_pattern)
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[:KNOWS]->(f:Person)"
         assert result == expected

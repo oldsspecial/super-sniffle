@@ -29,7 +29,8 @@
 - ✅ Fixed complex clause ordering issues (MATCH → WHERE → WITH → RETURN → ORDER BY → SKIP → LIMIT)
 - ✅ Added comprehensive unit tests and real-world examples
 - ✅ Updated all test cases to use proper var() function instead of workarounds
-- 📋 **NEXT PRIORITY**: Aggregation functions, OPTIONAL MATCH
+- ✅ **COMPLETED: Aggregation functions** - Implemented count(), sum(), avg(), min(), max() with GROUP BY support
+- 📋 **NEXT PRIORITY**: Implement OPTIONAL MATCH
 
 ## Active Decisions
 
@@ -93,6 +94,7 @@
 ## Current Implementation Status
 
 ### Completed Components
+- ✅ **Aggregation Functions**: Implemented count(), sum(), avg(), min(), max() with DISTINCT support
 - ✅ **Path API**: Automatic implicit relationships, fixed concatenation logic
 - ✅ **Expression System**: Property, Variable, Parameter, Literal classes with full operator support
 - ✅ **Pattern System**: 
@@ -107,7 +109,8 @@
 - ✅ **API Functions**: 
   - match(), node(), relationship(), path(), prop(), var(), param(), literal()
   - L() helper for label expressions
-  - Quantifier methods: one_or_more(), zero_or_more()
+  - Quantifier methods: one_or极ore(), zero_or_more()
+  - Aggregation functions: count(), sum(), avg(), min(), max()
 
 ### Test Coverage
 - ✅ 100% pass rate on all unit tests (37 tests)
@@ -119,10 +122,9 @@
 ## Next Steps
 
 ### Immediate Tasks
-1. **Add aggregation functions** - Built-in functions like count(), sum(), avg()
-2. **Implement OPTIONAL MATCH** - Left join equivalent for graph queries
-3. **Add support for UNWIND**
-4. **Implement subqueries**
+1. **Implement OPTIONAL MATCH** - Left join equivalent for graph queries
+2. **Add support for UNWIND**
+3. **Implement subqueries**
 
 ### Short-term Goals
 1. Complete all basic Cypher READ clauses

@@ -12,7 +12,7 @@ class TestPathOperators:
     def test_node_plus_relationship(self):
         """Test node + relationship operator."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         path_pattern = n1 + r
         assert isinstance(path_pattern, PathPattern)
         assert path_pattern.to_cypher() == "(n1:Person)-[r:KNOWS]->"
@@ -29,7 +29,7 @@ class TestPathOperators:
         n1 = node("Person", variable="n1")
         existing_path = path(
             node("Person", variable="n2"),
-            relationship(">", "r", "KNOWS"),
+            relationship("KNOWS", direction=">", variable="r"),
             node("Person", variable="n3")
         )
         path_result = n1 + existing_path
@@ -37,17 +37,17 @@ class TestPathOperators:
     
     def test_relationship_plus_node(self):
         """Test relationship + node operator."""
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">",variable= "r")
         n2 = node("Person", variable="n2")
         path = r + n2
         assert path.to_cypher() == "-[r:KNOWS]->(n2:Person)"
     
     def test_relationship_plus_path(self):
         """Test relationship + path operator."""
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         existing_path = path(
             node("Person", variable="n2"),
-            relationship(">", "s", "FRIENDS"),
+            relationship("FRIENDS", direction=">", variable="s"),
             node("Person", variable="n3")
         )
         path_result = r + existing_path
@@ -56,7 +56,7 @@ class TestPathOperators:
     def test_where_chaining_on_path(self):
         """Test where condition chaining on path."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", "r", "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         n2 = node("Person", variable="n2")
         condition = (prop("n1", "age") > literal(30)) & (prop("n2", "age") < literal(40))
         
@@ -82,9 +82,9 @@ class TestPathOperators:
     def test_path_function_with_mixed_types(self):
         """Test path() function with mixed pattern types."""
         n1 = node("Person", variable="n1")
-        r = relationship(">", variable="r", type= "KNOWS")
+        r = relationship("KNOWS", direction=">", variable="r")
         n2 = node("Person", variable="n2")
-        existing_path = path(node("Company", variable="c"), relationship(">", variable="w", type="WORKS_AT"))
+        existing_path = path(node("Company", variable="c"), relationship("WORKS_AT", direction=">", variable="w"))
         
         # All valid combinations
         path1 = path(n1, r, existing_path)

@@ -1,13 +1,19 @@
 # Progress: super-sniffle
 
 ## Project Status
-**Current Phase**: Core Pattern System with Label Expressions Complete - Ready for Aggregation Functions
+**Current Phase**: Aggregation Functions Implemented - Ready for OPTIONAL MATCH
 
-**Overall Progress**: 30%
+**Overall Progress**: 40%
 
-**Last Updated**: July 14, 2025
+**Last Updated**: July 18, 2025
 
 ## What Works
+
+### Aggregation Functions
+- ✅ Implemented FunctionExpression class
+- ✅ Added count(), sum(), avg(), min(), max() functions
+- ✅ Added support for DISTINCT and aliasing
+- ✅ Comprehensive test coverage
 
 ### Path Operator Overloading
 - ✅ Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
@@ -69,11 +75,7 @@
 - ✅ Real-world scenario examples and demos
 
 ## What's In Progress
-
-### Aggregation Functions
-- ⬜ FunctionExpression class implementation
-- ⬜ Built-in function registry
-- ⬜ Aggregation support for GROUP BY semantics
+(No active development items at the moment)
 
 ## Current Status: Path Operator Overloading Implemented! 🚀
 
@@ -102,7 +104,7 @@
 ## What's Next
 
 ### Core Components
-- ⬜ Aggregation functions (count, sum, avg, min, max)
+- ✅ Aggregation functions (count, sum, avg, min, max)
 - ⬜ OPTIONAL MATCH implementation
 - ⬜ UNWIND support
 - ⬜ Subquery implementation

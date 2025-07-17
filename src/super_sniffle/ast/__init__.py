@@ -16,6 +16,7 @@ from .expressions import (
     Variable,
     Parameter,
     Literal,
+    FunctionExpression,
     OrderByExpression,
 )
 
@@ -41,6 +42,7 @@ __all__ = [
     "Variable",
     "Parameter",
     "Literal",
+    "FunctionExpression",
     "OrderByExpression",
     # Pattern classes
     "NodePattern",
