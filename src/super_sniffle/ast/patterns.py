@@ -550,58 +550,6 @@ class PathPattern:
         """
         return self.concat(other)
 
-
-def node(*labels: str, variable: Optional[str] = None, **properties: Any) -> NodePattern:
-    """
-    Create a node pattern with the given labels and properties.
-    
-    Args:
-        *labels: Labels for the node
-        variable: Optional variable name
-        **properties: Properties for the node
-        
-    Returns:
-        NodePattern object
-    """
-    return NodePattern(variable, labels, properties)
-
-
-def relationship(direction: str, type: Optional[str] = None, variable: Optional[str] = None, **properties: Any) -> RelationshipPattern:
-    """
-    Create a relationship pattern with the given type and properties.
-    
-    Args:
-        direction: Relationship direction ("<", ">", or "-" for undirected)
-        type: Relationship type (optional)
-        variable: Optional variable name
-        **properties: Properties for the relationship
-        
-    Returns:
-        RelationshipPattern object
-    """
-    return RelationshipPattern(direction, variable, type, properties)
-
-
-def path(*elements: Union[NodePattern, RelationshipPattern, PathPattern]) -> PathPattern:
-    """
-    Create a path pattern from nodes, relationships, and paths.
-    
-    Args:
-        *elements: Alternating NodePattern, RelationshipPattern, and PathPattern objects
-        
-    Returns:
-        PathPattern object
-    """
-    # Flatten any PathPattern elements
-    flat_elements = []
-    for elem in elements:
-        if isinstance(elem, PathPattern):
-            flat_elements.extend(elem.elements)
-        else:
-            flat_elements.append(elem)
-    return PathPattern(flat_elements)
-
-
 @dataclass(frozen=True)
 class QuantifiedPathPattern:
     """

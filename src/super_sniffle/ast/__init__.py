@@ -1,58 +1,26 @@
-"""
-AST (Abstract Syntax Tree) dataclasses for representing Cypher query structure.
+# Import patterns
+from .patterns.node_pattern import NodePattern
+from .patterns.relationship_pattern import RelationshipPattern
+from .patterns.path_pattern import PathPattern
+from .patterns.quantified_path_pattern import QuantifiedPathPattern
+from .patterns.base_label_expr import BaseLabelExpr, L, LabelAtom
 
-This module contains the dataclass definitions that form the abstract syntax
-tree representation of Cypher queries. These classes provide the structural
-foundation for query construction and manipulation.
-"""
+# Import expressions
+from .expressions.expression import Expression, ComparisonExpression, LogicalExpression, NotExpression
+from .expressions.property import Property  # noqa: E402
+from .expressions.variable import Variable
+from .expressions.parameter import Parameter
+from .expressions.literal import Literal
+from .expressions.function_expression import FunctionExpression
+from .expressions.order_by_expression import OrderByExpression
 
-# Import expression classes
-from .expressions import (
-    Expression,
-    ComparisonExpression,
-    LogicalExpression,
-    NotExpression,
-    Property,
-    Variable,
-    Parameter,
-    Literal,
-    FunctionExpression,
-    OrderByExpression,
-)
-
-# Import pattern classes
-from .patterns import (
-    NodePattern,
-    RelationshipPattern,
-    PathPattern,
-    QuantifiedPathPattern,
-    L,
-)
-
-# TODO: Import other AST classes when implemented
-# from .clauses import Clause, MatchClause, WhereClause, ReturnClause
-
+# Re-export public API
 __all__ = [
-    # Expression classes
-    "Expression",
-    "ComparisonExpression",
-    "LogicalExpression",
-    "NotExpression",
-    "Property",
-    "Variable",
-    "Parameter",
-    "Literal",
-    "FunctionExpression",
-    "OrderByExpression",
-    # Pattern classes
-    "NodePattern",
-    "RelationshipPattern",
-    "PathPattern",
-    "QuantifiedPathPattern",
-    "L",
-    # TODO: Add other classes when implemented
-    # "Clause",
-    # "MatchClause",
-    # "WhereClause", 
-    # "ReturnClause",
+    # Patterns
+    'NodePattern', 'RelationshipPattern', 'PathPattern', 'QuantifiedPathPattern',
+    "BaseLabelExpr", 'L', 'LabelAtom',
+    
+    # Expressions
+    'Expression', 'ComparisonExpression', 'LogicalExpression', 'NotExpression',
+    'Property', 'Variable', 'Parameter', 'Literal', 'FunctionExpression', 'OrderByExpression'
 ]

@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass, field
 
 # Import expression and pattern classes
-from .ast.expressions import Expression, OrderByExpression, Property, Variable, Parameter, Literal, FunctionExpression
-from .ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
+from .ast import Expression, OrderByExpression, Property, Variable, Parameter, Literal, FunctionExpression
+from .ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
 from .clauses.clause import Clause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause

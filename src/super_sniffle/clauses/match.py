@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import List, Union
 
 from .clause import Clause
-from ..ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
+from ..ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
 
 
 @dataclass(frozen=True)
