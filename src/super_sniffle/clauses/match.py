@@ -22,3 +22,17 @@ class MatchClause(Clause):
         """
         patterns_str = ", ".join(p.to_cypher() for p in self.patterns)
         return f"MATCH {patterns_str}"
+
+@dataclass(frozen=True)
+class OptionalMatchClause(Clause):
+    """
+    Represents an OPTIONAL MATCH clause in a Cypher query.
+    """
+    patterns: List[Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]]
+
+    def to_cypher(self) -> str:
+        """
+        Convert the OPTIONAL MATCH clause to a Cypher string.
+        """
+        patterns_str = ", ".join(p.to_cypher() for p in self.patterns)
+        return f"OPTIONAL MATCH {patterns_str}"

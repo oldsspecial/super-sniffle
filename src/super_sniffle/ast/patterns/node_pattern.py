@@ -46,6 +46,10 @@ class NodePattern:
             else:
                 # Otherwise keep as tuple of strings
                 object.__setattr__(self, "labels", tuple(str(item) for item in converted))
+        
+        # If variable is provided, ensure it's not treated as part of the label expression
+        # This was causing issues like (:`(p & Person)`) instead of (p:Person)
+        # We'll remove this conversion and handle variables separately in to_cypher
     
     def where(self, condition: Expression) -> 'NodePattern':
         """
@@ -121,16 +125,25 @@ class NodePattern:
         """
         result = f"({self.variable if self.variable else ''}"
         
-        # Add labels or expressions
+        # Add labels or expressions after variable
         if self.labels:
+            # Handle label expressions
             if isinstance(self.labels, BaseLabelExpr):
-                result += ":" + str(self.labels)
+                labels_str = str(self.labels)
+                # Wrap complex expressions in backticks if they contain operators
+                if any(op in labels_str for op in ["&", "|", "!"]):
+                    result += f":`{labels_str}`"
+                else:
+                    result += f":{labels_str}"
             elif isinstance(self.labels, tuple):
-                # Handle tuple of strings or BaseLabelExpr
-                labels_str = ":".join(str(label) for label in self.labels)
-                result += ":" + labels_str
+                # Handle tuple of strings - join with colons for multiple labels
+                labels_str = ":".join(
+                    str(label) for label in self.labels
+                )
+                result += f":{labels_str}"
             else:
-                result += ":" + str(self.labels)
+                # Handle single string label
+                result += f":{self.labels}"
         
         # Add properties
         if self.properties:

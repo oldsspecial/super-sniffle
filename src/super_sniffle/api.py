@@ -27,6 +27,22 @@ class QueryBuilder:
         from .clauses.match import MatchClause
         return QueryBuilder(self.clauses + [MatchClause(list(patterns))])
 
+    def optional_match(self, *patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]) -> 'QueryBuilder':
+        """
+        Add an OPTIONAL MATCH clause with the given patterns.
+        
+        Args:
+            *patterns: Pattern objects to optionally match against
+            
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().optional_match(node("p", "Person"))
+        """
+        from .clauses.match import OptionalMatchClause
+        return QueryBuilder(self.clauses + [OptionalMatchClause(list(patterns))])
+
     def where(self, condition: Expression) -> 'QueryBuilder':
         from .clauses.where import WhereClause
         return QueryBuilder(self.clauses + [WhereClause(condition)])
@@ -170,6 +186,11 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
         # With inline condition:
         >>> adult = node("Person", variable="p").where(prop("p", "age") > 18)
     """
+    # If first argument is a string and variable is not provided, treat it as a variable
+    if variable is None and labels and isinstance(labels[0], str):
+        variable = labels[0]
+        labels = labels[1:]
+    
     # Convert simple string labels to label atoms
     processed_labels = []
     for label in labels:
@@ -440,3 +461,21 @@ def max(expression: Expression) -> FunctionExpression:
         >>> max(prop("p", "age"))  # Returns: max(p.age)
     """
     return FunctionExpression("max", [expression])
+
+def optional_match(
+    *patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]
+) -> QueryBuilder:
+    """
+    Create an OPTIONAL MATCH clause with the given patterns.
+    
+    Args:
+        *patterns: Pattern objects to optionally match against
+        
+    Returns:
+        A QueryBuilder object that can be chained with other clauses
+        
+    Example:
+        >>> query = optional_match(node("p", "Person")).where(prop("p", "age") > 30)
+    """
+    from .clauses.match import OptionalMatchClause
+    return QueryBuilder([OptionalMatchClause(list(patterns))])

@@ -124,7 +124,7 @@
 ## Next Steps
 
 ### Immediate Tasks
-1. **Implement OPTIONAL MATCH** - Left join equivalent for graph queries
+1. **✅ COMPLETED: Implement OPTIONAL MATCH** - Left join equivalent for graph queries
 2. **Add support for UNWIND**
 3. **Implement subqueries**
 
