@@ -90,7 +90,7 @@ __all__ = [
     "QuantifiedPathPattern",
     "L",
     # Clause classes
-    "Match极ause",
+    "MatchCause",
     "LimitClause",
     "SkipClause",
 ]

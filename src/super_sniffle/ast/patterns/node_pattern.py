@@ -89,7 +89,7 @@ class NodePattern:
             
             >>> # Using defaults for undirected relationship:
             >>> friend_path = person.relates_to("r", "KNOWS", target_node=node("f", "Person"))
-            >>> # Generates: (p:Person)-[极r:KNOWS]-(f:Person)
+            >>> # Generates: (p:Person)-[r:KNOWS]-(f:Person)
         """
         if not rel_type:
             raise ValueError("rel_type is required")

@@ -19,7 +19,7 @@ class RelationshipPattern:
     
     Attributes:
         direction: Relationship direction ("<", ">", or "-" for undirected)
-        variable: Optional variable name for极 the relationship
+        variable: Optional variable name for the relationship
         type: Optional relationship type (e.g., "KNOWS")
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
