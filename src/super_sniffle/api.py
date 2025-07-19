@@ -40,7 +40,7 @@ class QueryBuilder:
         Example:
             >>> query = QueryBuilder().optional_match(node("p", "Person"))
         """
-        from .clauses.match import OptionalMatchClause
+        from .clauses.optional_match import OptionalMatchClause
         return QueryBuilder(self.clauses + [OptionalMatchClause(list(patterns))])
 
     def where(self, condition: Expression) -> 'QueryBuilder':
@@ -461,21 +461,3 @@ def max(expression: Expression) -> FunctionExpression:
         >>> max(prop("p", "age"))  # Returns: max(p.age)
     """
     return FunctionExpression("max", [expression])
-
-def optional_match(
-    *patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]
-) -> QueryBuilder:
-    """
-    Create an OPTIONAL MATCH clause with the given patterns.
-    
-    Args:
-        *patterns: Pattern objects to optionally match against
-        
-    Returns:
-        A QueryBuilder object that can be chained with other clauses
-        
-    Example:
-        >>> query = optional_match(node("p", "Person")).where(prop("p", "age") > 30)
-    """
-    from .clauses.match import OptionalMatchClause
-    return QueryBuilder([OptionalMatchClause(list(patterns))])

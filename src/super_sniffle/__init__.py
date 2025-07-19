@@ -34,7 +34,6 @@ from .api import (
     relationship,
     path,
     match,
-    optional_match,
     asc,
     desc,
     count,
@@ -73,7 +72,6 @@ __all__ = [
     "relationship",
     "path",
     "match",
-    "optional_match",
     "asc",
     "desc",
     "count",
@@ -92,7 +90,7 @@ __all__ = [
     "QuantifiedPathPattern",
     "L",
     # Clause classes
-    "MatchCause",
+    "MatchClause",
     "LimitClause",
     "SkipClause",
 ]
