@@ -6,7 +6,7 @@
 ## Recent Changes
 - ✅ **COMPLETED: Codebase Refactoring** - Split patterns.py and expressions.py into one class per file for better maintainability
 - ✅ **COMPLETED: Operator Overloading for Path Construction**:
-  - Added `__极add__` operator to NodePattern, RelationshipPattern, and PathPattern
+  - Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
   - Enhanced path() function to accept mixed pattern types
   - Implemented WHERE condition chaining for paths
   - Added comprehensive test coverage
@@ -111,7 +111,7 @@
 - ✅ **API Functions**: 
   - match(), node(), relationship(), path(), prop(), var(), param(), literal()
   - L() helper for label expressions
-  - Quantifier methods: one_or极ore(), zero_or_more()
+  - Quantifier methods: one_or_more(), zero_or_more()
   - Aggregation functions: count(), sum(), avg(), min(), max()
 
 ### Test Coverage
