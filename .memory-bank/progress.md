@@ -1,7 +1,7 @@
 # Progress: super-sniffle
 
 ## Project Status
-**Current Phase**: OPTIONAL MATCH Implemented - Ready for UNWIND
+**Current Phase**: Refining OPTIONAL MATCH Implementation
 
 **Overall Progress**: 45%
 
@@ -22,6 +22,7 @@
 
 ### OPTIONAL MATCH
 - ✅ Implemented AST class, API method, string generation, and comprehensive tests
+
 ### Path Operator Overloading
 - ✅ Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
 - ✅ Enhanced path() function to accept mixed pattern types
@@ -84,14 +85,12 @@
 ## What's In Progress
 (No active development items at the moment)
 
-## Current Status: Codebase Refactoring Complete! 🚀
+## Current Status: OPTIONAL MATCH Implemented! ✅
 
 **Recent Achievements**:
-1. Implemented operator overloading for intuitive path construction
-2. Enhanced path() function to accept mixed pattern types
-3. Added WHERE condition chaining for paths
-4. Verified all unit tests pass (including new operator tests)
-5. Updated memory bank documentation
+1. Implemented OPTIONAL MATCH clause with comprehensive tests
+2. Verified all unit tests pass (including new OPTIONAL MATCH tests)
+3. Updated memory bank documentation
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions
@@ -100,6 +99,7 @@
 - **Path Construction**: Automatic handling of consecutive nodes
 - **Path Concatenation**: Correct handling of duplicate nodes
 - **MATCH Clause**: Single patterns, multiple patterns, chaining
+- **OPTIONAL MATCH**: Left join equivalent for graph queries
 - **WHERE Clause**: Filtering with proper clause order and complex chaining
 - **WITH Clause**: String and tuple projections, DISTINCT support
 - **RETURN Clause**: Projections, DISTINCT, return everything (*)
@@ -111,7 +111,6 @@
 ## What's Next
 
 ### Core Components
-- ✅ Aggregation functions (count, sum, avg, min, max)
 - ⬜ UNWIND support
 - ⬜ Subquery implementation
 
@@ -169,6 +168,6 @@ None - all tests passing
 - Memory bank documentation is crucial for context preservation between sessions
 
 ## Success Stories
-- Successfully implemented and tested quantified path patterns
+- Successfully implemented and tested OPTIONAL MATCH clause
 - Fixed complex path concatenation issue
 - Maintained 100% test pass rate through changes
