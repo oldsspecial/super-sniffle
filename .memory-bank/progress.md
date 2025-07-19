@@ -1,11 +1,11 @@
 # Progress: super-sniffle
 
 ## Project Status
-**Current Phase**: Aggregation Functions Implemented - Ready for OPTIONAL MATCH
+**Current Phase**: OPTIONAL MATCH Implemented - Ready for UNWIND
 
-**Overall Progress**: 40%
+**Overall Progress**: 45%
 
-**Last Updated**: July 18, 2025
+**Last Updated**: July 20, 2025
 
 ## What Works
 
@@ -20,6 +20,8 @@
 - ✅ Added support for DISTINCT and aliasing
 - ✅ Comprehensive test coverage
 
+### OPTIONAL MATCH
+- ✅ Implemented AST class, API method, string generation, and comprehensive tests
 ### Path Operator Overloading
 - ✅ Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
 - ✅ Enhanced path() function to accept mixed pattern types
@@ -110,7 +112,6 @@
 
 ### Core Components
 - ✅ Aggregation functions (count, sum, avg, min, max)
-- ⬜ OPTIONAL MATCH implementation
 - ⬜ UNWIND support
 - ⬜ Subquery implementation
 

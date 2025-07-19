@@ -1,9 +1,10 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**Completed Path API Improvements** - Implemented automatic implicit relationship insertion between consecutive nodes and fixed path concatenation logic.
+**Refining OPTIONAL MATCH Implementation** - Reviewing edge cases and ensuring proper integration with other clauses.
 
 ## Recent Changes
+- ✅ **COMPLETED: Implement OPTIONAL MATCH** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: Codebase Refactoring** - Split patterns.py and expressions.py into one class per file for better maintainability
 - ✅ **COMPLETED: Operator Overloading for Path Construction**:
   - Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
@@ -31,7 +32,6 @@
 - ✅ Added comprehensive unit tests and real-world examples
 - ✅ Updated all test cases to use proper var() function instead of workarounds
 - ✅ **COMPLETED: Aggregation functions** - Implemented count(), sum(), avg(), min(), max() with GROUP BY support
-- 📋 **NEXT PRIORITY**: Implement OPTIONAL MATCH
 
 ## Active Decisions
 
@@ -124,9 +124,8 @@
 ## Next Steps
 
 ### Immediate Tasks
-1. **✅ COMPLETED: Implement OPTIONAL MATCH** - Left join equivalent for graph queries
-2. **Add support for UNWIND**
-3. **Implement subqueries**
+1. **Add support for UNWIND**
+2. **Implement subqueries**
 
 ### Short-term Goals
 1. Complete all basic Cypher READ clauses
