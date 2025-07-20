@@ -1,9 +1,10 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**Refining OPTIONAL MATCH Implementation** - Reviewing edge cases and ensuring proper integration with other clauses.
+**Implementing UNWIND** - Adding support for UNWIND clause with expression and variable binding.
 
 ## Recent Changes
+- ✅ **COMPLETED: Implement UNWIND clause** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: Implement OPTIONAL MATCH** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: Codebase Refactoring** - Split patterns.py and expressions.py into one class per file for better maintainability
 - ✅ **COMPLETED: Operator Overloading for Path Construction**:
@@ -124,7 +125,7 @@
 ## Next Steps
 
 ### Immediate Tasks
-1. **Add support for UNWIND**
+1. ✅ **Add support for UNWIND**
 2. **Implement subqueries**
 
 ### Short-term Goals

@@ -85,7 +85,7 @@
 ## What's In Progress
 (No active development items at the moment)
 
-## Current Status: OPTIONAL MATCH Implemented! ✅
+## Current Status: UNWIND Implemented! ✅
 
 **Recent Achievements**:
 1. Implemented OPTIONAL MATCH clause with comprehensive tests
@@ -111,7 +111,7 @@
 ## What's Next
 
 ### Core Components
-- ⬜ UNWIND support
+- ✅ UNWIND support
 - ⬜ Subquery implementation
 
 ### Development Infrastructure

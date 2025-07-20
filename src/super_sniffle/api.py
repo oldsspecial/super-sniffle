@@ -14,6 +14,7 @@ from .ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPa
 from .clauses.clause import Clause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
+from .clauses.unwind import UnwindClause
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,22 @@ class QueryBuilder:
         """
         return CompoundQuery(queries=[self, other], union_operators=["UNION ALL"])
 
+    def unwind(self, expression: Expression, variable: str) -> 'QueryBuilder':
+        """
+        Add an UNWIND clause to the query.
+        
+        Args:
+            expression: The expression to unwind (e.g., a list literal or variable)
+            variable: The variable name for the unwound items
+            
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().unwind(literal([1,2,3]), "num")
+        """
+        return QueryBuilder(self.clauses + [UnwindClause(expression, variable)])
+
     def to_cypher(self) -> str:
         """
         Converts the constructed query to a Cypher string.
@@ -159,6 +176,23 @@ def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern, Quanti
         >>> query = match(node("p", "Person")).where(prop("p", "age") > 30)
     """
     return QueryBuilder([MatchClause(list(patterns))])
+
+
+def unwind(expression: Expression, variable: str) -> QueryBuilder:
+    """
+    Create an UNWIND clause with the given expression and variable.
+    
+    Args:
+        expression: The expression to unwind (e.g., a list literal or variable)
+        variable: The variable name for the unwound items
+        
+    Returns:
+        A QueryBuilder object that can be chained with other clauses
+        
+    Example:
+        >>> query = unwind(literal([1,2,3]), "num").return_("num")
+    """
+    return QueryBuilder([UnwindClause(expression, variable)])
 
 
 def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **properties: Any) -> NodePattern:
