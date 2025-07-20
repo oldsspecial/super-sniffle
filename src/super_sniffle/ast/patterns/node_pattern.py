@@ -4,6 +4,8 @@ from typing import Optional, Tuple, Dict, Any, Union
 from .base_label_expr import BaseLabelExpr, L
 from ..expressions import Expression
 from .utils import format_value
+from .relationship_pattern import RelationshipPattern  # Add import
+from .path_pattern import PathPattern  # Add import
 
 @dataclass(frozen=True)
 class NodePattern:
@@ -71,8 +73,10 @@ class NodePattern:
     def relates_to(self, variable: Optional[str] = None, rel_type: str = "", 
                   direction: str = "-", 
                   target_node: Optional['NodePattern'] = None,
-                  **properties: Any) -> Union['RelationshipPattern', 'PathPattern']:  # noqa: F821
+                  **properties: Any) -> Union[RelationshipPattern, PathPattern]:  # Remove quotes around types
         """
+        [DEPRECATED] Use relationship() instead.
+        
         Create a relationship from this node to another node.
         
         Args:
@@ -95,6 +99,8 @@ class NodePattern:
             >>> friend_path = person.relates_to("r", "KNOWS", target_node=node("f", "Person"))
             >>> # Generates: (p:Person)-[r:KNOWS]-(f:Person)
         """
+        import warnings
+        warnings.warn("relates_to is deprecated; use relationship() instead", DeprecationWarning)
         if not rel_type:
             raise ValueError("rel_type is required")
         
@@ -158,7 +164,45 @@ class NodePattern:
         result += ")"
         return result
     
-    def __add__(self, other: Union['NodePattern', 'RelationshipPattern', 'PathPattern']) -> 'PathPattern':  # noqa: F821
+    def relationship(self, *types: str, direction: str = "-", variable: Optional[str] = None, **properties: Any) -> RelationshipPattern:
+        """
+        Create a relationship pattern starting from this node.
+        
+        Args:
+            *types: Relationship types (e.g., "KNOWS", "FOLLOWS")
+            direction: Relationship direction ("<", ">", or "-" for undirected, default: "-")
+            variable: Optional variable name for the relationship
+            **properties: Relationship properties
+            
+        Returns:
+            A RelationshipPattern object representing the relationship
+            
+        Example:
+            >>> person = node("p", "Person")
+            >>> knows_rel = person.relationship("KNOWS", direction=">")
+            >>> knows_rel.node("f", "Person")  # Generates: (p:Person)-[:KNOWS]->(f:Person)
+        """
+        # Import locally to avoid circular dependency
+        from .relationship_pattern import RelationshipPattern
+        
+        # Map direction to RelationshipPattern's internal representation
+        if direction in ("->", ">"):
+            direction = ">"
+        elif direction in ("<-", "<"):
+            direction = "<"
+        elif direction not in ("-", "--"):
+            direction = "-"
+        
+        # Create the relationship pattern
+        return RelationshipPattern(
+            direction=direction,
+            variable=variable,
+            type="|".join(types) if types else "",
+            properties=properties,
+            start_node=self  # Store reference to start node
+        )
+        
+    def __add__(self, other: Union[NodePattern, RelationshipPattern, PathPattern]) -> PathPattern:  # Remove quotes around types
         """Enable operator overloading for path construction."""
         # Import locally to avoid circular dependencies
         from .relationship_pattern import RelationshipPattern

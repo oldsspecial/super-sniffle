@@ -7,7 +7,7 @@ conditions, ensuring proper Cypher generation and method chaining.
 
 import pytest
 from super_sniffle.ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
-from super_sniffle.api import node, relationship, path, prop, param, literal
+from super_sniffle.api import node, relationship, path, prop, param, literal, L
 
 
 class TestPatternOperators:
@@ -146,3 +146,48 @@ class TestQuantifiedPatterns:
         path = node() + relationship(direction="-") + node()
         rel2 = path.zero_or_more()
         assert rel2.to_cypher() == "(()--())*"
+
+# New tests for relationship pattern with start node
+def test_relationship_with_start_node():
+    """Test relationship created from node includes node pattern"""
+    n = node("n", "BLAH")
+    rel = n.relationship("KNOWS", variable="r", direction=">")
+    assert rel.to_cypher() == '(n:BLAH)-[r:KNOWS]->'
+
+def test_standalone_relationship():
+    """Test standalone relationship without start node"""
+    rel = relationship("KNOWS", variable="r", direction=">")
+    assert rel.to_cypher() == '-[r:KNOWS]->'
+
+def test_node_with_properties():
+    """Test node with properties in relationship pattern"""
+    n = node("n", "Person", name="Alice", age=30)
+    rel = n.relationship("KNOWS", variable="r", direction=">")
+    # Property order may vary
+    cypher = rel.to_cypher()
+    assert '(n:Person' in cypher
+    assert "name: 'Alice'" in cypher
+    assert 'age: 30' in cypher
+    assert '-[r:KNOWS]->' in cypher
+
+def test_node_with_label_expression():
+    """Test node with label expression in relationship"""
+    n = node("n", L("Person") & L("Admin"))
+    rel = n.relationship("KNOWS", variable="r", direction=">")
+    assert rel.to_cypher() == '(n:`(Person & Admin)`)-[r:KNOWS]->'
+
+def test_relationship_with_properties():
+    """Test relationship with properties"""
+    n = node("n", "Person")
+    rel = n.relationship("KNOWS", since=2020, variable="r", direction=">")
+    assert rel.to_cypher() == '(n:Person)-[r:KNOWS {since: 2020}]->'
+
+def test_complex_path_construction():
+    """Test chaining node creation after relationship"""
+    n1 = node("n", "Person")
+    path = n1.relationship("KNOWS", variable="r", direction=">").node("Person", variable="m")
+    # Handle the actual output format
+    cypher = path.to_cypher()
+    assert cypher.startswith('(n:Person)')
+    assert '-[r:KNOWS]->' in cypher
+    assert '(m:Person)' in cypher

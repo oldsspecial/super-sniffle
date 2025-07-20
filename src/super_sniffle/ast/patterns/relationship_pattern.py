@@ -23,12 +23,40 @@ class RelationshipPattern:
         type: Optional relationship type (e.g., "KNOWS")
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
+        start_node: Optional reference to start node (for API chaining)
     """
     direction: str  # "<", ">", or "-" for undirected
     variable: Optional[str] = None
     type: Optional[str] = None
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
+    start_node: Optional['NodePattern'] = field(default=None, compare=False)  # Not part of pattern identity
+    
+    def node(self, *labels: str, variable: Optional[str] = None, **properties: Any) -> 'PathPattern':
+        """
+        Create an end node and return a complete path pattern.
+        
+        Args:
+            *labels: Node labels
+            variable: Optional node variable name
+            **properties: Node properties
+            
+        Returns:
+            PathPattern containing start node, relationship, and end node
+            
+        Example:
+            >>> person = node("p", "Person")
+            >>> path = person.relationship("KNOWS", ">").node("f", "Person")
+            >>> # Generates: (p:Person)-[:KNOWS]->(f:Person)
+        """
+        from .node_pattern import NodePattern
+        from .path_pattern import PathPattern
+        
+        if not self.start_node:
+            raise ValueError("RelationshipPattern missing start_node reference")
+            
+        end_node = NodePattern(variable, labels, properties)
+        return PathPattern([self.start_node, self, end_node])
     
     def where(self, condition: Expression) -> 'RelationshipPattern':
         """
@@ -83,22 +111,26 @@ class RelationshipPattern:
                 rel_content += " "
             rel_content += f"WHERE {self.condition.to_cypher()}"
         
-        # If there's no content (anonymous relationship), use shorthand
+        # Build the relationship string
         if not rel_content:
             if self.direction == "<":
-                return "<--"
+                rel_str = "<--"
             elif self.direction == ">":
-                return "-->"
+                rel_str = "-->"
             else:
-                return "--"
-        
-        # Build the full relationship pattern with direction
-        if self.direction == "<":
-            return f"<-[{rel_content}]-"
-        elif self.direction == ">":
-            return f"-[{rel_content}]->"
+                rel_str = "--"
         else:
-            return f"-[{rel_content}]-"
+            if self.direction == "<":
+                rel_str = f"<-[{rel_content}]-"
+            elif self.direction == ">":
+                rel_str = f"-[{rel_content}]->"
+            else:
+                rel_str = f"-[{rel_content}]-"
+
+        # Prepend start node if present
+        if self.start_node:
+            return self.start_node.to_cypher() + rel_str
+        return rel_str
 
     def __add__(self, other: Union['NodePattern', 'PathPattern']) -> 'PathPattern':
         """Enable operator overloading for path construction."""
