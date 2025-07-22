@@ -102,9 +102,9 @@ def relationship_query():
     # Build the complete path pattern using the path() constructor
     complex_path = path(
         person,
-        relationship(">", "r1", "KNOWS"),
+        relationship("KNOWS", direction=">", variable="r1"),
         friend,
-        relationship(">", "r2", "LIVES_IN"),
+        relationship("LIVES_IN", direction=">", variable="r2"),
         city
     )
     
@@ -213,21 +213,21 @@ def demonstrate_patterns():
     
     # Basic relationship patterns
     print("\n3. Basic Relationship Patterns:")
-    knows_rel = relationship(">", "r", "KNOWS")
-    print("relationship('>', 'r', 'KNOWS')")
+    knows_rel = relationship("KNOWS", direction=">", variable="r")
+    print("relationship('KNOWS', direction='>', variable='r')")
     print(f"Cypher: {knows_rel.to_cypher()}")
     
     # Relationship with inline condition
     print("\n4. Relationship with Inline Condition:")
-    recent_knows = relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020))
-    print("relationship('>', 'r', 'KNOWS').where(prop('r', 'since') > 2020)")
+    recent_knows = relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > literal(2020))
+    print("relationship('KNOWS', direction='>', variable='r').where(prop('r', 'since') > 2020)")
     print(f"Cypher: {recent_knows.to_cypher()}")
     
     # Path patterns
     print("\n5. Path Patterns:")
     friend_path = path(
         node("p1", "Person"),
-        relationship(">", "r", "KNOWS"),
+        relationship("KNOWS", direction=">", variable="r"),
         node("p2", "Person")
     )
     print("path(node('p1', 'Person'), relationship('>', 'r', 'KNOWS'), node('p2', 'Person'))")
@@ -237,7 +237,7 @@ def demonstrate_patterns():
     print("\n6. Complex Path with Multiple Inline Conditions:")
     complex_path = path(
         node("p1", "Person").where(prop("p1", "active") == literal(True)),
-        relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
+        relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > literal(2020)),
         node("p2", "Person").where(prop("p2", "age") > literal(18))
     )
     print("Complex path with inline conditions:")
@@ -311,12 +311,12 @@ def demonstrate_match_clause():
     print("match(node('p', 'Person').where(prop('p', 'age') > 25))")
     print(f"Cypher: {query2.to_cypher()}")
     
-    # MATCH with relationships using relates_to
-    print("\n3. MATCH with relates_to Method:")
+    # MATCH with relationships using path() and relationship()
+    print("\n3. MATCH with path() and relationship():")
     person = node("p", "Person")
     friend = node("f", "Person")
-    query3 = match(person.relates_to("r", "KNOWS", ">", friend))
-    print("match(person.relates_to('r', 'KNOWS', '>', friend))")
+    query3 = match(path(person, relationship("KNOWS", direction=">", variable="r"), friend))
+    print("match(path(person, relationship('KNOWS', direction='>', variable='r'), friend))")
     print(f"Cypher: {query3.to_cypher()}")
     
     # Multiple MATCH clauses
@@ -328,14 +328,16 @@ def demonstrate_match_clause():
     print("match(node('p', 'Person')).match(node('c', 'Company'))")
     print(f"Cypher: {query4.to_cypher()}")
     
-    # Complex path with relates_to
-    print("\n5. Complex Path with relates_to:")
+    # Complex path with path() and relationship()
+    print("\n5. Complex Path with path() and relationship():")
     query5 = match(
-        node("p", "Person").where(prop("p", "active") == literal(True))
-        .relates_to("r", "KNOWS", ">", 
-                   node("f", "Person")
-                   .relates_to("lives", "LIVES_IN", ">", 
-                              node("c", "City").where(prop("c", "name") == param("city_name"))))
+        path(
+            node("p", "Person").where(prop("p", "active") == literal(True)),
+            relationship("KNOWS", direction=">", variable="r"),
+            node("f", "Person"),
+            relationship("LIVES_IN", direction=">", variable="lives"),
+            node("c", "City").where(prop("c", "name") == param("city_name"))
+        )
     )
     print("Complex chained relates_to:")
     print(f"Cypher: {query5.to_cypher()}")

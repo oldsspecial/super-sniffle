@@ -63,8 +63,11 @@ print(query)
 # Basic relationship pattern
 query = (
     match(
-        node("p", "Person")
-        .relates_to(">", "KNOWS", node("f", "Person"))
+        path(
+            node("Person", variable="p"),
+            relationship("KNOWS", direction=">"),
+            node("Person", variable="f")
+        )
     )
     .return_("p.name", "f.name")
     .to_cypher()
@@ -73,8 +76,11 @@ query = (
 # Label expressions and quantified paths
 query = (
     match(
-        node("p", L("Person") & L("Employee"))
-        .relates_to("r", "KNOWS*1..5", ">", node("f", "Person"))
+        path(
+            node(L("Person") & L("Employee"), variable="p"),
+            relationship("KNOWS", direction=">"),
+            node("Person", variable="f")
+        )
     )
     .where(prop("p", "department").equals("Engineering"))
     .return_("p.name", "f.name")
@@ -101,9 +107,13 @@ def build_person_query(min_age, city_name):
 def build_person_query():
     return (
         match(
-            node("Person", variable="p")
-            .relates_to("r1", "KNOWS", ">", node("Person", variable="f"))
-            .relates_to("r2", "LIVES_IN", ">", node("City", variable="c"))
+            path(
+                node("Person", variable="p"),
+                relationship("KNOWS", direction=">", variable="r1"),
+                node("Person", variable="f"),
+                relationship("LIVES_IN", direction=">", variable="r2"),
+                node("City", variable="c")
+            )
         )
         .where(
             prop("p", "age").gt(param("min_age"))

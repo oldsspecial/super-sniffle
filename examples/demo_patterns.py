@@ -50,19 +50,19 @@ def main():
     # Basic relationship patterns
     print("\n3. Basic Relationship Patterns:")
     
-    knows_rel = relationship(">", "r", "KNOWS")
-    print(f"relationship('>', 'r', 'KNOWS')")
+    knows_rel = relationship("KNOWS", direction=">", variable="r")
+    print(f"relationship('KNOWS', direction='>', variable='r')")
     print(f"Cypher: {knows_rel.to_cypher()}")
     
-    works_for_rel = relationship(">", "w", "WORKS_FOR", since=2020)
-    print(f"\nrelationship('>', 'w', 'WORKS_FOR', since=2020)")
+    works_for_rel = relationship("WORKS_FOR", direction=">", variable="w", since=2020)
+    print(f"\nrelationship('WORKS_FOR', direction='>', variable='w', since=2020)")
     print(f"Cypher: {works_for_rel.to_cypher()}")
     
     # Relationship patterns with inline WHERE conditions
     print("\n4. Relationship Patterns with Inline WHERE Conditions:")
     
-    recent_knows = relationship(">", "r", "KNOWS").where(prop("r", "since") > param("start_year"))
-    print(f"relationship('>', 'r', 'KNOWS').where(prop('r', 'since') > param('start_year'))")
+    recent_knows = relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > param("start_year"))
+    print(f"relationship('KNOWS', direction='>', variable='r').where(prop('r', 'since') > param('start_year'))")
     print(f"Cypher: {recent_knows.to_cypher()}")
     
     strong_friendship = relationship("-", "f", "FRIENDS").where(
@@ -77,7 +77,7 @@ def main():
     
     simple_path = path(
         node("p1", "Person"),
-        relationship(">", "r", "KNOWS"),
+        relationship("KNOWS", direction=">", variable="r"),
         node("p2", "Person")
     )
     print("path(node('p1', 'Person'), relationship('>', 'r', 'KNOWS'), node('p2', 'Person'))")
@@ -88,7 +88,7 @@ def main():
     
     filtered_friendship = path(
         node("p1", "Person").where(prop("p1", "active") == literal(True)),
-        relationship(">", "r", "KNOWS").where(prop("r", "since") > literal(2020)),
+        relationship("KNOWS", direction=">", variable="r").where(prop("r", "since") > literal(2020)),
         node("p2", "Person").where(prop("p2", "age") > literal(18))
     )
     print("Complex path with multiple inline conditions:")
