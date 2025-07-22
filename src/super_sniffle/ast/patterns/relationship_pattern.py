@@ -112,20 +112,21 @@ class RelationshipPattern:
             rel_content += f"WHERE {self.condition.to_cypher()}"
         
         # Build the relationship string
-        if not rel_content:
-            if self.direction == "<":
-                rel_str = "<--"
-            elif self.direction == ">":
-                rel_str = "-->"
-            else:
-                rel_str = "--"
-        else:
-            if self.direction == "<":
+        if self.direction == "<":
+            if rel_content:
                 rel_str = f"<-[{rel_content}]-"
-            elif self.direction == ">":
+            else:
+                rel_str = "<--"
+        elif self.direction == ">":
+            if rel_content:
                 rel_str = f"-[{rel_content}]->"
             else:
+                rel_str = "-->"
+        else:
+            if rel_content:
                 rel_str = f"-[{rel_content}]-"
+            else:
+                rel_str = "--"
 
         # Prepend start node if present
         if self.start_node:

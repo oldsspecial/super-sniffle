@@ -88,19 +88,6 @@ class PathPattern:
     variable: Optional[str] = None
 ```
 
-### Visitor Pattern
-For traversing the AST and generating Cypher strings:
-
-```python
-class CypherGenerator(Visitor):
-    def visit_node(self, node: Node) -> str:
-        # Generate Cypher for a node
-        
-    def visit_relationship(self, rel: Relationship) -> str:
-        # Generate Cypher for a relationship
-        
-    # Other visit methods...
-```
 
 ## Key Technical Decisions
 

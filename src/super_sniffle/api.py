@@ -104,6 +104,11 @@ class QueryBuilder:
         Combines this query with another using UNION ALL.
         """
         return CompoundQuery(queries=[self, other], union_operators=["UNION ALL"])
+    
+    def call_subquery(self, subquery: 'QueryBuilder', variables: Optional[Union[str, List[str]]] = None) -> 'QueryBuilder':
+        """Add a CALL subquery clause to the query."""
+        from .clauses.call_subquery import CallSubqueryClause
+        return QueryBuilder(self.clauses + [CallSubqueryClause(subquery, variables)])
 
     def unwind(self, expression: Expression, variable: str) -> 'QueryBuilder':
         """
@@ -130,6 +135,7 @@ class QueryBuilder:
         from .clauses.limit import LimitClause
         from .clauses.skip import SkipClause
         from .clauses.order_by import OrderByClause
+        from .clauses.call_subquery import CallSubqueryClause
 
         # Separate pagination clauses from the rest
         pagination_clauses = []
@@ -154,8 +160,8 @@ class QueryBuilder:
         )
 
         # A special case for queries that end with LIMIT/SKIP without a RETURN or WITH.
-        # A RETURN * should be implicitly added.
-        if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause)) for c in other_clauses):
+        # A RETURN * should be implicitly added, but not for CALL subquery clauses
+        if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause, CallSubqueryClause)) for c in other_clauses):
             other_clauses.append(ReturnClause(["*"]))
 
         all_clauses = other_clauses + sorted_pagination_clauses
@@ -495,3 +501,44 @@ def max(expression: Expression) -> FunctionExpression:
         >>> max(prop("p", "age"))  # Returns: max(p.age)
     """
     return FunctionExpression("max", [expression])
+
+
+def call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[str]]] = None) -> QueryBuilder:
+    """
+    Create a CALL subquery clause.
+    
+    This function creates a CALL subquery clause that allows running subqueries
+    with variable scoping in Neo4j Cypher. It supports three calling patterns:
+    
+    1. CALL { ... } - no variable scoping
+    2. CALL(var1, var2) { ... } - specific variable scoping  
+    3. CALL(*) { ... } - all variables scoping
+    
+    Args:
+        subquery: The inner query to execute as a subquery
+        variables: Variable scoping specification:
+            - None: CALL() - no variables
+            - "*": CALL(*) - all variables
+            - List[str]: CALL(var1, var2) - specific variables
+            
+    Returns:
+        A QueryBuilder object with the CALL subquery clause
+        
+    Examples:
+        >>> # Basic subquery without variable scoping
+        >>> inner = match(node("p", "Person")).return_("p.name")
+        >>> query = call_subquery(inner)
+        >>> # CALL { MATCH (p:Person) RETURN p.name }
+        
+        >>> # Subquery with specific variable scoping
+        >>> inner = match(node("p", "Person")).return_("p.name")
+        >>> query = call_subquery(inner, ["p"])
+        >>> # CALL(p) { MATCH (p:Person) RETURN p.name }
+        
+        >>> # Subquery with all variables scoping
+        >>> inner = match(node("p", "Person")).return_("p.name")
+        >>> query = call_subquery(inner, "*")
+        >>> # CALL(*) { MATCH (p:Person) RETURN p.name }
+    """
+    from .clauses.call_subquery import CallSubqueryClause
+    return QueryBuilder([CallSubqueryClause(subquery, variables)])

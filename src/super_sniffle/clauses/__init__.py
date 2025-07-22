@@ -13,6 +13,7 @@ from .with_ import WithClause
 from .order_by import OrderByClause
 from .limit import LimitClause
 from .skip import SkipClause
+from .call_subquery import CallSubqueryClause
 
 __all__ = [
     "MatchClause",
@@ -22,4 +23,5 @@ __all__ = [
     "OrderByClause",
     "LimitClause",
     "SkipClause",
+    "CallSubqueryClause",
 ]

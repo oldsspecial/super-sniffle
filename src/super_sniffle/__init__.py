@@ -41,6 +41,7 @@ from .api import (
     avg,
     min,
     max,
+    call_subquery,
 )
 
 # AST components (for advanced usage)
@@ -79,6 +80,7 @@ __all__ = [
     "avg",
     "min",
     "max",
+    "call_subquery",
     
     # AST classes
     "Property",
