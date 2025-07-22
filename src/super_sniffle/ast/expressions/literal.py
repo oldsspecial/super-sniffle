@@ -7,8 +7,8 @@ class Literal(Expression):
     
     def to_cypher(self) -> str:
         if isinstance(self.value, str):
-            escaped = self.value.replace('"', '\\"')
-            return f'"{escaped}"'
+            escaped = self.value.replace("'", "\\'")
+            return f"'{escaped}'"
         elif isinstance(self.value, bool):
             return "true" if self.value else "false"
         elif self.value is None:

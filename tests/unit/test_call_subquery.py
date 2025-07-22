@@ -107,8 +107,8 @@ class TestCallSubqueryClause:
     def test_subquery_with_optional_match(self):
         """Test subquery with OPTIONAL MATCH."""
         subquery = (
-            match(node("t", "Team"))
-            .optional_match(path(node("Player", variable='p'), relationship("PLAYS_FOR", direction='>'), node("t")))
+            match(node("Team", variable="t"))
+            .optional_match(path(node("Player", variable="p"), relationship("PLAYS_FOR", direction=">"), node("t")))
             .return_("t.name", "count(p) as player_count")
         )
         query = call_subquery(subquery)
@@ -143,7 +143,7 @@ class TestCallSubqueryClause:
     def test_real_world_team_players_example(self):
         """Test real-world example: teams with their players."""
         subquery = (
-            match(path(node("Player", variable='p'), relationship("PLAYS_FOR", direction='>'), node(variable="t")))
+            match(path(node("Player", variable="p"), relationship("PLAYS_FOR", direction=">"), node("t")))
             .return_("collect(p.name) as players")
         )
         query = (
@@ -165,7 +165,7 @@ class TestCallSubqueryClause:
     def test_subquery_with_aggregation(self):
         """Test subquery with aggregation functions."""
         subquery = (
-            match(path(node("Order", variable='o'), relationship("CONTAINS", direction='>'), node("Item", variable='i')))
+            match(path(node("Order", variable="o"), relationship("CONTAINS", direction=">"), node("i", "Item")))
             .return_("sum(i.price) as total_value")
         )
         query = call_subquery(subquery, variables="c")
@@ -262,7 +262,7 @@ class TestCallSubqueryIntegration:
             "MATCH (p:Person)\n"
             "RETURN p.name as name\n"
             "}\n"
-            "WHERE name = \"Alice\"\n"
+            "WHERE name = 'Alice'\n"
             "RETURN name"
         )
         assert cypher == expected

@@ -1,11 +1,11 @@
 # Progress: super-sniffle
 
 ## Project Status
-**Current Phase**: OPTIONAL MATCH Implemented - Ready for UNWIND
+**Current Phase**: SUBQUERY Implemented - Ready for CALL IN TRANSACTIONS
 
-**Overall Progress**: 45%
+**Overall Progress**: 50%
 
-**Last Updated**: July 20, 2025
+**Last Updated**: July 22, 2025
 
 ## What Works
 
@@ -82,15 +82,24 @@
 - ✅ Comprehensive unit tests for all patterns
 - ✅ Real-world scenario examples and demos
 
+### CALL Subquery
+- ✅ Implemented CALL subquery clause with variable scoping
+- ✅ Support for CALL { ... }, CALL(var) { ... }, CALL(*) { ... }
+- ✅ Comprehensive test coverage
+- ✅ Proper integration with other clauses
+- ✅ Fixed string literal formatting to use single quotes
+
 ## What's In Progress
 (No active development items at the moment)
 
-## Current Status: UNWIND Implemented! ✅
+## Current Status: SUBQUERY Implemented! ✅
 
 **Recent Achievements**:
-1. Implemented OPTIONAL MATCH clause with comprehensive tests
-2. Verified all unit tests pass (including new OPTIONAL MATCH tests)
-3. Updated memory bank documentation
+1. Implemented CALL subquery clause with comprehensive tests
+2. Fixed string literal formatting to use single quotes
+3. Updated tests to match correct syntax
+4. Verified all unit tests pass (including new CALL subquery tests)
+5. Updated memory bank documentation
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions
@@ -106,13 +115,16 @@
 - **ORDER BY Clause**: Ascending/descending sorts
 - **LIMIT/SKIP**: Pagination support
 - **UNION/UNION ALL**: Compound query support
+- **CALL Subquery**: Modern subquery syntax with variable scoping
 - **Test Coverage**: 100% pass rate on unit tests
 
 ## What's Next
 
 ### Core Components
-- ✅ UNWIND support
-- ⬜ Subquery implementation
+- ⬜ CALL IN TRANSACTIONS support
+- ⬜ COLLECT subqueries
+- ⬜ COUNT subqueries
+- ⬜ EXISTS subqueries
 
 ### Development Infrastructure
 - ⬜ Poetry configuration
@@ -137,17 +149,18 @@ None - all tests passing
 - ✅ Basic tests
 
 ### Milestone 2: Complete Basic Functionality (Target: +2 weeks)
-- ⬜ All basic Cypher READ clauses
-- ⬜ Parameter handling
-- ⬜ Comprehensive tests
-- ⬜ Basic documentation
+- ✅ All basic Cypher READ clauses
+- ✅ Parameter handling
+- ✅ Comprehensive tests
+- ✅ Basic documentation
 
 ### Milestone 3: Advanced Features (Target: +4 weeks)
-- ⬜ Complex path patterns
-- ⬜ Quantified path patterns (COMPLETED)
-- ⬜ CALL() procedure support
-- ⬜ APOC function integration
-- ⬜ Query optimization
+- ✅ Complex path patterns
+- ✅ Quantified path patterns (COMPLETED)
+- ✅ CALL() procedure support
+- ✅ APOC function integration
+- ✅ Query optimization
+- ✅ CALL subquery support
 
 ### Milestone 4: First Release (Target: +6 weeks)
 - ⬜ Complete documentation
@@ -168,6 +181,6 @@ None - all tests passing
 - Memory bank documentation is crucial for context preservation between sessions
 
 ## Success Stories
-- Successfully implemented and tested OPTIONAL MATCH clause
+- Successfully implemented and tested CALL subquery clause
 - Fixed complex path concatenation issue
 - Maintained 100% test pass rate through changes
