@@ -110,6 +110,11 @@ class QueryBuilder:
         """Add a CALL subquery clause to the query."""
         from .clauses.call_subquery import CallSubqueryClause
         return QueryBuilder(self.clauses + [CallSubqueryClause(subquery, variables)])
+        
+    def optional_call_subquery(self, subquery: 'QueryBuilder', variables: Optional[Union[str, List[str]]] = None) -> 'QueryBuilder':
+        """Add an OPTIONAL CALL subquery clause to the query."""
+        from .clauses.call_subquery import CallSubqueryClause
+        return QueryBuilder(self.clauses + [CallSubqueryClause(subquery, variables, optional=True)])
 
     def use(self, database: Union[str, Expression]) -> 'QueryBuilder':
         """
@@ -563,11 +568,12 @@ def call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[st
     Create a CALL subquery clause.
     
     This function creates a CALL subquery clause that allows running subqueries
-    with variable scoping in Neo4j Cypher. It supports three calling patterns:
+    with variable scoping in Neo4j Cypher. It supports the following calling patterns:
     
-    1. CALL { ... } - no variable scoping
-    2. CALL(var1, var2) { ... } - specific variable scoping  
-    3. CALL(*) { ... } - all variables scoping
+    1. CALL() { ... } - no variable scoping
+    2. CALL(var) { ... } - single variable scoping
+    3. CALL(var1, var2) { ... } - multiple variables scoping
+    4. CALL(*) { ... } - all variables scoping
     
     Args:
         subquery: The inner query to execute as a subquery
@@ -597,3 +603,41 @@ def call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[st
     """
     from .clauses.call_subquery import CallSubqueryClause
     return QueryBuilder([CallSubqueryClause(subquery, variables)])
+
+def optional_call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[str]]] = None) -> QueryBuilder:
+    """
+    Create an OPTIONAL CALL subquery clause.
+    
+    This function creates an OPTIONAL CALL subquery clause that allows running 
+    subqueries with variable scoping in Neo4j Cypher. The subquery will return 
+    null if no results are found, similar to OPTIONAL MATCH.
+    
+    Supports the same calling patterns as call_subquery:
+    1. OPTIONAL CALL() { ... }
+    2. OPTIONAL CALL(var) { ... }
+    3. OPTIONAL CALL(var1, var2) { ... }
+    4. OPTIONAL CALL(*) { ... }
+    
+    Args:
+        subquery: The inner query to execute as a subquery
+        variables: Variable scoping specification:
+            - None: OPTIONAL CALL() - no variables
+            - "*": OPTIONAL CALL(*) - all variables
+            - List[str]: OPTIONAL CALL(var1, var2) - specific variables
+            
+    Returns:
+        A QueryBuilder object with the OPTIONAL CALL subquery clause
+        
+    Examples:
+        >>> # Basic optional subquery
+        >>> inner = match(node("p", "Person")).return_("p.name")
+        >>> query = optional_call_subquery(inner)
+        >>> # OPTIONAL CALL() { MATCH (p:Person) RETURN p.name }
+        
+        >>> # Optional subquery with variable scoping
+        >>> inner = match(node("p", "Person")).return_("p.name")
+        >>> query = optional_call_subquery(inner, ["p"])
+        >>> # OPTIONAL CALL(p) { MATCH (p:Person) RETURN p.name }
+    """
+    from .clauses.call_subquery import CallSubqueryClause
+    return QueryBuilder([CallSubqueryClause(subquery, variables, optional=True)])

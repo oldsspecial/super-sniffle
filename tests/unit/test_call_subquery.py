@@ -9,6 +9,7 @@ import pytest
 from super_sniffle import (
     match, node, prop, literal, var, call_subquery, path, relationship
 )
+from super_sniffle.api import optional_call_subquery
 
 
 class TestCallSubqueryClause:
@@ -264,5 +265,53 @@ class TestCallSubqueryIntegration:
             "}\n"
             "WHERE name = 'Alice'\n"
             "RETURN name"
+        )
+        assert cypher == expected
+
+
+class TestOptionalCallSubquery:
+    """Test the OPTIONAL CALL subquery functionality."""
+    
+    def test_basic_optional_call_no_variables(self):
+        """Test basic OPTIONAL CALL without variable scoping."""
+        subquery = match(node("p", "Person")).return_("p.name")
+        query = optional_call_subquery(subquery)
+        cypher = query.to_cypher()
+        expected = "OPTIONAL CALL() {\n  MATCH (p:Person)\n  RETURN p.name\n}"
+        assert cypher == expected
+    
+    def test_optional_call_with_variables(self):
+        """Test OPTIONAL CALL with variable scoping."""
+        subquery = match(node("p", "Person")).return_("p")
+        query = optional_call_subquery(subquery, variables=["t", "u"])
+        cypher = query.to_cypher()
+        expected = "OPTIONAL CALL(t, u) {\n  MATCH (p:Person)\n  RETURN p\n}"
+        assert cypher == expected
+    
+    def test_optional_call_with_star(self):
+        """Test OPTIONAL CALL with all variables scoping."""
+        subquery = match(node("p", "Person")).return_("p")
+        query = optional_call_subquery(subquery, variables="*")
+        cypher = query.to_cypher()
+        expected = "OPTIONAL CALL(*) {\n  MATCH (p:Person)\n  RETURN p\n}"
+        assert cypher == expected
+    
+    def test_optional_call_chained_with_match(self):
+        """Test OPTIONAL CALL chained with MATCH clause."""
+        subquery = match(node("p", "Player")).where(prop("p", "team") == var("t")).return_("collect(p) as players")
+        query = (
+            match(node("t", "Team"))
+            .optional_call_subquery(subquery, variables="t")
+            .return_("t", "players")
+        )
+        cypher = query.to_cypher()
+        expected = (
+            "MATCH (t:Team)\n"
+            "OPTIONAL CALL(t) {\n"
+            "  MATCH (p:Player)\n"
+            "  WHERE p.team = t\n"
+            "  RETURN collect(p) as players\n"
+            "}\n"
+            "RETURN t, players"
         )
         assert cypher == expected

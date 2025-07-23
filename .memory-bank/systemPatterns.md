@@ -2,166 +2,214 @@
 
 ## Architecture Overview
 
-super-sniffle follows a layered architecture with clear separation of concerns:
+### Core Design Philosophy
+The super-sniffle library follows a **functional, immutable, and composable** architecture where each component is:
+- **Immutable**: Once created, objects cannot be modified
+- **Composable**: Components can be combined to build complex queries
+- **Type-safe**: Full type hints throughout for IDE support
+- **Testable**: Each component has clear boundaries and behavior
 
+### Key Architectural Patterns
+
+#### 1. AST-Based Design
+The library uses an Abstract Syntax Tree (AST) approach where:
+- **Expressions** represent values and conditions
+- **Patterns** represent graph structures
+- **Clauses** represent query operations
+- **Queries** are composed of ordered clauses
+
+#### 2. Immutable Builder Pattern
+- **QueryBuilder** provides fluent interface for query construction
+- Each method returns a new instance (immutable)
+- Method chaining enables readable query construction
+- Clear separation between construction and string generation
+
+#### 3. Expression System
+**Base Classes:**
+- `Expression`: Base class for all expressions
+- `Property`: Represents property access (node.prop)
+- `Variable`: Represents variable references
+- `Parameter`: Represents query parameters
+- `Literal`: Represents literal values
+- `FunctionExpression`: Represents function calls (count, sum, etc.)
+
+**Operator Overloading:**
+- Comparison operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- Logical operators: `&` (AND), `|` (OR), `~` (NOT)
+- Method-based operations: `.contains()`, `.starts_with()`, etc.
+
+#### 4. Pattern System
+**Node Patterns:**
+- `NodePattern`: Represents nodes with labels and properties
+- Label expressions: `&` (AND), `|` (OR), `!` (NOT)
+- Inline WHERE conditions: `(n:Person WHERE n.age > 30)`
+
+**Relationship Patterns:**
+- `RelationshipPattern`: Represents relationships with types and properties
+- Direction support: `--`, `->`, `<-`
+- Single type constraint per Cypher specification
+
+**Path Patterns:**
+- `PathPattern`: Represents complex traversals
+- `QuantifiedPathPattern`: Variable-length paths with quantifiers
+- Automatic relationship insertion between consecutive nodes
+
+#### 5. Clause System
+**Core Clauses:**
+- `MatchClause`: Basic pattern matching
+- `OptionalMatchClause`: Left join equivalent
+- `WhereClause`: Filtering conditions
+- `WithClause`: Projection and variable binding
+- `ReturnClause`: Final result specification
+- `OrderByClause`: Sorting results
+- `LimitClause`/`SkipClause`: Pagination
+- `UnwindClause`: List unwinding
+- `CallSubqueryClause`: Subquery execution
+- `UseClause`: Database selection
+
+**Clause Ordering:**
 ```
-┌─────────────────────────────────────┐
-│            Public API               │
-└───────────────┬─────────────────────┘
-                │
-┌───────────────▼─────────────────────┐
-│         Query Components            │
-└───────────────┬─────────────────────┘
-                │
-┌───────────────▼─────────────────────┐
-│        AST Construction             │
-└───────────────┬─────────────────────┘
-                │
-┌───────────────▼─────────────────────┐
-│       String Generation             │
-└─────────────────────────────────────┘
+MATCH → WHERE → WITH → CALL → UNWIND → RETURN → ORDER BY → SKIP → LIMIT
 ```
 
-### 1. Public API Layer
-The top-level interface that developers interact with directly. Provides intuitive functions and classes for query construction.
+### 6. Subquery Architecture
+**CALL Subquery:**
+- Variable scoping: CALL { ... }, CALL(var) { ... }, CALL(*) { ... }
+- Integration with USE clause for database selection
+- Proper clause ordering within subqueries
 
-### 2. Query Components Layer
-Implements the building blocks of Cypher queries (nodes, relationships, patterns, clauses) as composable objects.
+### 7. String Generation Patterns
+**Consistent Formatting:**
+- Single quotes for string literals
+- Proper indentation for nested structures
+- Clear separation between clauses
+- Readable multi-line output
 
-### 3. AST Construction Layer
-Transforms the query components into an Abstract Syntax Tree (AST) that represents the structure of the Cypher query.
+### 8. Testing Architecture
+**Test Categories:**
+- Unit tests for individual components
+- Integration tests for clause combinations
+- Real-world scenario tests
+- Edge case coverage
 
-### 4. String Generation Layer
-Traverses the AST to produce properly formatted Cypher query strings.
+**Test Patterns:**
+- Descriptive test names
+- AAA pattern (Arrange, Act, Assert)
+- Comprehensive coverage for all public APIs
 
-## Core Design Patterns
+## Design Decisions
 
-### Immutable Builder Pattern
-Each query operation returns a new query object rather than modifying the existing one. This enables:
-- Method chaining for fluent interfaces
-- Safe composition without side effects
-- Thread safety
-- Easier testing
+### 1. Immutable Objects
+**Rationale:** Prevents accidental mutation and makes reasoning about queries easier
+**Trade-offs:** Slightly more memory usage, but improved safety and predictability
 
+### 2. Single Relationship Type Constraint
+**Rationale:** Aligns with Cypher specification and prevents invalid queries
+**Implementation:** Enforced at API level with clear error messages
+
+### 3. String-based Projections in WITH Clause
+**Rationale:** Provides maximum Cypher compatibility and flexibility
+**Trade-offs:** Less type safety, but more expressive power
+
+### 4. Operator Overloading for Expressions
+**Rationale:** Provides intuitive, Pythonic syntax for building conditions
+**Examples:** `prop('age') > 30`, `prop('name').contains('John')`
+
+### 5. Automatic Relationship Insertion
+**Rationale:** Improves API usability by reducing boilerplate
+**Implementation:** Detects consecutive nodes and inserts implicit relationships
+
+## Code Organization
+
+### Directory Structure
+```
+src/super_sniffle/
+├── api.py              # Public API functions
+├── compound_query.py   # UNION support
+├── ast/                # AST components
+│   ├── expressions/    # Expression classes
+│   └── patterns/       # Pattern classes
+├── clauses/            # Clause implementations
+└── utils/              # Utility functions
+```
+
+### Module Responsibilities
+- **api.py**: Public interface and convenience functions
+- **ast/**: Core AST components (expressions and patterns)
+- **clauses/**: Individual clause implementations
+- **compound_query.py**: Query composition and UNION support
+
+## Integration Patterns
+
+### 1. Query Construction Flow
 ```python
-# Example of immutable builder pattern
-query1 = match(node("n", "Person"))
-query2 = query1.where(prop("n", "age").gt(30))  # query1 remains unchanged
+# Start with patterns
+node = node('Person', 'p')
+rel = relationship('KNOWS', 'r')
+
+# Build query
+query = (match(node)
+         .where(prop('p.name') == 'Alice')
+         .return_(var('p')))
 ```
 
-### Composable Functions
-Pure functions that can be combined to create complex query patterns:
-
+### 2. Subquery Integration
 ```python
-def person_node(var_name):
-    return node(var_name, "Person")
-
-def knows_relationship(from_var, to_var):
-    return relationship(from_var, "KNOWS", to_var)
-
-# Composition
-pattern = person_node("p").relates_to(knows_relationship, person_node("f"))
+# CALL subquery with variable scoping
+subquery = match(node('Person', 'p')).return_(var('p'))
+query = match(node('Company', 'c')).call_subquery(subquery, ['c'])
 ```
 
-### Abstract Syntax Tree (AST)
-Using dataclasses to represent the query structure:
-
+### 3. UNWIND Integration
 ```python
-@dataclass(frozen=True)
-class NodePattern:
-    variable: Optional[str] = None
-    labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = ()
-    properties: Dict[str, Any] = field(default_factory=dict)
-    condition: Optional[Expression] = None
-
-@dataclass(frozen=True)
-class RelationshipPattern:
-    direction: str  # "<", ">", or "-" for undirected
-    variable: Optional[str] = None
-    type: str = ""
-    properties: Dict[str, Any] = field(default_factory=dict)
-    condition: Optional[Expression] = None
-
-@dataclass(frozen=True)
-class PathPattern:
-    elements: Sequence[Union[NodePattern, RelationshipPattern]]
-    variable: Optional[str] = None
+# UNWIND with list processing
+query = (unwind(param('names'), 'name')
+         .match(node('Person', 'p'))
+         .where(prop('p.name') == var('name'))
+         .return_(var('p')))
 ```
 
+## Error Handling Patterns
 
-## Key Technical Decisions
+### 1. Validation at Construction Time
+- Type checking for parameters
+- Relationship type constraints
+- Variable name validation
 
-### 1. Dataclasses for AST
-Using Python's dataclasses for AST nodes provides:
-- Immutability (with frozen=True)
-- Automatic equality and hash methods
-- Clear structure and type hints
-- Serialization capabilities
+### 2. Clear Error Messages
+- Descriptive error messages for invalid operations
+- Helpful suggestions for fixing common mistakes
 
-### 2. Type Hints Throughout
-Comprehensive type annotations for:
-- Better IDE support
-- Static analysis
-- Self-documenting code
-- Catching errors early
+### 3. Type Safety
+- Full type hints throughout
+- MyPy-compatible type annotations
+- IDE-friendly API design
 
-### 3. Functional Approach
-Preference for pure functions and immutable data structures to:
-- Simplify testing
-- Enable composition
-- Reduce side effects
-- Improve code reasoning
+## Performance Considerations
 
-### 4. String Generation Strategy
-Two-phase approach:
-1. Build complete AST first
-2. Generate formatted string in a single pass
+### 1. String Generation
+- Lazy evaluation of string representations
+- Efficient concatenation using join operations
+- Minimal memory overhead for complex queries
 
-This allows for:
-- Optimization before string generation
-- Consistent formatting
-- Proper indentation and line breaks for readability
+### 2. Object Creation
+- Lightweight objects for common patterns
+- Efficient reuse of immutable components
+- Optimized for query construction speed
 
-## Component Relationships
+## Future Extensibility
 
-### Query Building Flow
-1. User creates query components (nodes, relationships, patterns)
-2. Components are assembled into clauses (MATCH, WHERE, etc.)
-3. Clauses are combined into a complete query
-4. Query is converted to an AST
-5. AST is rendered as a Cypher string
+### 1. Plugin Architecture
+- Clear interfaces for adding new clause types
+- Extensible expression system
+- Pattern system supports custom implementations
 
-### Error Handling Strategy
-- Early validation at the component level
-- Type checking through static analysis
-- Runtime validation before string generation
-- Clear error messages with context
+### 2. WRITE Operations
+- Architecture supports extension to CREATE, MERGE, DELETE
+- Clear separation between READ and WRITE operations
+- Consistent API patterns for write operations
 
-## Critical Implementation Paths
-
-### Pattern Construction
-The most complex part of the system, handling:
-- **Label Expressions**: Complex label matching using &, |, and ! operators
-- **Quantified Path Patterns**: Variable-length paths with *, +, and {min,max} quantifiers
-- **Automatic Relationship Insertion**: Implicit "--" relationships between consecutive nodes
-- **Path Concatenation**: Handling duplicate nodes at connection points
-- **Inline Conditions**: WHERE clauses within pattern elements
-- **Pattern Comprehensions**: Advanced Cypher pattern matching
-
-### Parameter Handling
-Safe parameterization of values to prevent injection:
-```python
-# Instead of directly embedding values
-.where(prop("n", "name").equals(param("name")))
-# Generates: WHERE n.name = $name
-```
-
-### Formatting and Indentation
-Ensuring generated queries are readable and maintainable:
-```cypher
-MATCH (p:Person)
-WHERE p.age > 30
-RETURN p.name, p.age
-ORDER BY p.age DESC
-LIMIT 10
-```
+### 3. Query Optimization
+- AST structure enables query analysis
+- Potential for query optimization passes
+- Extensible for custom optimization rules

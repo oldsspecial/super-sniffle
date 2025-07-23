@@ -17,9 +17,10 @@ class CallSubqueryClause(Clause):
     Represents a CALL subquery clause in a Cypher query.
     
     This implements the modern CALL subquery syntax with variable scoping:
-    - CALL { ... } - no variable scoping
+    - CALL() { ... } - no variable scoping
     - CALL(var1, var2) { ... } - specific variable scoping
     - CALL(*) { ... } - all variables scoping
+    - OPTIONAL CALL() { ... } - optional subquery
     
     Args:
         subquery: The inner query to execute as a subquery
@@ -27,9 +28,11 @@ class CallSubqueryClause(Clause):
             - None: CALL() - no variables
             - "*": CALL(*) - all variables
             - List[str]: CALL(var1, var2) - specific variables
+        optional: Whether to make this an OPTIONAL CALL
     """
     subquery: Any  # QueryBuilder - avoiding circular import
     variables: Optional[Union[str, List[str]]] = None
+    optional: bool = False
 
     def to_cypher(self, indent: Optional[str] = None) -> str:
         """
@@ -59,4 +62,5 @@ class CallSubqueryClause(Clause):
         body = self.subquery.to_cypher(indent=body_indent)
         
         # Format the CALL clause
-        return f"{prefix}CALL{var_scope} {{\n{body}\n{prefix}}}"
+        call_keyword = "OPTIONAL CALL" if self.optional else "CALL"
+        return f"{prefix}{call_keyword}{var_scope} {{\n{body}\n{prefix}}}"

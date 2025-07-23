@@ -1,11 +1,11 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**Implementing UNWIND** - Adding support for UNWIND clause with expression and variable binding.
+**COMPLETED: CALL Subquery & UNWIND Implementation** - Ready for CALL IN TRANSACTIONS
 
 ## Recent Changes
-- ✅ **COMPLETED: Implement UNWIND clause** - Added AST class, API method, string generation, and comprehensive tests
-- ✅ **COMPLETED: Implement OPTIONAL MATCH** - Added AST class, API method, string generation, and comprehensive tests
+- ✅ **COMPLETED: CALL subquery clause** - Added AST class, API method, string generation, and 18 comprehensive tests
+- ✅ **COMPLETED: UNWIND clause** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: Codebase Refactoring** - Split patterns.py and expressions.py into one class per file for better maintainability
 - ✅ **COMPLETED: Operator Overloading for Path Construction**:
   - Added `__add__` operator to NodePattern, RelationshipPattern, and PathPattern
@@ -16,6 +16,7 @@
 - ✅ **COMPLETED: Path API improvements**:
   - Automatic insertion of implicit relationships ("--") between consecutive nodes
   - Fixed path concatenation to handle duplicate nodes at connection points
+  - Maintained immutable pattern throughout
 - ✅ **COMPLETED: Quantified Path Patterns** - Implemented variable-length path matching with quantifiers
 - ✅ **COMPLETED: Label Expression System** - Added support for complex label expressions (&, |, !)
 - ✅ Implemented complete operator-based expression system
@@ -86,6 +87,8 @@
 5. **WITH clause flexibility** - String-based projections provide maximum Cypher compatibility
 6. **Operator overloading** - Full expression system with Python operator support
 7. **Clause chaining** - Complex query construction with proper ordering
+8. **CALL Subquery Implementation** - Careful handling of variable scoping patterns
+9. **UNWIND Clause** - Clean integration with existing clause system
 
 ### Recent Technical Insights
 - Paths with consecutive nodes require implicit relationships for valid Cypher syntax
@@ -93,10 +96,14 @@
 - Clear semantic APIs prevent common mistakes (prop vs var usage)
 - Comprehensive unit tests are crucial for maintaining complex pattern logic
 - Immutable patterns simplify reasoning about query composition
+- **CALL subquery** requires careful variable scoping to match Cypher specification
+- **UNWIND clause** integrates seamlessly with existing clause ordering
 
 ## Current Implementation Status
 
 ### Completed Components
+- ✅ **CALL Subquery**: Implemented with variable scoping support (CALL { ... }, CALL(var) { ... }, CALL(*) { ... })
+- ✅ **UNWIND Clause**: Full implementation with expression and variable binding
 - ✅ **Aggregation Functions**: Implemented count(), sum(), avg(), min(), max() with DISTINCT support
 - ✅ **Path API**: Automatic implicit relationships, fixed concatenation logic
 - ✅ **Expression System**: Property, Variable, Parameter, Literal classes with full operator support
@@ -116,26 +123,35 @@
   - Quantifier methods: one_or_more(), zero_or_more()
   - Aggregation functions: count(), sum(), avg(), min(), max()
   - use() for database selection
+  - call_subquery() for subqueries
+  - unwind() for list unwinding
 
 ### Test Coverage
-- ✅ 100% pass rate on all unit tests (37 tests)
+- ✅ **192/192 unit tests passing** (100% pass rate)
+- ✅ **92% overall coverage**
 - ✅ Comprehensive coverage for path operations
 - ✅ Integration tests for clause combinations
 - ✅ Real-world example demonstrations
 - ✅ Edge case coverage for all operators
+- ✅ **CALL subquery**: 18 comprehensive tests
+- ✅ **UNWIND clause**: Full test suite
 
 ## Next Steps
 
 ### Immediate Tasks
-1. ✅ **Add support for UNWIND**
-2. **Implement subqueries**
+1. ✅ **COMPLETED: CALL subquery**
+2. ✅ **COMPLETED: UNWIND clause**
+3. **Implement CALL IN TRANSACTIONS** - Add support for CALL subqueries with IN TRANSACTIONS clause
+4. **Implement additional subquery types**:
+   - COLLECT subqueries
+   - COUNT subqueries  
+   - EXISTS subqueries
 
 ### Short-term Goals
-1. Complete all basic Cypher READ clauses
-2. Add support for complex path patterns and variable-length relationships
-3. Develop comprehensive parameter handling
-4. Create migration guides from string-based queries
-5. Set up proper package distribution
+1. Complete all advanced Cypher READ features
+2. Add comprehensive parameter handling
+3. Create migration guides from string-based queries
+4. Set up proper package distribution
 
 ### Medium-term Goals
 1. Add support for WRITE operations (CREATE, UPDATE, DELETE)
@@ -143,3 +159,9 @@
 3. Develop comprehensive documentation site
 4. Create VS Code extension for syntax highlighting
 5. Publish stable package to PyPI
+
+## Architecture Decisions
+- **CALL Subquery Design**: Clean separation between subquery and variable scoping
+- **UNWIND Integration**: Seamless integration with existing clause ordering
+- **String Formatting**: Consistent use of single quotes for string literals
+- **Variable Scoping**: Clear patterns for CALL subquery variable handling
