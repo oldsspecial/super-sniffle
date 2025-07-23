@@ -3,6 +3,7 @@ WHERE clause implementation for Cypher queries.
 """
 
 from dataclasses import dataclass
+from typing import Optional
 
 from ..ast.expressions import Expression
 from .clause import Clause
@@ -15,9 +16,9 @@ class WhereClause(Clause):
     """
     condition: Expression
 
-    def to_cypher(self) -> str:
+    def to_cypher(self, indent: Optional[str] = None) -> str:
         """
         Convert the WHERE clause to a Cypher string.
         """
-        return f"WHERE {self.condition.to_cypher()}"
-
+        prefix = indent if indent is not None else ""
+        return f"{prefix}WHERE {self.condition.to_cypher()}"

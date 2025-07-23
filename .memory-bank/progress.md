@@ -5,7 +5,7 @@
 
 **Overall Progress**: 50%
 
-**Last Updated**: July 22, 2025
+**Last Updated**: July 23, 2025
 
 ## What Works
 
@@ -92,14 +92,15 @@
 ## What's In Progress
 (No active development items at the moment)
 
-## Current Status: SUBQUERY Implemented! ✅
+## Current Status: USE Clause Implemented! ✅
 
 **Recent Achievements**:
 1. Implemented CALL subquery clause with comprehensive tests
 2. Fixed string literal formatting to use single quotes
-3. Updated tests to match correct syntax
-4. Verified all unit tests pass (including new CALL subquery tests)
+3. Implemented USE clause with support for top-level, CALL subquery, and UNWIND+CALL contexts
+4. Added comprehensive unit tests for USE clause
 5. Updated memory bank documentation
+6. Fixed unit test for nested subqueries
 
 ### What Works Now ✅
 - **Expression System**: Complete operator overloading for WHERE conditions
@@ -118,9 +119,19 @@
 - **CALL Subquery**: Modern subquery syntax with variable scoping
 - **Test Coverage**: 100% pass rate on unit tests
 
+## What Works
+
+### USE Clause
+- ✅ Top-level database selection
+- ✅ Database selection in CALL subqueries
+- ✅ Expression-based database names
+- ✅ Parameter support
+- ✅ Comprehensive unit tests (all passing)
+
 ## What's Next
 
 ### Core Components
+- ✅ USE clause implemented
 - ⬜ CALL IN TRANSACTIONS support
 - ⬜ COLLECT subqueries
 - ⬜ COUNT subqueries

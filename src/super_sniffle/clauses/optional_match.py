@@ -1,14 +1,19 @@
 from dataclasses import dataclass
-from typing import Sequence, Union
+from typing import List, Optional, Union
 
-from ..ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
 from .clause import Clause
+from ..ast.patterns import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern
 
 
 @dataclass(frozen=True)
 class OptionalMatchClause(Clause):
-    patterns: Sequence[Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]]
+    """Represents an OPTIONAL MATCH clause in a Cypher query."""
+    patterns: List[Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]]
 
-    def to_cypher(self) -> str:
-        patterns = ", ".join(pattern.to_cypher() for pattern in self.patterns)
-        return f"OPTIONAL MATCH {patterns}"
+    def to_cypher(self, indent: Optional[str] = None) -> str:
+        """
+        Convert the OPTIONAL MATCH clause to a Cypher string.
+        """
+        prefix = indent if indent is not None else ""
+        pattern_str = ", ".join(pattern.to_cypher() for pattern in self.patterns)
+        return f"{prefix}OPTIONAL MATCH {pattern_str}"

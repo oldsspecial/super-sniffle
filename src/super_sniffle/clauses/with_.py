@@ -1,35 +1,30 @@
-"""
-WITH clause implementation for Cypher queries.
-"""
-
 from dataclasses import dataclass
-from typing import List, Union, Tuple
+from typing import List, Optional
 
 from .clause import Clause
 
 
 @dataclass(frozen=True)
 class WithClause(Clause):
-    """
-    Represents a WITH clause in a Cypher query.
-    """
-    projections: List[Union[str, Tuple[str, str]]]
+    """Represents a WITH clause in a Cypher query."""
+    projections: List[str]
     distinct: bool = False
 
-    def to_cypher(self) -> str:
+    def to_cypher(self, indent: Optional[str] = None) -> str:
         """
         Convert the WITH clause to a Cypher string.
         """
-        distinct_str = "DISTINCT " if self.distinct else ""
+        prefix = indent if indent is not None else ""
+        distinct_str = " DISTINCT" if self.distinct else ""
         
-        projection_strings = []
+        # Process projections that could be strings or tuples (expression, alias)
+        processed_projections = []
         for proj in self.projections:
-            if isinstance(proj, str):
-                projection_strings.append(proj)
-            else:  # It's a tuple (expression, alias)
-                expression, alias = proj
-                projection_strings.append(f"{expression} AS {alias}")
-        
-        projections_str = ", ".join(projection_strings)
-        return f"WITH {distinct_str}{projections_str}"
-
+            if isinstance(proj, tuple):
+                # Tuple format: (expression, alias)
+                processed_projections.append(f"{proj[0]} AS {proj[1]}")
+            else:
+                processed_projections.append(proj)
+                
+        projections_str = ", ".join(processed_projections)
+        return f"{prefix}WITH{distinct_str} {projections_str}"

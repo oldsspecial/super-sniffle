@@ -14,6 +14,7 @@ from .order_by import OrderByClause
 from .limit import LimitClause
 from .skip import SkipClause
 from .call_subquery import CallSubqueryClause
+from .use import UseClause
 
 __all__ = [
     "MatchClause",
@@ -24,4 +25,5 @@ __all__ = [
     "LimitClause",
     "SkipClause",
     "CallSubqueryClause",
+    "UseClause",
 ]

@@ -31,16 +31,20 @@ class CallSubqueryClause(Clause):
     subquery: Any  # QueryBuilder - avoiding circular import
     variables: Optional[Union[str, List[str]]] = None
 
-    def to_cypher(self) -> str:
+    def to_cypher(self, indent: Optional[str] = None) -> str:
         """
         Convert the CALL subquery clause to a Cypher string.
         
+        Args:
+            indent: Optional indentation prefix for each line
+            
         Returns:
             Cypher string representation of the CALL subquery
         """
+        prefix = indent if indent is not None else ""
         # Build the variable scoping part
         if self.variables is None or (isinstance(self.variables, list) and len(self.variables) == 0):
-            var_scope = ""
+            var_scope = "()"
         elif self.variables == "*":
             var_scope = "(*)"
         elif isinstance(self.variables, str):
@@ -50,8 +54,9 @@ class CallSubqueryClause(Clause):
         else:
             var_scope = ""
         
-        # Get the subquery Cypher
-        subquery_cypher = self.subquery.to_cypher()
+        # Get the subquery Cypher with proper indentation
+        body_indent = prefix + "  " if prefix else "  "
+        body = self.subquery.to_cypher(indent=body_indent)
         
         # Format the CALL clause
-        return f"CALL{var_scope} {{\n{subquery_cypher}\n}}"
+        return f"{prefix}CALL{var_scope} {{\n{body}\n{prefix}}}"

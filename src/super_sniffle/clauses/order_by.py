@@ -1,28 +1,19 @@
-"""
-ORDER BY clause implementation for Cypher queries.
-"""
-
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Optional
 
-from ..ast.expressions import OrderByExpression
 from .clause import Clause
+from ..ast.expressions.order_by_expression import OrderByExpression
 
 
 @dataclass(frozen=True)
 class OrderByClause(Clause):
-    """
-    Represents an ORDER BY clause in a Cypher query.
-    """
-    expressions: List[Union[str, OrderByExpression]]
+    """Represents an ORDER BY clause in a Cypher query."""
+    expressions: List[OrderByExpression]
 
-    def to_cypher(self) -> str:
+    def to_cypher(self, indent: Optional[str] = None) -> str:
         """
         Convert the ORDER BY clause to a Cypher string.
         """
-        expressions_str = ", ".join(
-            expr.to_cypher() if hasattr(expr, 'to_cypher') else str(expr) 
-            for expr in self.expressions
-        )
-        return f"ORDER BY {expressions_str}"
-
+        prefix = indent if indent is not None else ""
+        order_str = ", ".join(expr.to_cypher() for expr in self.expressions)
+        return f"{prefix}ORDER BY {order_str}"

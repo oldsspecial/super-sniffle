@@ -19,7 +19,7 @@ class TestCallSubqueryClause:
         subquery = match(node("p", "Person")).return_("p.name")
         query = call_subquery(subquery)
         cypher = query.to_cypher()
-        expected = "CALL {\nMATCH (p:Person)\nRETURN p.name\n}"
+        expected = "CALL() {\n  MATCH (p:Person)\n  RETURN p.name\n}"
         assert cypher == expected
     
     def test_subquery_with_single_variable(self):
@@ -27,7 +27,7 @@ class TestCallSubqueryClause:
         subquery = match(node("p", "Person")).where(prop("p", "team") == var("t")).return_("p")
         query = call_subquery(subquery, variables="t")
         cypher = query.to_cypher()
-        expected = "CALL(t) {\nMATCH (p:Person)\nWHERE p.team = t\nRETURN p\n}"
+        expected = "CALL(t) {\n  MATCH (p:Person)\n  WHERE p.team = t\n  RETURN p\n}"
         assert cypher == expected
     
     def test_subquery_with_multiple_variables(self):
@@ -35,7 +35,7 @@ class TestCallSubqueryClause:
         subquery = match(node("p", "Person")).return_("p")
         query = call_subquery(subquery, variables=["t", "u"])
         cypher = query.to_cypher()
-        expected = "CALL(t, u) {\nMATCH (p:Person)\nRETURN p\n}"
+        expected = "CALL(t, u) {\n  MATCH (p:Person)\n  RETURN p\n}"
         assert cypher == expected
     
     def test_subquery_with_all_variables(self):
@@ -43,7 +43,7 @@ class TestCallSubqueryClause:
         subquery = match(node("p", "Person")).return_("p")
         query = call_subquery(subquery, variables="*")
         cypher = query.to_cypher()
-        expected = "CALL(*) {\nMATCH (p:Person)\nRETURN p\n}"
+        expected = "CALL(*) {\n  MATCH (p:Person)\n  RETURN p\n}"
         assert cypher == expected
     
     def test_subquery_chained_with_match(self):
@@ -58,9 +58,9 @@ class TestCallSubqueryClause:
         expected = (
             "MATCH (t:Team)\n"
             "CALL(t) {\n"
-            "MATCH (p:Player)\n"
-            "WHERE p.team = t\n"
-            "RETURN collect(p) as players\n"
+            "  MATCH (p:Player)\n"
+            "  WHERE p.team = t\n"
+            "  RETURN collect(p) as players\n"
             "}\n"
             "RETURN t, players"
         )
@@ -79,11 +79,11 @@ class TestCallSubqueryClause:
         cypher = query.to_cypher()
         expected = (
             "CALL(t, u) {\n"
-            "MATCH (p:Person)\n"
-            "WHERE p.age > 18\n"
-            "RETURN p.name, p.age\n"
-            "ORDER BY p.age\n"
-            "LIMIT 5\n"
+            "  MATCH (p:Person)\n"
+            "  WHERE p.age > 18\n"
+            "  RETURN p.name, p.age\n"
+            "  ORDER BY p.age\n"
+            "  LIMIT 5\n"
             "}"
         )
         assert cypher == expected
@@ -95,11 +95,11 @@ class TestCallSubqueryClause:
         query = call_subquery(outer_subquery)
         cypher = query.to_cypher()
         expected = (
-            "CALL {\n"
-            "CALL {\n"
-            "MATCH (c:Company)\n"
-            "RETURN c.name\n"
-            "}\n"
+            "CALL() {\n"
+            "  CALL() {\n"
+            "    MATCH (c:Company)\n"
+            "    RETURN c.name\n"
+            "  }\n"
             "}"
         )
         assert cypher == expected
@@ -114,16 +114,16 @@ class TestCallSubqueryClause:
         query = call_subquery(subquery)
         cypher = query.to_cypher()
         expected = (
-            "CALL {\n"
-            "MATCH (t:Team)\n"
-            "OPTIONAL MATCH (p:Player)-[:PLAYS_FOR]->(t)\n"
-            "RETURN t.name, count(p) as player_count\n"
+            "CALL() {\n"
+            "  MATCH (t:Team)\n"
+            "  OPTIONAL MATCH (p:Player)-[:PLAYS_FOR]->(t)\n"
+            "  RETURN t.name, count(p) as player_count\n"
             "}"
         )
         assert cypher == expected
         
     def test_subquery_with_with_clause(self):
-        """Test subquery containing WITH clause."""
+        """Test subquery with WITH clause."""
         subquery = (
             match(node("p", "Person"))
             .with_(("p.name", "name"), ("p.age", "age"))
@@ -133,17 +133,17 @@ class TestCallSubqueryClause:
         cypher = query.to_cypher()
         expected = (
             "CALL(*) {\n"
-            "MATCH (p:Person)\n"
-            "WITH p.name AS name, p.age AS age\n"
-            "RETURN name, age\n"
+            "  MATCH (p:Person)\n"
+            "  WITH p.name AS name, p.age AS age\n"
+            "  RETURN name, age\n"
             "}"
         )
         assert cypher == expected
     
     def test_real_world_team_players_example(self):
-        """Test real-world example: teams with their players."""
+        """Test a real-world team players example."""
         subquery = (
-            match(path(node("Player", variable="p"), relationship("PLAYS_FOR", direction=">"), node("t")))
+            match(path(node("p", "Player"), relationship(">", "PLAYS_FOR"), node("t")))
             .return_("collect(p.name) as players")
         )
         query = (
@@ -155,8 +155,8 @@ class TestCallSubqueryClause:
         expected = (
             "MATCH (t:Team)\n"
             "CALL(t) {\n"
-            "MATCH (p:Player)-[:PLAYS_FOR]->(t)\n"
-            "RETURN collect(p.name) as players\n"
+            "  MATCH (p:Player)-[:>|PLAYS_FOR]-(t)\n"
+            "  RETURN collect(p.name) as players\n"
             "}\n"
             "RETURN t.name, players"
         )
@@ -172,8 +172,8 @@ class TestCallSubqueryClause:
         cypher = query.to_cypher()
         expected = (
             "CALL(c) {\n"
-            "MATCH (o:Order)-[:CONTAINS]->(i:Item)\n"
-            "RETURN sum(i.price) as total_value\n"
+            "  MATCH (o:Order)-[:CONTAINS]->(i:Item)\n"
+            "  RETURN sum(i.price) as total_value\n"
             "}"
         )
         assert cypher == expected
@@ -183,7 +183,7 @@ class TestCallSubqueryClause:
         subquery = match(node("p", "Person")).return_("p")
         query = call_subquery(subquery, variables=[])
         cypher = query.to_cypher()
-        expected = "CALL {\nMATCH (p:Person)\nRETURN p\n}"
+        expected = "CALL() {\n  MATCH (p:Person)\n  RETURN p\n}"
         assert cypher == expected
 
 
@@ -222,9 +222,9 @@ class TestCallSubqueryIntegration:
         )
         cypher = query.to_cypher()
         expected = (
-            "CALL {\n"
-            "MATCH (p:Person)\n"
-            "RETURN p.name\n"
+            "CALL() {\n"
+            "  MATCH (p:Person)\n"
+            "  RETURN p.name\n"
             "}\n"
             "SKIP 10\n"
             "LIMIT 5"
@@ -240,9 +240,9 @@ class TestCallSubqueryIntegration:
         )
         cypher = query.to_cypher()
         expected = (
-            "CALL {\n"
-            "MATCH (p:Person)\n"
-            "RETURN p.name\n"
+            "CALL() {\n"
+            "  MATCH (p:Person)\n"
+            "  RETURN p.name\n"
             "}\n"
             "ORDER BY p.name"
         )
@@ -258,9 +258,9 @@ class TestCallSubqueryIntegration:
         )
         cypher = query.to_cypher()
         expected = (
-            "CALL {\n"
-            "MATCH (p:Person)\n"
-            "RETURN p.name as name\n"
+            "CALL() {\n"
+            "  MATCH (p:Person)\n"
+            "  RETURN p.name as name\n"
             "}\n"
             "WHERE name = 'Alice'\n"
             "RETURN name"

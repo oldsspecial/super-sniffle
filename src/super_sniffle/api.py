@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from .ast import Expression, OrderByExpression, Property, Variable, Parameter, Literal, FunctionExpression
 from .ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
 from .clauses.clause import Clause
+from .clauses.use import UseClause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
 from .clauses.unwind import UnwindClause
@@ -110,6 +111,30 @@ class QueryBuilder:
         from .clauses.call_subquery import CallSubqueryClause
         return QueryBuilder(self.clauses + [CallSubqueryClause(subquery, variables)])
 
+    def use(self, database: Union[str, Expression]) -> 'QueryBuilder':
+        """
+        Add a USE clause for database selection.
+        
+        This clause must be the first clause in the query. If a USE clause already exists, 
+        it will be replaced with the new database selection.
+        
+        Args:
+            database: Database name (string) or expression (e.g., function call) 
+                      resolving to a database name
+                      
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().use("movies").match(node("m:Movie"))
+            >>> query = QueryBuilder().use(function("graph.byName", var("graphName")))
+        """
+        from .clauses.use import UseClause
+        # Remove any existing USE clauses
+        new_clauses = [c for c in self.clauses if not isinstance(c, UseClause)]
+        # Add new USE clause at beginning
+        return QueryBuilder([UseClause(database)] + new_clauses)
+
     def unwind(self, expression: Expression, variable: str) -> 'QueryBuilder':
         """
         Add an UNWIND clause to the query.
@@ -126,9 +151,15 @@ class QueryBuilder:
         """
         return QueryBuilder(self.clauses + [UnwindClause(expression, variable)])
 
-    def to_cypher(self) -> str:
+    def to_cypher(self, indent: str = "") -> str:
         """
         Converts the constructed query to a Cypher string.
+        
+        Args:
+            indent: Optional indentation prefix for each line
+            
+        Returns:
+            Cypher string representation of the query
         """
         from .clauses.return_ import ReturnClause
         from .clauses.with_ import WithClause
@@ -165,7 +196,14 @@ class QueryBuilder:
             other_clauses.append(ReturnClause(["*"]))
 
         all_clauses = other_clauses + sorted_pagination_clauses
-        return "\n".join(c.to_cypher() for c in all_clauses)
+        
+        # Generate Cypher for each clause with optional indentation
+        cypher_lines = []
+        for clause in all_clauses:
+            clause_cypher = clause.to_cypher(indent=indent)
+            cypher_lines.append(clause_cypher)
+        
+        return "\n".join(cypher_lines)
 
 
 def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern]) -> QueryBuilder:
@@ -183,6 +221,23 @@ def match(*patterns: Union[NodePattern, RelationshipPattern, PathPattern, Quanti
     """
     return QueryBuilder([MatchClause(list(patterns))])
 
+
+def use(database: Union[str, Expression]) -> QueryBuilder:
+    """
+    Create a top-level USE clause for database selection.
+    
+    Args:
+        database: Database name (string) or expression (e.g., function call) 
+                  resolving to a database name
+                      
+    Returns:
+        A QueryBuilder object that can be chained with other clauses
+        
+    Example:
+        >>> query = use("movies").match(node("m:Movie"))
+        >>> query = use(function("graph.byName", var("graphName")))
+    """
+    return QueryBuilder([UseClause(database)])
 
 def unwind(expression: Expression, variable: str) -> QueryBuilder:
     """
@@ -528,7 +583,7 @@ def call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[st
         >>> # Basic subquery without variable scoping
         >>> inner = match(node("p", "Person")).return_("p.name")
         >>> query = call_subquery(inner)
-        >>> # CALL { MATCH (p:Person) RETURN p.name }
+        >>> # CALL() { MATCH (p:Person) RETURN p.name }
         
         >>> # Subquery with specific variable scoping
         >>> inner = match(node("p", "Person")).return_("p.name")

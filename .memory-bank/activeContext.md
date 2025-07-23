@@ -109,11 +109,13 @@
 - ✅ **WHERE Clause**: Complex condition building with operator overloading
 - ✅ **RETURN Clause**: Projections, DISTINCT, and return-all (*) support
 - ✅ **WITH Clause**: String-based projections, DISTINCT, and chaining support
+- ✅ **USE Clause**: Database selection for top-level and subqueries
 - ✅ **API Functions**: 
   - match(), node(), relationship(), path(), prop(), var(), param(), literal()
   - L() helper for label expressions
   - Quantifier methods: one_or_more(), zero_or_more()
   - Aggregation functions: count(), sum(), avg(), min(), max()
+  - use() for database selection
 
 ### Test Coverage
 - ✅ 100% pass rate on all unit tests (37 tests)
