@@ -60,10 +60,8 @@
 - ✅ Comprehensive examples and demos
 - ✅ Error handling and validation
 
-## 🎯 **Current Focus: CALL IN TRANSACTIONS Implementation**
 
 ### Missing Features (Next Phase)
-1. **CALL IN TRANSACTIONS** - For batch processing
 2. **Additional subquery types**:
    - COLLECT subqueries
    - COUNT subqueries  
@@ -82,7 +80,6 @@
 - ✅ String generation optimized
 
 ## 🚀 **Next Milestones**
-1. **CALL IN TRANSACTIONS** (Advanced feature)
 2. **Performance optimization**
 3. **Complete documentation**
 4. **PyPI package publication**
