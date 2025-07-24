@@ -19,6 +19,7 @@ from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
 from .clauses.unwind import UnwindClause
 from .clauses.call_subquery import CallSubqueryClause
+from .clauses.return_ import ReturnClause
 
 
 @dataclass(frozen=True)
@@ -63,12 +64,34 @@ class QueryBuilder:
                 proj_list.append(p)
         return QueryBuilder(self.clauses + [WithClause(proj_list, distinct)])
 
-    def return_(self, *projections: str, distinct: bool = False) -> 'QueryBuilder':
+    def return_(self, *projections: Union[str, Tuple[str, str]], distinct: bool = False) -> 'QueryBuilder':
+        """
+        Add a RETURN clause to the query.
+        
+        Args:
+            *projections: The expressions to return (can be strings or (expression, alias) tuples)
+            distinct: Whether to add DISTINCT keyword
+            
+        Example:
+            >>> query.return_("p.name", ("p.age", "age"))
+        """
         from .clauses.return_ import ReturnClause
-        projections_list = list(projections)
-        if not projections_list or (len(projections_list) == 1 and projections_list[0] == "*"):
-            projections_list = ["*"]
-        return QueryBuilder(self.clauses + [ReturnClause(projections_list, distinct)])
+        processed_projections = []
+        
+        for proj in projections:
+            if isinstance(proj, tuple):
+                # Validate tuple format
+                if len(proj) != 2:
+                    raise ValueError("Tuple projection must have exactly two elements: (expression, alias)")
+                processed_projections.append(proj)
+            else:
+                # For strings, use (expression, None) to indicate no alias
+                processed_projections.append((proj, None))
+                
+        if not processed_projections:
+            processed_projections = [('*', None)]
+            
+        return QueryBuilder(self.clauses + [ReturnClause(processed_projections, distinct)])
         
     def group_by(self, *expressions: str) -> 'QueryBuilder':
         """
@@ -291,7 +314,7 @@ class QueryBuilder:
         # A special case for queries that end with LIMIT/SKIP without a RETURN or WITH.
         # A RETURN * should be implicitly added, but not for CALL subquery clauses
         if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause, CallSubqueryClause)) for c in all_clauses):
-            all_clauses.append(ReturnClause(["*"]))
+            all_clauses.append(ReturnClause([('*', None)]))
 
         # Add sorted pagination clauses at the end
         all_clauses.extend(sorted_pagination_clauses)
