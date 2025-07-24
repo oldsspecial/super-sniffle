@@ -15,6 +15,8 @@ from .limit import LimitClause
 from .skip import SkipClause
 from .call_subquery import CallSubqueryClause
 from .use import UseClause
+from .call_procedure import CallProcedureClause
+from .yield_ import YieldClause
 
 __all__ = [
     "MatchClause",
@@ -26,4 +28,6 @@ __all__ = [
     "SkipClause",
     "CallSubqueryClause",
     "UseClause",
+    "CallProcedureClause",
+    "YieldClause",
 ]

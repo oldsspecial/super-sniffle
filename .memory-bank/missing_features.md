@@ -1,68 +1,66 @@
 # Missing Features: super-sniffle
 
-## Priority List (Higher than CALL IN TRANSACTIONS, COLLECT, EXISTS subqueries)
+## ✅ **COMPLETED Features** (Updated Status)
 
-### 🔴 CRITICAL - Immediate Priority
+### USE Clause
+- **Status**: ✅ **COMPLETED** - Fully implemented and tested
+- **Implementation**: `UseClause` AST class + API integration
+- **Tests**: 11 comprehensive unit tests passing
+- **Usage**: `use("database_name")` or `QueryBuilder().use("database")`
 
-#### 1. USE Clause
-- **Status**: Missing
-- **Purpose**: Direct queries to run on specific databases
-- **Cypher Example**: `USE neo4j MATCH (m:Movie) RETURN m.title`
-- **Implementation Notes**: 
-  - Add USE clause AST class
-  - Support database name as string parameter
-  - Integrate with query builder chain
+## 🔴 **ACTUALLY Missing - Immediate Priority**
 
-#### 2. CALL Procedure Support
-- **Status**: Missing  
-- **Purpose**: Support for calling database procedures
-- **Cypher Example**: `CALL db.relationshipTypes()`
-- **Implementation Notes**:
-  - Distinguish from CALL subqueries
-  - Support procedure names and arguments
-  - Handle procedure return values
+### 1. CALL Procedure Support
+- **Status**: ❌ **MISSING** - Not yet implemented
+- **Purpose**: Support for calling database procedures (distinct from CALL subqueries)
+- **Cypher Examples**:
+  - `CALL db.labels()`
+  - `CALL dbms.checkConfigValue('setting', 'value')`
+  - `CALL apoc.neighbors.tohop(n, "KNOWS>", 1)`
+- **Key Requirements**:
+  - Procedure name (string)
+  - Procedure arguments (literals, parameters, expressions)
+  - Optional vs required calls
+  - Integration with YIELD clause
 
-#### 3. YIELD Clause
-- **Status**: Missing
+### 2. YIELD Clause
+- **Status**: ❌ **MISSING** - Not yet implemented
 - **Purpose**: Handle output from procedure calls
-- **Cypher Example**: `CALL db.relationshipTypes() YIELD relationshipType`
-- **Implementation Notes**:
-  - Integrate with CALL procedure support
-  - Handle yielded variables and aliases
+- **Cypher Examples**:
+  - `CALL db.labels() YIELD label`
+  - `CALL db.labels() YIELD *`
+  - `CALL apoc.neighbors.tohop(n, "KNOWS>", 1) YIELD node`
+- **Key Requirements**:
+  - Select specific return columns
+  - Aliasing support (`YIELD column AS alias`)
+  - Wildcard support (`YIELD *`)
+  - Integration with CALL procedure
 
-### 🟡 MEDIUM - Next Phase
+### 3. CALL IN TRANSACTIONS
+- **Status**: ❌ **MISSING** - Not yet implemented
+- **Purpose**: Batch processing with transaction management
+- **Cypher Examples**:
+  - `CALL { ... } IN TRANSACTIONS`
+  - `CALL { ... } IN TRANSACTIONS OF 1000 ROWS`
 
-#### 4. Dynamic Label Parameters
-- **Status**: Missing
-- **Purpose**: Dynamic label references using parameters
-- **Cypher Example**: `MATCH (movie:$label) RETURN movie.title`
-- **Implementation Notes**:
-  - Support parameter placeholders in labels
-  - Ensure proper parameter binding
+## 🟡 **Future Enhancements**
 
-#### 5. Dynamic Relationship Type Parameters
-- **Status**: Missing
-- **Purpose**: Dynamic relationship types using parameters
-- **Cypher Example**: `MATCH ()-[r:$(relationshipType)]->()`
-- **Implementation Notes**:
-  - Support parameter placeholders in relationship types
-  - Handle type validation
+### Dynamic Parameters
+- **Status**: ❌ **MISSING** - Lower priority
+- **Purpose**: Dynamic label/type/property access via parameters
+- **Cypher Examples**:
+  - `MATCH (n:$label)` - dynamic labels
+  - `MATCH ()-[r:$type]->()` - dynamic relationship types
+  - `n[$property]` - dynamic property access
 
-#### 6. Dynamic Property Access
-- **Status**: Missing
-- **Purpose**: Dynamic property access using parameters
-- **Cypher Example**: `MATCH (n:Person) WHERE n[$propname] > 40`
-- **Implementation Notes**:
-  - Support bracket notation for dynamic properties
-  - Ensure parameter safety
+## Implementation Priority (Updated)
 
-## Implementation Order
-
-1. **USE Clause** - Foundation for multi-database support
-2. **CALL Procedure + YIELD** - Core database interaction
-3. **Dynamic Parameters** - Flexibility for parameterized queries
+1. **CALL Procedure + YIELD** (Critical - missing functionality)
+2. **CALL IN TRANSACTIONS** (Advanced feature)
+3. **Dynamic Parameters** (Convenience feature)
 
 ## Notes
-- Pattern variable assignment is already supported via `match().as('variable')`
-- These features take priority over CALL IN TRANSACTIONS, COLLECT, EXISTS subqueries
-- Focus on READ operations as per project scope
+- ✅ USE clause is fully implemented and tested
+- ✅ CALL subquery is fully implemented and tested
+- ✅ All basic Cypher READ operations are complete
+- 🎯 Focus should be on CALL procedure implementation next

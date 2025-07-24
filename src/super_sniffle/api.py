@@ -13,9 +13,12 @@ from .ast import Expression, OrderByExpression, Property, Variable, Parameter, L
 from .ast import NodePattern, RelationshipPattern, PathPattern, QuantifiedPathPattern, BaseLabelExpr, L, LabelAtom
 from .clauses.clause import Clause
 from .clauses.use import UseClause
+from .clauses.call_procedure import CallProcedureClause
+from .clauses.yield_ import YieldClause
 from .compound_query import CompoundQuery
 from .clauses.match import MatchClause
 from .clauses.unwind import UnwindClause
+from .clauses.call_subquery import CallSubqueryClause
 
 
 @dataclass(frozen=True)
@@ -51,7 +54,14 @@ class QueryBuilder:
 
     def with_(self, *projections: Union[str, Tuple[str, str]], distinct: bool = False) -> 'QueryBuilder':
         from .clauses.with_ import WithClause
-        return QueryBuilder(self.clauses + [WithClause(list(projections), distinct)])
+        # Convert to list of projections (string or tuple)
+        proj_list = []
+        for p in projections:
+            if isinstance(p, tuple):
+                proj_list.append(p)
+            else:
+                proj_list.append(p)
+        return QueryBuilder(self.clauses + [WithClause(proj_list, distinct)])
 
     def return_(self, *projections: str, distinct: bool = False) -> 'QueryBuilder':
         from .clauses.return_ import ReturnClause
@@ -79,16 +89,21 @@ class QueryBuilder:
     def order_by(self, *fields: Union[str, OrderByExpression]) -> 'QueryBuilder':
         from .clauses.order_by import OrderByClause
         from .ast.expressions import OrderByExpression as OrderByExpr
-        expressions: List[Union[str, OrderByExpression]] = [OrderByExpr(field) if isinstance(field, str) else field for field in fields]
+        expressions = []
+        for field in fields:
+            if isinstance(field, str):
+                expressions.append(OrderByExpr(field, False))  # ascending by default
+            else:
+                expressions.append(field)
         return QueryBuilder(self.clauses + [OrderByClause(expressions)])
 
-    def skip(self, count: Union[int, str]) -> 'QueryBuilder':
+    def skip(self, count: Union[int, Expression]) -> 'QueryBuilder':
         from .clauses.skip import SkipClause
         # Remove existing skip clauses to ensure the last one takes precedence
         new_clauses = [c for c in self.clauses if not isinstance(c, SkipClause)]
         return QueryBuilder(new_clauses + [SkipClause(count)])
 
-    def limit(self, count: Union[int, str]) -> 'QueryBuilder':
+    def limit(self, count: Union[int, Expression]) -> 'QueryBuilder':
         from .clauses.limit import LimitClause
         # Remove existing limit clauses to ensure the last one takes precedence
         new_clauses = [c for c in self.clauses if not isinstance(c, LimitClause)]
@@ -115,6 +130,67 @@ class QueryBuilder:
         """Add an OPTIONAL CALL subquery clause to the query."""
         from .clauses.call_subquery import CallSubqueryClause
         return QueryBuilder(self.clauses + [CallSubqueryClause(subquery, variables, optional=True)])
+        
+    def call_procedure(self, procedure_name: str, *arguments: Union[str, Expression], optional: bool = False) -> 'QueryBuilder':
+        """
+        Add a CALL procedure clause to the query.
+        
+        Args:
+            procedure_name: Name of the procedure to call
+            *arguments: Arguments to pass to the procedure
+            optional: Whether to use OPTIONAL CALL
+            
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().call_procedure("db.labels")
+            >>> query = QueryBuilder().call_procedure("dbms.checkConfigValue", "server.bolt.enabled", "true")
+            >>> query = QueryBuilder().optional_call_procedure("apoc.neighbors.tohop", var("n"), "KNOWS>", 1)
+        """
+        return QueryBuilder(self.clauses + [CallProcedureClause(procedure_name, list(arguments), optional)])
+        
+    def optional_call_procedure(self, procedure_name: str, *arguments: Union[str, Expression]) -> 'QueryBuilder':
+        """
+        Add an OPTIONAL CALL procedure clause to the query.
+        
+        Args:
+            procedure_name: Name of the procedure to call
+            *arguments: Arguments to pass to the procedure
+            
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().optional_call_procedure("apoc.neighbors.tohop", var("n"), "KNOWS>", 1)
+        """
+        return self.call_procedure(procedure_name, *arguments, optional=True)
+        
+    def yield_(self, *columns: Union[str, Tuple[str, str]], wildcard: bool = False) -> 'QueryBuilder':
+        """
+        Add a YIELD clause to handle procedure output.
+        
+        Args:
+            *columns: Columns to yield (can be strings or (column, alias) tuples)
+            wildcard: Whether to use YIELD * (returns all columns)
+            
+        Returns:
+            A QueryBuilder object that can be chained with other clauses
+            
+        Example:
+            >>> query = QueryBuilder().call_procedure("db.labels").yield_("label")
+            >>> query = QueryBuilder().call_procedure("db.propertyKeys").yield_(("propertyKey", "prop"))
+            >>> query = QueryBuilder().call_procedure("db.labels").yield_(wildcard=True)
+        """
+        # Process column specifications
+        processed_columns = []
+        for col in columns:
+            if isinstance(col, tuple):
+                processed_columns.append(col)
+            else:
+                processed_columns.append((col, None))
+                
+        return QueryBuilder(self.clauses + [YieldClause(processed_columns, wildcard)])
 
     def use(self, database: Union[str, Expression]) -> 'QueryBuilder':
         """
@@ -259,6 +335,40 @@ def unwind(expression: Expression, variable: str) -> QueryBuilder:
         >>> query = unwind(literal([1,2,3]), "num").return_("num")
     """
     return QueryBuilder([UnwindClause(expression, variable)])
+    
+def call_procedure(procedure_name: str, *arguments: Union[str, Expression], optional: bool = False) -> QueryBuilder:
+    """
+    Create a CALL procedure clause.
+    
+    Args:
+        procedure_name: Name of the procedure to call
+        *arguments: Arguments to pass to the procedure
+        optional: Whether to use OPTIONAL CALL
+        
+    Returns:
+        A QueryBuilder object that can be chained with other clauses
+        
+    Example:
+        >>> query = call_procedure("db.labels")
+        >>> query = call_procedure("dbms.checkConfigValue", "server.bolt.enabled", "true")
+    """
+    return QueryBuilder([CallProcedureClause(procedure_name, list(arguments), optional)])
+
+def optional_call_procedure(procedure_name: str, *arguments: Union[str, Expression]) -> QueryBuilder:
+    """
+    Create an OPTIONAL CALL procedure clause.
+    
+    Args:
+        procedure_name: Name of the procedure to call
+        *arguments: Arguments to pass to the procedure
+        
+    Returns:
+        A QueryBuilder object that can be chained with other clauses
+        
+    Example:
+        >>> query = optional_call_procedure("apoc.neighbors.tohop", var("n"), "KNOWS>", 1)
+    """
+    return call_procedure(procedure_name, *arguments, optional=True)
 
 
 def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **properties: Any) -> NodePattern:

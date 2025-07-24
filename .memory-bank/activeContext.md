@@ -1,9 +1,11 @@
 # Active Context: super-sniffle
 
 ## Current Focus
-**COMPLETED: CALL Subquery & UNWIND Implementation** - Ready for CALL IN TRANSACTIONS
+**COMPLETED: CALL Procedure & YIELD Implementation** - All tests passing
 
 ## Recent Changes
+- ✅ **COMPLETED: CALL procedure clause** - Added AST class, API method, string generation, and comprehensive tests
+- ✅ **COMPLETED: YIELD clause** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: CALL subquery clause** - Added AST class, API method, string generation, and 18 comprehensive tests
 - ✅ **COMPLETED: UNWIND clause** - Added AST class, API method, string generation, and comprehensive tests
 - ✅ **COMPLETED: Codebase Refactoring** - Split patterns.py and expressions.py into one class per file for better maintainability
@@ -141,8 +143,10 @@
 ### Immediate Tasks
 1. ✅ **COMPLETED: CALL subquery**
 2. ✅ **COMPLETED: UNWIND clause**
-3. **Implement CALL IN TRANSACTIONS** - Add support for CALL subqueries with IN TRANSACTIONS clause
-4. **Implement additional subquery types**:
+3. ✅ **COMPLETED: CALL procedure**
+4. ✅ **COMPLETED: YIELD clause**
+5. **Implement CALL IN TRANSACTIONS** - Add support for CALL subqueries with IN TRANSACTIONS clause
+6. **Implement additional subquery types**:
    - COLLECT subqueries
    - COUNT subqueries  
    - EXISTS subqueries
