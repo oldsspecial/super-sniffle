@@ -129,40 +129,49 @@ class NodePattern:
             >>> node("Person").where(prop("age") > 18).to_cypher()
             >>> # Returns: "(:Person WHERE age > 18)"
         """
-        result = f"({self.variable if self.variable else ''}"
+        parts = []
         
-        # Add labels or expressions after variable
+        # Add variable
+        if self.variable:
+            parts.append(self.variable)
+        
+        # Add labels or expressions
         if self.labels:
             # Handle label expressions
             if isinstance(self.labels, BaseLabelExpr):
                 labels_str = str(self.labels)
                 # Wrap complex expressions in backticks if they contain operators
                 if any(op in labels_str for op in ["&", "|", "!"]):
-                    result += f":`{labels_str}`"
+                    parts.append(f"`{labels_str}`")
                 else:
-                    result += f":{labels_str}"
+                    parts.append(labels_str)
             elif isinstance(self.labels, tuple):
                 # Handle tuple of strings - join with colons for multiple labels
-                labels_str = ":".join(
-                    str(label) for label in self.labels
-                )
-                result += f":{labels_str}"
+                parts.append(":".join(str(label) for label in self.labels))
             else:
                 # Handle single string label
-                result += f":{self.labels}"
+                parts.append(str(self.labels))
+        
+        # If there are labels but no variable, we need to add a colon before the labels
+        if not self.variable and parts:
+            # Prepend a colon to the first part
+            parts[0] = ":" + parts[0]
+        
+        # Combine variable and labels with colon
+        label_str = ":".join(parts) if parts else ""
         
         # Add properties
+        properties_str = ""
         if self.properties:
-            props_str = ", ".join(f"{k}: {format_value(v)}" 
-                                for k, v in self.properties.items())
-            result += f" {{{props_str}}}"
+            props = ", ".join(f"{k}: {format_value(v)}" for k, v in self.properties.items())
+            properties_str = f" {{{props}}}"
         
         # Add inline WHERE condition
+        condition_str = ""
         if self.condition:
-            result += f" WHERE {self.condition.to_cypher()}"
+            condition_str = f" WHERE {self.condition.to_cypher()}"
         
-        result += ")"
-        return result
+        return f"({label_str}{properties_str}{condition_str})"
     
     def relationship(self, *types: str, direction: str = "-", variable: Optional[str] = None, **properties: Any) -> RelationshipPattern:
         """

@@ -14,15 +14,15 @@
 - ✅ Poetry configuration with all dependencies
 - ✅ GitHub repository with proper .gitignore
 - ✅ Sphinx documentation configuration
-- ✅ Comprehensive test suite (208/208 tests passing)
+- ✅ Comprehensive test suite (211/211 tests passing)
 - ✅ Memory bank documentation system
 
 ### Expression System
-- ✅ Complete expression class hierarchy
+- ✅ Complete expression极 class hierarchy
 - ✅ Operator overloading for intuitive syntax
 - ✅ Property, Parameter, and Literal classes
 - ✅ Logical operations (AND, OR, NOT) with & | ~ operators
-- ✅ Comparison operators (==, !=, >,极 <, >=, <=)
+- ✅ Comparison operators (==, !=, >, <, >=, <=)
 - ✅ Method-based operations (contains, starts_with, ends_with, etc.)
 - ✅ Aggregation functions (count, sum, avg, min, max)
 - ✅ Comprehensive unit tests
@@ -51,6 +51,7 @@
 - ✅ **UNION/UNION ALL** - Query combination
 - ✅ **CALL Procedure Clause** - Database procedure execution with argument handling
 - ✅ **YIELD Clause** - Procedure output handling
+- ✅ **NEXT Clause** - Sequential query composition
 
 ### API & Usability
 - ✅ Fluent QueryBuilder interface
@@ -69,7 +70,7 @@
    - EXISTS subqueries
 
 ## 📊 **Test Results**
-- **208/208 unit tests passing** (100% pass rate)
+- **211/211 unit tests passing** (100% pass rate)
 - **92% overall coverage**
 - **All critical paths tested**
 
@@ -81,11 +82,10 @@
 - ✅ String generation optimized
 
 ## 🚀 **Next Milestones**
-1. **CALL Procedure + YIELD** (Current priority)
-2. **CALL IN TRANSACTIONS** (Advanced feature)
-3. **Performance optimization**
-4. **Complete documentation**
-5. **PyPI package publication**
+1. **CALL IN TRANSACTIONS** (Advanced feature)
+2. **Performance optimization**
+3. **Complete documentation**
+4. **PyPI package publication**
 
 ## 📝 **Lessons Learned**
 - Memory bank documentation is crucial for context preservation
@@ -100,3 +100,4 @@
 - CALL subquery implementation handled complex variable scoping correctly
 - Memory bank system prevents context loss between sessions
 - CALL procedure and YIELD clause implementation completed with comprehensive tests
+- NEXT clause implementation completed with comprehensive tests

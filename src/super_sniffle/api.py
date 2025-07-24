@@ -232,6 +232,23 @@ class QueryBuilder:
         """
         return QueryBuilder(self.clauses + [UnwindClause(expression, variable)])
 
+    def next(self) -> 'QueryBuilder':
+        """
+        Add a NEXT clause to chain query segments sequentially.
+        
+        Returns:
+            A QueryBuilder object with the NEXT clause added
+            
+        Example:
+            >>> query = (match(node("c", "Customer"))
+            ...          .return_(var("c").as_("customer"))
+            ...          .next()
+            ...          .match(var("customer").relationship("BUYS").node("Product", {"name": "Chocolate"}))
+            ...          .return_(var("customer").prop("firstName").as_("chocolateCustomer")))
+        """
+        from .clauses.next_ import NextClause
+        return QueryBuilder(self.clauses + [NextClause()])
+
     def to_cypher(self, indent: str = "") -> str:
         """
         Converts the constructed query to a Cypher string.
@@ -251,12 +268,12 @@ class QueryBuilder:
 
         # Separate pagination clauses from the rest
         pagination_clauses = []
-        other_clauses = []
+        all_clauses = []
         for c in self.clauses:
             if isinstance(c, (OrderByClause, SkipClause, LimitClause)):
                 pagination_clauses.append(c)
             else:
-                other_clauses.append(c)
+                all_clauses.append(c)
 
         # Define the correct order for pagination clauses
         pagination_order = {
@@ -273,10 +290,11 @@ class QueryBuilder:
 
         # A special case for queries that end with LIMIT/SKIP without a RETURN or WITH.
         # A RETURN * should be implicitly added, but not for CALL subquery clauses
-        if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause, CallSubqueryClause)) for c in other_clauses):
-            other_clauses.append(ReturnClause(["*"]))
+        if sorted_pagination_clauses and not any(isinstance(c, (ReturnClause, WithClause, CallSubqueryClause)) for c in all_clauses):
+            all_clauses.append(ReturnClause(["*"]))
 
-        all_clauses = other_clauses + sorted_pagination_clauses
+        # Add sorted pagination clauses at the end
+        all_clauses.extend(sorted_pagination_clauses)
         
         # Generate Cypher for each clause with optional indentation
         cypher_lines = []

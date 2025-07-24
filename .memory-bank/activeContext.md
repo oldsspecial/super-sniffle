@@ -119,6 +119,7 @@
 - ✅ **RETURN Clause**: Projections, DISTINCT, and return-all (*) support
 - ✅ **WITH Clause**: String-based projections, DISTINCT, and chaining support
 - ✅ **USE Clause**: Database selection for top-level and subqueries
+- ✅ **NEXT Clause**: Sequential query composition support
 - ✅ **API Functions**: 
   - match(), node(), relationship(), path(), prop(), var(), param(), literal()
   - L() helper for label expressions
@@ -127,9 +128,10 @@
   - use() for database selection
   - call_subquery() for subqueries
   - unwind() for list unwinding
+  - next() for sequential query composition
 
 ### Test Coverage
-- ✅ **192/192 unit tests passing** (100% pass rate)
+- ✅ **211/211 unit tests passing** (100% pass rate)
 - ✅ **92% overall coverage**
 - ✅ Comprehensive coverage for path operations
 - ✅ Integration tests for clause combinations
@@ -137,6 +139,7 @@
 - ✅ Edge case coverage for all operators
 - ✅ **CALL subquery**: 18 comprehensive tests
 - ✅ **UNWIND clause**: Full test suite
+- ✅ **NEXT clause**: Comprehensive tests
 
 ## Next Steps
 
@@ -145,8 +148,9 @@
 2. ✅ **COMPLETED: UNWIND clause**
 3. ✅ **COMPLETED: CALL procedure**
 4. ✅ **COMPLETED: YIELD clause**
-5. **Implement CALL IN TRANSACTIONS** - Add support for CALL subqueries with IN TRANSACTIONS clause
-6. **Implement additional subquery types**:
+5. ✅ **COMPLETED: NEXT clause**
+6. **Implement CALL IN TRANSACTIONS** - Add support for CALL subqueries with IN TRANSACTIONS clause
+7. **Implement additional subquery types**:
    - COLLECT subqueries
    - COUNT subqueries  
    - EXISTS subqueries
@@ -169,3 +173,4 @@
 - **UNWIND Integration**: Seamless integration with existing clause ordering
 - **String Formatting**: Consistent use of single quotes for string literals
 - **Variable Scoping**: Clear patterns for CALL subquery variable handling
+- **NEXT Clause Design**: Simple and intuitive API for sequential query composition

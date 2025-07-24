@@ -17,6 +17,7 @@ from .call_subquery import CallSubqueryClause
 from .use import UseClause
 from .call_procedure import CallProcedureClause
 from .yield_ import YieldClause
+from .next_ import NextClause
 
 __all__ = [
     "MatchClause",
@@ -30,4 +31,5 @@ __all__ = [
     "UseClause",
     "CallProcedureClause",
     "YieldClause",
+    "NextClause",
 ]
