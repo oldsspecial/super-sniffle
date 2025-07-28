@@ -88,10 +88,14 @@ class QueryBuilder:
                 # For strings, use (expression, None) to indicate no alias
                 processed_projections.append((proj, None))
                 
+        # Convert list to List[Tuple[str, Optional[str]]] to satisfy type checker
+        typed_projections: List[Tuple[str, Optional[str]]] = processed_projections
+                
         if not processed_projections:
             processed_projections = [('*', None)]
+            typed_projections = [('*', None)]
             
-        return QueryBuilder(self.clauses + [ReturnClause(processed_projections, distinct)])
+        return QueryBuilder(self.clauses + [ReturnClause(typed_projections, distinct)])
         
     def group_by(self, *expressions: str) -> 'QueryBuilder':
         """
@@ -712,6 +716,43 @@ def max(expression: Expression) -> FunctionExpression:
         >>> max(prop("p", "age"))  # Returns: max(p.age)
     """
     return FunctionExpression("max", [expression])
+
+
+def sequence(*queries: QueryBuilder) -> QueryBuilder:
+    """
+    Create a sequence of queries connected by NEXT clauses.
+    
+    This function takes multiple QueryBuilder instances and chains them together
+    using NEXT clauses, creating a query sequence where each query executes after
+    the previous one.
+    
+    Args:
+        *queries: QueryBuilder instances to chain together
+        
+    Returns:
+        A single QueryBuilder representing the sequence of queries
+        
+    Example:
+        >>> q1 = match(node("a")).return_("a")
+        >>> q2 = match(node("b")).return_("b")
+        >>> q3 = match(node("c")).return_("c")
+        >>> query = sequence(q1, q2, q3)
+        >>> # Equivalent to: q1.next().q2.next().q3
+    """
+    if not queries:
+        return QueryBuilder()
+    
+    # Start with the first query
+    current = queries[0]
+    
+    # Chain subsequent queries with next()
+    for next_query in queries[1:]:
+        # First add a NEXT clause
+        current = current.next()
+        # Then add all clauses from the next query
+        current = QueryBuilder(current.clauses + next_query.clauses)
+    
+    return current
 
 
 def call_subquery(subquery: QueryBuilder, variables: Optional[Union[str, List[str]]] = None) -> QueryBuilder:
