@@ -8,9 +8,9 @@ class TestOptionalMatch(unittest.TestCase):
         self.assertEqual(cypher, "OPTIONAL MATCH (p:Person)")
 
     def test_optional_match_relationship(self):
-        query = QueryBuilder().optional_match(
-            node("p", "Person").relates_to(variable=None, rel_type="KNOWS", direction=">", target_node=node("f", "Person"))
-        )
+        # Create a path pattern: (p:Person)-[:KNOWS]->(f:Person)
+        path_pattern = node("p", "Person").relationship("KNOWS", direction=">", variable=None) + node("f", "Person")
+        query = QueryBuilder().optional_match(path_pattern)
         cypher = query.to_cypher()
         self.assertEqual(cypher, "OPTIONAL MATCH (p:Person)-[:KNOWS]->(f:Person)")
 
@@ -28,11 +28,12 @@ class TestOptionalMatch(unittest.TestCase):
         self.assertEqual(cypher, "OPTIONAL MATCH (a:Person), (b:Company)")
 
     def test_optional_match_with_other_clauses(self):
-        query = (
-            QueryBuilder().optional_match(node("p", "Person"))
-            .optional_match(node("p").relates_to(variable=None, rel_type="WORKS_AT", direction=">", target_node=node("c", "Company")))
-            .return_("p", "c")
-        )
+        # First optional match: (p:Person)
+        query = QueryBuilder().optional_match(node("p", "Person"))
+        # Second optional match: (p)-[:WORKS_AT]->(c:Company)
+        path_pattern = node("p").relationship("WORKS_AT", direction=">", variable=None) + node("c", "Company")
+        query = query.optional_match(path_pattern)
+        query = query.return_("p", "c")
         cypher = query.to_cypher()
         expected = (
             "OPTIONAL MATCH (p:Person)\n"

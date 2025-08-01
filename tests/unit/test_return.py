@@ -117,7 +117,7 @@ class TestReturnWithRelationships:
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
         query = (
-            match(person.relates_to("r", "KNOWS", ">", friend))
+            match(person.relationship("KNOWS", direction=">", variable="r") + friend)
             .where(prop("p", "age") > literal(25))
             .return_("p.name", "f.name", "r.since")
         )
@@ -131,8 +131,8 @@ class TestReturnWithRelationships:
         friend = node("Person", variable="f")
         company = node("Company", variable="c")
         query = (
-            match(person.relates_to("knows", "KNOWS", ">", friend))
-            .match(person.relates_to("works", "WORKS_FOR", ">", company))
+            match(person.relationship("KNOWS", direction=">", variable="knows") + friend)
+            .match(person.relationship("WORKS_FOR", direction=">", variable="works") + company)
             .return_("p.name", "f.name", "c.name")
         )
         result = query.to_cypher()
@@ -214,7 +214,7 @@ class TestRealWorldExamples:
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
         query = (
-            match(person.relates_to("r", "KNOWS", ">", friend))
+            match(person.relationship("KNOWS", direction=">", variable="r") + friend)
             .where(
                 (prop("p", "active") == literal(True)) &
                 (prop("p", "age") > literal(25)) &
@@ -246,7 +246,7 @@ class TestRealWorldExamples:
         employee = node("Employee", variable="e")
         department = node("Department", variable="d")
         query = (
-            match(employee.relates_to("works_in", "WORKS_IN", ">", department))
+            match(employee.relationship("WORKS_IN", direction=">", variable="works_in") + department)
             .where(
                 (prop("d", "name") == param("dept_name")) &
                 (prop("e", "salary") > param("min_salary"))

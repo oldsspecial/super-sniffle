@@ -21,11 +21,12 @@ class TestBasicMatch:
         expected = "MATCH (p:Person)"
         assert result == expected
 
-    def test_match_with_relates_to(self):
-        """Test MATCH with relates_to method."""
+    def test_match_with_relationship_api(self):
+        """Test MATCH with the relationship API."""
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        query = match(person.relates_to("r", "KNOWS", ">", friend))
+        path_pattern = person.relationship("KNOWS", direction=">", variable="r") + friend
+        query = match(path_pattern)
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
         assert result == expected
@@ -63,11 +64,12 @@ class TestComplexPaths:
         expected = "MATCH (p1:Person WHERE p1.active = true)-[r:KNOWS WHERE r.since > 2020]->(p2:Person)"
         assert result == expected
 
-    def test_relates_to_with_properties(self):
-        """Test relates_to with relationship properties."""
+    def test_relationship_with_properties(self):
+        """Test relationship with properties."""
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        query = match(person.relates_to("r", "KNOWS", ">", friend, since=2020))
+        path_pattern = person.relationship("KNOWS", direction=">", variable="r", since=2020) + friend
+        query = match(path_pattern)
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS {since: 2020}]->(f:Person)"
         assert result == expected
@@ -80,7 +82,9 @@ class TestRelationshipDirections:
         """Test outgoing relationship direction."""
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        query = match(person.relates_to("r", "KNOWS", ">", friend))
+        # Use relationship to create the path pattern
+        path_pattern = person.relationship("KNOWS", direction=">", variable="r") + friend
+        query = match(path_pattern)
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]->(f:Person)"
         assert result == expected
@@ -89,7 +93,7 @@ class TestRelationshipDirections:
         """Test incoming relationship direction."""
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        query = match(person.relates_to("r", "KNOWS", "<", friend))
+        query = match(person.relationship("KNOWS", direction="<", variable="r") + friend)
         result = query.to_cypher()
         expected = "MATCH (p:Person)<-[r:KNOWS]-(f:Person)"
         assert result == expected
@@ -98,7 +102,7 @@ class TestRelationshipDirections:
         """Test undirected relationship (using default)."""
         person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        query = match(person.relates_to("r", "KNOWS", target_node=friend))
+        query = match(person.relationship("KNOWS", direction="-", variable="r") + friend)
         result = query.to_cypher()
         expected = "MATCH (p:Person)-[r:KNOWS]-(f:Person)"
         assert result == expected
@@ -107,11 +111,11 @@ class TestRelationshipDirections:
 class TestImmutability:
     """Test that objects remain immutable."""
     
-    def test_node_pattern_immutability_with_relates_to(self):
-        """Test NodePattern immutability with relates_to."""
+    def test_node_pattern_immutability_with_relationship(self):
+        """Test NodePattern immutability with relationship."""
         original_person = node("Person", variable="p")
         friend = node("Person", variable="f")
-        path_result = original_person.relates_to("r", "KNOWS", ">", friend)
+        path_result = original_person.relationship("KNOWS", direction=">", variable="r") + friend
         
         # Original should be unchanged
         assert original_person.to_cypher() == "(p:Person)"
@@ -169,16 +173,17 @@ class TestRealWorldExamples:
     def test_simple_friend_relationship(self):
         """Test simple friend relationship query."""
         query = match(
-            node("Person", variable="user").relates_to("friendship", "FRIENDS_WITH", "-", node("Person", variable="friend"))
+            node("Person", variable="user").relationship("FRIENDS_WITH", direction="-", variable="friendship").node("Person", variable="friend")
         )
         result = query.to_cypher()
+        # Check that the result matches the expected Cypher query
         expected = "MATCH (user:Person)-[friendship:FRIENDS_WITH]-(friend:Person)"
         assert result == expected
 
     def test_employee_company_relationship(self):
         """Test employee-company relationship query."""
         query = match(
-            node("Employee", variable="emp").relates_to("employment", "WORKS_FOR", ">", node("Company", variable="comp"))
+            node("Employee", variable="emp").relationship("WORKS_FOR", direction=">", variable="employment").node("Company", variable="comp")
         )
         result = query.to_cypher()
         expected = "MATCH (emp:Employee)-[employment:WORKS_FOR]->(comp:Company)"
@@ -238,7 +243,7 @@ class TestMatchChaining:
         """Test MATCH clauses that can be chained with relationships."""
         first_match = match(node("Person", variable="p"))
         second_match = first_match.match(
-            node(variable="p").relates_to("works", "WORKS_FOR", ">", node("Company", variable="c"))
+            node(variable="p").relationship("WORKS_FOR", direction=">", variable="works").node("Company", variable="c")
         )
         
         result = second_match.to_cypher()

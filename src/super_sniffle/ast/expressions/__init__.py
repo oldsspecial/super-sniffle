@@ -5,6 +5,7 @@ from .parameter import Parameter
 from .literal import Literal
 from .function_expression import FunctionExpression
 from .order_by_expression import OrderByExpression
+from .formatting import format_value
 
 __all__ = [
     'Expression',
@@ -16,5 +17,6 @@ __all__ = [
     'Parameter',
     'Literal',
     'FunctionExpression',
-    'OrderByExpression'
+    'OrderByExpression',
+    'format_value'
 ]

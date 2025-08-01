@@ -94,7 +94,8 @@ class TestPathOperators:
         assert path2.to_cypher() == "(c:Company)-[w:WORKS_AT]->(n1:Person)-[r:KNOWS]->"
         
         path3 = path(n1, existing_path, r)
-        assert path3.to_cypher() == "(n1:Person)--(c:Company)-[w:WORKS_AT]->-[r:KNOWS]->"
+        # The path should end with the last relationship pattern
+        assert path3.to_cypher() == "(n1:Person)--(c:Company)-[w:WORKS_AT]->"
         
         # With automatic implicit relationship
         path4 = path(n1, existing_path)

@@ -27,7 +27,7 @@ def test_next_clause_in_query_builder():
         "MATCH (c:Customer)\n"
         "RETURN c AS customer\n"
         "NEXT\n"
-        "MATCH (customer)-[:BUYS]->(Product {name: 'Chocolate'})\n"
+        "MATCH (customer)-[:BUYS]->(Product {name: \"Chocolate\"})\n"
         "RETURN customer.firstName AS chocolateCustomer"
     )
     assert cypher == expected

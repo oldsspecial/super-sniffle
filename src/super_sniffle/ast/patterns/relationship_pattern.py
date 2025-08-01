@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, replace
 from typing import Optional, Union, Dict, Any, TYPE_CHECKING
 from ..expressions import Expression
 from .quantified_path_pattern import QuantifiedPathPattern
-from .utils import format_value
+from super_sniffle.ast.formatting_utils import format_value
 from .types import NodeType, PathType
 
 if TYPE_CHECKING:
@@ -114,24 +114,16 @@ class RelationshipPattern:
         # Build the relationship string
         if self.direction == "<":
             if rel_content:
-                rel_str = f"<-[{rel_content}]-"
-            else:
-                rel_str = "<--"
+                return f"<-[{rel_content}]-"
+            return "<--"
         elif self.direction == ">":
             if rel_content:
-                rel_str = f"-[{rel_content}]->"
-            else:
-                rel_str = "-->"
+                return f"-[{rel_content}]->"
+            return "-->"
         else:
             if rel_content:
-                rel_str = f"-[{rel_content}]-"
-            else:
-                rel_str = "--"
-
-        # Prepend start node if present
-        if self.start_node:
-            return self.start_node.to_cypher() + rel_str
-        return rel_str
+                return f"-[{rel_content}]-"
+            return "--"
 
     def __add__(self, other: Union['NodePattern', 'PathPattern']) -> 'PathPattern':
         """Enable operator overloading for path construction."""

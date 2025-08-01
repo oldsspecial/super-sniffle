@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, replace
-from typing import Optional, Sequence, Union, TYPE_CHECKING
+from typing import Optional, Sequence, Union, TYPE_CHECKING, Any
 from ..expressions import Expression
 from .base_patterns import BasePathPattern
 from .types import PatternElement, NodeType, RelType
@@ -27,7 +27,7 @@ class PathPattern(BasePathPattern):
     condition: Optional[Expression] = None
     
     def __post_init__(self):
-        """Automatically insert implicit relationships between consecutive nodes."""
+        """Automatically insert implicit relationships between consecutive nodes only when necessary."""
         # Import locally to avoid circular dependency
         from .relationship_pattern import RelationshipPattern
         from .node_pattern import NodePattern
@@ -41,13 +41,21 @@ class PathPattern(BasePathPattern):
                 flattened_elements.append(elem)
         
         new_elements = []
-        for i, elem in enumerate(flattened_elements):
-            new_elements.append(elem)
+        i = 0
+        while i < len(flattened_elements):
+            current = flattened_elements[i]
+            new_elements.append(current)
             
-            # Check if next element exists and both are nodes
-            if i < len(flattened_elements) - 1 and isinstance(elem, NodePattern) and isinstance(flattened_elements[i+1], NodePattern):
-                # Insert implicit relationship: no variable, no type, undirected
-                new_elements.append(RelationshipPattern(direction="-"))
+            # If current is a node and next exists, and next is also a node, then insert an implicit relationship
+            if i < len(flattened_elements) - 1:
+                next_elem = flattened_elements[i+1]
+                if isinstance(current, NodePattern) and isinstance(next_elem, NodePattern):
+                    # Insert implicit relationship: no variable, no type, undirected
+                    new_elements.append(RelationshipPattern(direction="-"))
+                elif isinstance(current, RelationshipPattern) and isinstance(next_elem, RelationshipPattern):
+                    # Skip next element if it's a relationship since we shouldn't have two relationships in a row
+                    i += 1
+            i += 1
         
         # Update elements with implicit relationships
         object.__setattr__(self, "elements", new_elements)
@@ -207,6 +215,21 @@ class PathPattern(BasePathPattern):
             
         return PathPattern(new_elements, variable=self.variable)
         
+    def node(self, *labels: str, variable: Optional[str] = None, **properties: Any) -> 'PathPattern':
+        """
+        Append a node to the path pattern.
+        
+        Args:
+            *labels: Labels for the node
+            variable: Optional variable name for the node
+            **properties: Properties for the node
+            
+        Returns:
+            New PathPattern with the node appended
+        """
+        from .node_pattern import NodePattern
+        return self.concat(NodePattern(variable, labels, properties))
+    
     def __add__(self, other: Union['PathPattern', 'NodePattern', 'RelationshipPattern']) -> 'PathPattern':
         """
         Concatenate this path with another path, node, or relationship using the '+' operator.
