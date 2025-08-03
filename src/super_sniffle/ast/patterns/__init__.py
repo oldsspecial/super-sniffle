@@ -11,7 +11,7 @@ from .node_pattern import NodePattern
 from .relationship_pattern import RelationshipPattern
 from .path_pattern import PathPattern
 from .quantified_path_pattern import QuantifiedPathPattern
-from .utils import format_value
+from super_sniffle.ast.formatting_utils import format_value
 
 __all__ = [
     'BaseLabelExpr', 'LabelAtom', 'LabelAnd', 'LabelOr', 'LabelNot', 'L',

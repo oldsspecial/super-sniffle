@@ -5,7 +5,7 @@ from .parameter import Parameter
 from .literal import Literal
 from .function_expression import FunctionExpression
 from .order_by_expression import OrderByExpression
-from .formatting import format_value
+from super_sniffle.ast.formatting_utils import format_value
 
 __all__ = [
     'Expression',

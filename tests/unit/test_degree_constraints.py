@@ -33,7 +33,7 @@ def test_combined_with_properties():
     pattern = node("Person", variable="p", max_degree=4, name="Alice", age=30)
     result = pattern.to_cypher()
     assert result.startswith("(p:Person {")
-    assert "name: 'Alice'" in result
+    assert 'name: "Alice"' in result
     assert "age: 30" in result
     assert "WHERE apoc.node.degree(p) < 4" in result
 
@@ -61,7 +61,7 @@ def test_missing_max_degree_error():
 def test_degree_without_constraints():
     """Test node without degree constraints remains unchanged."""
     pattern = node("Person", variable="p", name="Alice")
-    assert pattern.to_cypher() == "(p:Person {name: 'Alice'})"
+    assert pattern.to_cypher() == '(p:Person {name: "Alice"})'
 
 def test_complex_label_expression():
     """Test degree constraint with complex label expression."""
