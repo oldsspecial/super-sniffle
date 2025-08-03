@@ -149,7 +149,9 @@ class NodePattern:
         
         # Add existing condition if present
         if self.condition:
-            conditions.append(f"({self.condition.to_cypher()})")
+            cypher_str = self.condition.to_cypher()
+            if cypher_str:
+                conditions.append(cypher_str)
             
         # Add APOC degree condition if needed
         if self.max_degree is not None:
@@ -169,9 +171,10 @@ class NodePattern:
             apoc_call = f"{func_name}({', '.join(args)}) < {self.max_degree}"
             conditions.append(apoc_call)
         
-        # Combine all conditions
+        # Combine all conditions, filtering out any None values
         if conditions:
-            condition_str = " WHERE " + " AND ".join(conditions)
+            valid_conditions = [c for c in conditions if c is not None]
+            condition_str = " WHERE " + " AND ".join(valid_conditions)
         
         return f"({label_str}{properties_str}{condition_str})"
     

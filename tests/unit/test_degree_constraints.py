@@ -44,7 +44,7 @@ def test_combined_with_where_condition():
         prop("p", "age") > literal(18)
     )
     result = pattern.to_cypher()
-    assert "WHERE (p.age > 18) AND apoc.node.degree(p) < 5" in result
+    assert "WHERE p.age > 18 AND apoc.node.degree(p) < 5" in result
 
 def test_missing_variable_error():
     """Test error when variable is missing with degree constraints."""
