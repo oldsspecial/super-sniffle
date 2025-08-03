@@ -19,11 +19,17 @@ class NodePattern:
         labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = Labels or expressions
         properties: Dictionary of property constraints
         condition: Optional inline WHERE condition
+        max_degree: Optional maximum degree constraint
+        degree_direction: Optional relationship direction for degree constraint ("in", "out")
+        degree_rel_type: Optional relationship type for degree constraint
     """
     variable: Optional[str] = None
     labels: Union[Tuple[Union[str, BaseLabelExpr], ...], BaseLabelExpr, str] = ()
     properties: Dict[str, Any] = field(default_factory=dict)
     condition: Optional[Expression] = None
+    max_degree: Optional[int] = None
+    degree_direction: Optional[str] = None
+    degree_rel_type: Optional[str] = None
 
     def __post_init__(self):
         # Convert single string label to tuple
@@ -49,6 +55,9 @@ class NodePattern:
                 # Otherwise keep as tuple of strings
                 object.__setattr__(self, "labels", tuple(str(item) for item in converted))
         
+        # Validate degree constraints at creation time
+        self._validate_degree_params()
+        
         # If variable is provided, ensure it's not treated as part of the label expression
         # This was causing issues like (:`(p & Person)`) instead of (p:Person)
         # We'll remove this conversion and handle variables separately in to_cypher
@@ -69,6 +78,21 @@ class NodePattern:
             >>> # Generates: (p:Person WHERE p.age > 18)
         """
         return replace(self, condition=condition)
+    
+    def _validate_degree_params(self):
+        """Validate degree constraint parameters."""
+        if (self.max_degree is not None or 
+            self.degree_direction is not None or 
+            self.degree_rel_type is not None):
+            if self.variable is None:
+                raise ValueError(
+                    "Variable name is required when using degree constraints "
+                    "(max_degree, degree_direction, or degree_rel_type)"
+                )
+            if self.max_degree is None:
+                raise ValueError(
+                    "max_degree must be provided when using degree constraints"
+                )
     
     
     def to_cypher(self) -> str:
@@ -118,9 +142,36 @@ class NodePattern:
             properties_str = f" {{{props}}}"
         
         # Add inline WHERE condition
+        # Validation already happened in __post_init__
+        
         condition_str = ""
+        conditions: list[str] = []  # Explicit type declaration
+        
+        # Add existing condition if present
         if self.condition:
-            condition_str = f" WHERE {self.condition.to_cypher()}"
+            conditions.append(f"({self.condition.to_cypher()})")
+            
+        # Add APOC degree condition if needed
+        if self.max_degree is not None:
+            # Determine APOC function based on direction
+            if self.degree_direction == "in":
+                func_name = "apoc.node.degree.in"
+            elif self.degree_direction == "out":
+                func_name = "apoc.node.degree.out"
+            else:
+                func_name = "apoc.node.degree"
+            
+            # Build function arguments
+            args = [self.variable]
+            if self.degree_rel_type:
+                args.append(f"'{self.degree_rel_type}'")
+                
+            apoc_call = f"{func_name}({', '.join(args)}) < {self.max_degree}"
+            conditions.append(apoc_call)
+        
+        # Combine all conditions
+        if conditions:
+            condition_str = " WHERE " + " AND ".join(conditions)
         
         return f"({label_str}{properties_str}{condition_str})"
     

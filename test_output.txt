@@ -1,0 +1,99 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-7.4.4, pluggy-1.5.0 -- /Users/user/git/super-sniffle/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/user/git/super-sniffle
+configfile: pyproject.toml
+plugins: anyio-4.9.0, cov-4.1.0
+collecting ... collected 10 items
+
+tests/unit/test_degree_constraints.py::test_basic_degree_constraint PASSED [ 10%]
+tests/unit/test_degree_constraints.py::test_direction_constraint PASSED  [ 20%]
+tests/unit/test_degree_constraints.py::test_rel_type_constraint PASSED   [ 30%]
+tests/unit/test_degree_constraints.py::test_direction_and_rel_type_constraint PASSED [ 40%]
+tests/unit/test_degree_constraints.py::test_combined_with_properties FAILED [ 50%]
+tests/unit/test_degree_constraints.py::test_combined_with_where_condition PASSED [ 60%]
+tests/unit/test_degree_constraints.py::test_missing_variable_error PASSED [ 70%]
+tests/unit/test_degree_constraints.py::test_missing_max_degree_error PASSED [ 80%]
+tests/unit/test_degree_constraints.py::test_degree_without_constraints FAILED [ 90%]
+tests/unit/test_degree_constraints.py::test_complex_label_expression PASSED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_combined_with_properties _________________________
+
+    def test_combined_with_properties():
+        """Test degree constraint combined with node properties."""
+        pattern = node("Person", variable="p", max_degree=4, name="Alice", age=30)
+        result = pattern.to_cypher()
+        assert result.startswith("(p:Person {")
+>       assert "name: \"Alice\"" in result
+E       assert 'name: "Alice"' in "(p:Person {name: 'Alice', age: 30} WHERE apoc.node.degree(p) < 4)"
+
+tests/unit/test_degree_constraints.py:36: AssertionError
+_______________________ test_degree_without_constraints ________________________
+
+    def test_degree_without_constraints():
+        """Test node without degree constraints remains unchanged."""
+        pattern = node("Person", variable="p", name="Alice")
+>       assert pattern.to_cypher() == "(p:Person {name: \"Alice\"})"
+E       assert "(p:Person {name: 'Alice'})" == '(p:Person {name: "Alice"})'
+E         - (p:Person {name: "Alice"})
+E         ?                  ^     ^
+E         + (p:Person {name: 'Alice'})
+E         ?                  ^     ^
+
+tests/unit/test_degree_constraints.py:64: AssertionError
+
+---------- coverage: platform darwin, python 3.12.4-final-0 ----------
+Name                                                        Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------------------
+src/super_sniffle/__init__.py                                   6      0   100%
+src/super_sniffle/api.py                                      196    127    35%   33-34, 49-50, 53-54, 57-65, 78-98, 113-114, 117-125, 128-131, 134-137, 143, 149, 153-154, 158-159, 178, 194, 213-220, 240-244, 260, 276-277, 289-332, 348, 366, 382, 400, 416, 460-461, 514-527, 551-557, 593, 610, 645, 662, 681-682, 699, 716, 732, 748, 772-785, 826-827, 864-865
+src/super_sniffle/ast/__init__.py                              13      0   100%
+src/super_sniffle/ast/expressions/__init__.py                   9      0   100%
+src/super_sniffle/ast/expressions/expression.py                40     11    72%   30, 45, 57, 66-68, 77-79, 144, 168
+src/super_sniffle/ast/expressions/formatting.py                10      8    20%   18-27
+src/super_sniffle/ast/expressions/function_expression.py       14      9    36%   5-7, 10-14, 17
+src/super_sniffle/ast/expressions/literal.py                   14      4    71%   10-11, 13, 15
+src/super_sniffle/ast/expressions/order_by_expression.py        8      4    50%   5-6, 9-10
+src/super_sniffle/ast/expressions/parameter.py                  6      2    67%   5, 8
+src/super_sniffle/ast/expressions/property.py                  32     11    66%   32, 36, 44, 48, 52, 65, 77, 89, 101, 110, 119
+src/super_sniffle/ast/expressions/variable.py                  31     14    55%   6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45
+src/super_sniffle/ast/formatting.py                            10     10     0%   1-27
+src/super_sniffle/ast/formatting_utils.py                      10      2    80%   23, 25
+src/super_sniffle/ast/patterns/__init__.py                      7      0   100%
+src/super_sniffle/ast/patterns/base_label_expr.py              32      7    78%   10, 13, 35-36, 39, 44, 47
+src/super_sniffle/ast/patterns/base_patterns.py                13      2    85%   11-12
+src/super_sniffle/ast/patterns/node_pattern.py                101     27    73%   37, 44, 52, 56, 88, 124-129, 198-218, 223-233
+src/super_sniffle/ast/patterns/path_pattern.py                102     81    21%   8-10, 32-61, 79-107, 111, 126-130, 143-151, 157-158, 164-165, 187-216, 230-231, 245
+src/super_sniffle/ast/patterns/quantified_path_pattern.py      18      8    56%   25-34, 38
+src/super_sniffle/ast/patterns/relationship_pattern.py         70     50    29%   9-11, 52-59, 76, 90-126, 130-139, 158-169
+src/super_sniffle/ast/patterns/types.py                        12      4    67%   9-12
+src/super_sniffle/ast/patterns/utils.py                        20     14    30%   22-28, 45-54
+src/super_sniffle/clauses/__init__.py                          14      0   100%
+src/super_sniffle/clauses/call_procedure.py                    32     19    41%   8, 29-35, 39-61
+src/super_sniffle/clauses/call_subquery.py                     23     14    39%   47-66
+src/super_sniffle/clauses/clause.py                             5      0   100%
+src/super_sniffle/clauses/group_by.py                           9      9     0%   1-19
+src/super_sniffle/clauses/limit.py                             12      4    67%   15-18
+src/super_sniffle/clauses/match.py                             11      3    73%   17-19
+src/super_sniffle/clauses/next_.py                              8      3    62%   10, 16-17
+src/super_sniffle/clauses/optional_match.py                    11     11     0%   1-19
+src/super_sniffle/clauses/order_by.py                          11      3    73%   17-19
+src/super_sniffle/clauses/return_.py                           22     13    41%   15-21, 27-38
+src/super_sniffle/clauses/skip.py                              12      4    67%   15-18
+src/super_sniffle/clauses/unwind.py                            11      2    82%   24-25
+src/super_sniffle/clauses/use.py                               15      6    60%   20-21, 25-31
+src/super_sniffle/clauses/where.py                             10      2    80%   23-24
+src/super_sniffle/clauses/with_.py                             17      9    47%   17-30
+src/super_sniffle/clauses/yield_.py                            25     16    36%   21-30, 34-47
+src/super_sniffle/compound_query.py                            19      8    58%   10, 25, 34, 43-47
+src/super_sniffle/utils/__init__.py                             1      1     0%   12
+-----------------------------------------------------------------------------------------
+TOTAL                                                        1042    522    50%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/unit/test_degree_constraints.py::test_combined_with_properties
+FAILED tests/unit/test_degree_constraints.py::test_degree_without_constraints
+========================= 2 failed, 8 passed in 0.22s ==========================

@@ -416,13 +416,23 @@ def optional_call_procedure(procedure_name: str, *arguments: Union[str, Expressi
     return call_procedure(procedure_name, *arguments, optional=True)
 
 
-def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **properties: Any) -> NodePattern:
+def node(
+    *labels: Union[str, BaseLabelExpr], 
+    variable: Optional[str] = None,
+    max_degree: Optional[int] = None,
+    degree_direction: Optional[str] = None,
+    degree_rel_type: Optional[str] = None,
+    **properties: Any
+) -> NodePattern:
     """
-    Create a node pattern with optional variable, labels or expressions, and properties.
+    Create a node pattern with optional variable, labels or expressions, properties, and APOC degree constraints.
     
     Args:
         *labels: Node labels (strings) or label expressions (using L() helper)
         variable: Optional variable name for the node
+        max_degree: Optional maximum degree constraint (requires variable)
+        degree_direction: Optional relationship direction for degree constraint ("in", "out")
+        degree_rel_type: Optional relationship type for degree constraint
         **properties: Node properties
         
     Returns:
@@ -432,8 +442,12 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
         # Simple node with variable and label
         >>> person = node("Person", variable="p", age=30, name="Alice")
         
-        # Node with complex label expression
-        >>> admin = node(L("Person") & L("Admin"), variable="a")
+        # Node with degree constraint
+        >>> low_degree = node("Person", variable="p", max_degree=5)
+        
+        # Node with complex degree constraints
+        >>> specific_degree = node("Person", variable="p", max_degree=3, 
+        ...                       degree_direction="in", degree_rel_type="KNOWS")
         
         # Node without variable
         >>> anonymous = node("User")
@@ -446,6 +460,15 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
         variable = labels[0]
         labels = labels[1:]
     
+    # Validate degree constraints
+    if (max_degree is not None or 
+        degree_direction is not None or 
+        degree_rel_type is not None) and variable is None:
+        raise ValueError(
+            "Variable name is required when using degree constraints "
+            "(max_degree, degree_direction, or degree_rel_type)"
+        )
+    
     # Convert simple string labels to label atoms
     processed_labels = []
     for label in labels:
@@ -454,7 +477,14 @@ def node(*labels: Union[str, BaseLabelExpr], variable: Optional[str] = None, **p
         else:
             processed_labels.append(label)
     
-    return NodePattern(variable=variable, labels=tuple(processed_labels), properties=properties)
+    return NodePattern(
+        variable=variable, 
+        labels=tuple(processed_labels), 
+        properties=properties,
+        max_degree=max_degree,
+        degree_direction=degree_direction,
+        degree_rel_type=degree_rel_type
+    )
 
 
 def relationship(

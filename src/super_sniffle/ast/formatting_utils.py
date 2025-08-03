@@ -16,9 +16,9 @@ def format_value(value: Any) -> str:
         >>> format_value(True) -> 'true'
     """
     if isinstance(value, str):
-        # Escape quotes in the string
-        escaped = value.replace('"', '\\"')
-        return f'"{escaped}"'
+        # Escape single quotes in the string
+        escaped = value.replace("'", "\\'")
+        return f"'{escaped}'"
     elif isinstance(value, bool):
         return "true" if value else "false"
     elif value is None:
