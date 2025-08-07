@@ -24,8 +24,8 @@ def test_use_clause_ordering():
 def test_use_with_complex_query():
     """Test USE clause with complex query patterns."""
     # Create path pattern using path function
-    p_node = node("p", "Person")
-    f_node = node("f", "Person")
+    p_node = node("Person", variable="p")
+    f_node = node("Person", variable="f")
     knows_rel = relationship("KNOWS", direction=">")
     pattern = path(p_node, knows_rel, f_node)
     query = (

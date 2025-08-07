@@ -156,7 +156,7 @@ def test_standalone_relationship():
 
     def test_node_with_properties():
         """Test node with properties in relationship pattern"""
-        n = node("n", "Person", name="Alice", age=30)
+        n = node("Person", variable="n", name="Alice", age=30)
         rel = n.relationship("KNOWS", variable="r", direction=">")
         # Property order may vary
         cypher = rel.to_cypher()
@@ -174,13 +174,13 @@ def test_node_with_label_expression():
 
 def test_relationship_with_properties():
     """Test relationship with properties"""
-    n = node("n", "Person")
+    n = node("Person", variable="n")
     rel = n.relationship("KNOWS", since=2020, variable="r", direction=">")
     assert rel.to_cypher() == '(n:Person)-[r:KNOWS {since: 2020}]->'
 
 def test_complex_path_construction():
     """Test chaining node creation after relationship"""
-    n1 = node("n", "Person")
+    n1 = node("Person", variable="n")
     path = n1.relationship("KNOWS", variable="r", direction=">").node("Person", variable="m")
     # Handle the actual output format
     cypher = path.to_cypher()

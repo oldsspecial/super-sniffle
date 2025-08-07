@@ -7,6 +7,64 @@ from super_sniffle.ast.formatting_utils import format_value
 from .relationship_pattern import RelationshipPattern  # Add import
 from .path_pattern import PathPattern  # Add import
 
+# Lazy variable generation for anonymous nodes
+_node_counter = 0
+_JAZZ_MUSICIANS = [
+    # New Orleans pioneers and early jazz (1900s-1920s)
+    "bolden", "morton", "oliver", "armstrong", "bechet", "ory", "dodds", "noone",
+    "tio", "perez", "picou", "bunk", "celestin", "piron", "robichaux", "trepagnier",
+    
+    # Chicago jazz (1920s)
+    "beiderbecke", "trumbauer", "mares", "rappolo", "brunies", "pollack", "teschemacher",
+    "freeman", "tough", "sullivan", "spanier", "condon", "mckenzie", "lang",
+    
+    # New York stride and early big band (1910s-1920s)
+    "johnson", "roberts", "blake", "waller", "hines", "wilson", "henderson", "redman",
+    "carter", "hawkins", "smith", "miley", "nanton", "bigard", "hardwick",
+    
+    # Blues and boogie pioneers (1920s)
+    "handy", "williams", "cox", "bradford", "davenport", "lewis", "ammons", "yancey",
+    
+    # White jazz musicians (1920s)
+    "whiteman", "goldkette", "nichols", "dorsey", "goodman", "miller", "krupa",
+    "berigan", "mole", "venuti", "signorelli", "rollini",
+    
+    # Territory bands and regional (1920s)
+    "moten", "kirk", "williams", "page", "rushing", "basie", "luncford", "calloway",
+    
+    # Female performers (1920s)
+    "rainey", "hunter", "spivey", "wallace", "hill", "cox", "henderson", "austin",
+    
+    # International early jazz (1920s)
+    "reinhardt", "grappelli", "coleman", "ellington", "mills", "miley", "anderson",
+    
+    # Obscure but important early figures
+    "keppard", "ladnier", "brown", "stewart", "green", "singleton", "hall", "foster",
+    "jackson", "russell", "dodson", "shoffner", "duhe", "barbarin", "marrero",
+    
+    # Additional early jazz surnames
+    "lofton", "brooks", "thomas", "cooper", "scott", "clark", "richardson", "parker",
+    "bryant", "washington", "holmes", "bailey", "mitchell", "gibson", "reynolds",
+    "watson", "hughes", "sanders", "coleman", "murphy", "harrison", "garrett"
+]
+
+def _get_next_variable_name() -> str:
+    """Generate next automatic variable name using pre-1930s jazz musician surnames."""
+    global _node_counter
+    if _node_counter < len(_JAZZ_MUSICIANS):
+        musician = _JAZZ_MUSICIANS[_node_counter]
+    else:
+        # Fallback to numbered musicians if we exceed the list
+        musician = f"jazzcat{_node_counter - len(_JAZZ_MUSICIANS) + 1}"
+    
+    _node_counter += 1
+    return f"_node_{musician}"
+
+def _reset_variable_counter() -> None:
+    """Reset the variable counter (useful for testing)."""
+    global _node_counter
+    _node_counter = 0
+
 @dataclass(frozen=True)
 class NodePattern:
     """
@@ -30,30 +88,36 @@ class NodePattern:
     max_degree: Optional[int] = None
     degree_direction: Optional[str] = None
     degree_rel_type: Optional[str] = None
+    _lazy_variable: Optional[str] = field(default=None, init=False, compare=False)
 
     def __post_init__(self):
         # Convert single string label to tuple
         if isinstance(self.labels, str):
             object.__setattr__(self, "labels", (self.labels,))
-        # If we have a tuple of labels, check if we need to convert to expression
+        # If we have a tuple of labels, handle them appropriately
         elif isinstance(self.labels, tuple):
-            # Convert all strings in tuple to LabelAtom
-            converted = []
-            for item in self.labels:
-                if isinstance(item, str):
-                    converted.append(L(item))
-                else:
-                    converted.append(item)
-            
-            # If we have any expressions, combine them with AND
-            if any(isinstance(item, BaseLabelExpr) for item in converted):
-                expr = converted[0]
-                for label in converted[1:]:
-                    expr = expr & label
-                object.__setattr__(self, "labels", expr)
+            # For simple string labels, keep as tuple (they'll be joined with colons in to_cypher)
+            if all(isinstance(item, str) for item in self.labels):
+                # Keep as tuple of strings - no conversion needed
+                pass
             else:
-                # Otherwise keep as tuple of strings
-                object.__setattr__(self, "labels", tuple(str(item) for item in converted))
+                # Convert mixed types to expressions and handle complex label logic
+                converted = []
+                for item in self.labels:
+                    if isinstance(item, str):
+                        converted.append(L(item))
+                    else:
+                        converted.append(item)
+                
+                # If we have any expressions, combine them with AND
+                if any(isinstance(item, BaseLabelExpr) for item in converted):
+                    expr = converted[0]
+                    for label in converted[1:]:
+                        expr = expr & label
+                    object.__setattr__(self, "labels", expr)
+                else:
+                    # Otherwise keep as tuple of strings
+                    object.__setattr__(self, "labels", tuple(str(item) for item in converted))
         
         # Validate degree constraints at creation time
         self._validate_degree_params()
@@ -78,6 +142,70 @@ class NodePattern:
             >>> # Generates: (p:Person WHERE p.age > 18)
         """
         return replace(self, condition=condition)
+    
+    def _ensure_variable(self) -> str:
+        """
+        Ensure this node has a variable name, generating one if needed.
+        This is called when the node is referenced and needs a variable.
+        
+        Returns:
+            The variable name (existing or newly generated)
+        """
+        if self.variable is not None:
+            return self.variable
+        
+        if self._lazy_variable is not None:
+            return self._lazy_variable
+        
+        # Generate new variable and store it
+        generated = _get_next_variable_name()
+        object.__setattr__(self, '_lazy_variable', generated)
+        return generated
+    
+    def prop(self, property_name: str) -> 'Property':
+        """
+        Create a property reference for this node pattern.
+        This ensures the node gets a variable when its properties are accessed.
+        
+        Args:
+            property_name: Name of the property to reference
+            
+        Returns:
+            A Property object representing the property reference
+            
+        Example:
+            >>> person = node("Person", variable="p") 
+            >>> age_condition = person.prop("age") > literal(23)
+            >>> # Equivalent to: prop("p", "age") > literal(23)
+            
+            >>> anonymous = node("Person")
+            >>> age_condition = anonymous.prop("age") > literal(23)
+            >>> # Generates variable automatically: prop("_node_bolden", "age") > literal(23)
+        """
+        variable_name = self._ensure_variable()
+        
+        # Import locally to avoid circular import issues
+        from ..expressions import Property
+        return Property(variable_name, property_name)
+    
+    def __str__(self) -> str:
+        """
+        String representation for use in projections.
+        This ensures the node gets a variable when referenced in return statements.
+        
+        Returns:
+            The variable name as a string (existing or newly generated)
+            
+        Example:
+            >>> person = node("Person", variable="p")
+            >>> str(person)  # Returns: "p"
+            >>> match(person).return_(person)  # Equivalent to .return_("p")
+            
+            >>> anonymous = node("Person")
+            >>> str(anonymous)  # Returns: "_node_bolden" (auto-generated)
+            >>> match(anonymous).return_(anonymous)  # Uses the generated variable
+        """
+        return self._ensure_variable()
     
     def _validate_degree_params(self):
         """Validate degree constraint parameters."""
@@ -110,30 +238,49 @@ class NodePattern:
         
         # Handle variable and labels separately
         cypher_parts = []
-        if self.variable:
-            cypher_parts.append(self.variable)
         
-        # Add labels or expressions
+        # Use lazy variable if it exists, otherwise use original variable (which may be None)
+        effective_variable = None
+        if self.variable is not None:
+            effective_variable = self.variable
+        elif self._lazy_variable is not None:
+            effective_variable = self._lazy_variable
+            
+        # Combine variable and labels
+        label_parts = []
+        
+        # Add variable if present
+        if effective_variable:
+            label_parts.append(effective_variable)
+        
+        # Add labels with proper formatting
         if self.labels:
-            # Handle label expressions
             if isinstance(self.labels, BaseLabelExpr):
                 labels_str = str(self.labels)
                 # Wrap complex expressions in backticks if they contain operators
                 if any(op in labels_str for op in ["&", "|", "!"]):
                     labels_str = f"`{labels_str}`"
+                label_parts.append(labels_str)
             elif isinstance(self.labels, tuple):
-                # Handle tuple of strings - join with colons for multiple labels
+                # Handle tuple of labels - join with colons for multiple labels
                 labels_str = ":".join(str(label) for label in self.labels)
+                label_parts.append(labels_str)
             else:
-                # Handle single string label
+                # Handle single string label (fallback)
                 labels_str = str(self.labels)
-            
-            cypher_parts.append(labels_str)
+                label_parts.append(labels_str)
         
-        # Combine variable and labels
-        label_str = ""
-        if cypher_parts:
-            label_str = ":".join(cypher_parts)
+        # Join with colons, handling the anonymous case
+        if label_parts:
+            if effective_variable:
+                # Has variable: join with colons (p:Person or p)
+                label_str = ":".join(label_parts)
+            else:
+                # Anonymous with labels: prepend colon (:Person)
+                label_str = ":" + ":".join(label_parts)
+        else:
+            # No variable or labels (shouldn't happen)
+            label_str = ""
         
         # Add properties
         properties_str = ""
@@ -164,7 +311,7 @@ class NodePattern:
                 func_name = "apoc.node.degree"
             
             # Build function arguments
-            args = [self.variable]
+            args = [effective_variable]
             if self.degree_rel_type:
                 args.append(f"'{self.degree_rel_type}'")
                 

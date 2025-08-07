@@ -8,6 +8,10 @@ class Variable(Expression):
     def to_cypher(self) -> str:
         return self.name
     
+    def __str__(self) -> str:
+        """String representation returns the variable name."""
+        return self.name
+    
     def __eq__(self, other: Any) -> ComparisonExpression:
         return ComparisonExpression(self, "=", other)
     

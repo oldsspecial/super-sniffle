@@ -69,11 +69,12 @@ class QueryBuilder:
         Add a RETURN clause to the query.
         
         Args:
-            *projections: The expressions to return (can be strings or (expression, alias) tuples)
+            *projections: The expressions to return (can be strings, NodePattern objects, or (expression, alias) tuples)
             distinct: Whether to add DISTINCT keyword
             
         Example:
             >>> query.return_("p.name", ("p.age", "age"))
+            >>> query.return_(node_pattern)  # Uses node_pattern.variable
         """
         from .clauses.return_ import ReturnClause
         processed_projections = []
@@ -83,10 +84,13 @@ class QueryBuilder:
                 # Validate tuple format
                 if len(proj) != 2:
                     raise ValueError("Tuple projection must have exactly two elements: (expression, alias)")
-                processed_projections.append(proj)
+                # Convert first element to string if it's not already
+                expr_str = str(proj[0])
+                processed_projections.append((expr_str, proj[1]))
             else:
-                # For strings, use (expression, None) to indicate no alias
-                processed_projections.append((proj, None))
+                # Convert to string (handles NodePattern via __str__ method)
+                expr_str = str(proj)
+                processed_projections.append((expr_str, None))
                 
         # Convert list to List[Tuple[str, Optional[str]]] to satisfy type checker
         typed_projections: List[Tuple[str, Optional[str]]] = processed_projections
@@ -439,26 +443,26 @@ def node(
         A NodePattern object representing the node pattern
         
     Example:
-        # Simple node with variable and label
-        >>> person = node("Person", variable="p", age=30, name="Alice")
+        # Anonymous node with label  
+        >>> person = node("Person", age=30)
+        >>> match(person)  # Generates: MATCH (:Person {age: 30})
         
-        # Node with degree constraint
-        >>> low_degree = node("Person", variable="p", max_degree=5)
+        # Anonymous node that gets variable when referenced
+        >>> person = node("Person")
+        >>> match(person).return_(person)  # Generates: MATCH (_node_bolden:Person) RETURN _node_bolden
         
-        # Node with complex degree constraints
-        >>> specific_degree = node("Person", variable="p", max_degree=3, 
-        ...                       degree_direction="in", degree_rel_type="KNOWS")
+        # Node with explicit variable
+        >>> person = node("Person", variable="p", age=30)
+        >>> match(person).return_(person)  # Generates: MATCH (p:Person {age: 30}) RETURN p
         
-        # Node without variable
-        >>> anonymous = node("User")
+        # Multiple labels, anonymous
+        >>> multi = node("Person", "Employee")  # Generates: (:Person & Employee)
         
-        # With inline condition:
-        >>> adult = node("Person", variable="p").where(prop("p", "age") > 18)
+        # Multiple labels with variable
+        >>> multi = node("Person", "Employee", variable="p")  # Generates: (p:`(Person & Employee)`)
     """
-    # If first argument is a string and variable is not provided, treat it as a variable
-    if variable is None and labels and isinstance(labels[0], str):
-        variable = labels[0]
-        labels = labels[1:]
+    # All positional arguments are treated as labels
+    # Variables must be specified explicitly with the variable= parameter
     
     # Validate degree constraints
     if (max_degree is not None or 

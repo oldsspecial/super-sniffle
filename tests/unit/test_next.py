@@ -11,13 +11,13 @@ def test_next_clause_in_query_builder():
     from super_sniffle.api import path
     
     query = (
-        match(node("c", "Customer"))
+        match(node("Customer", variable="c"))
         .return_("c AS customer")
         .next()
         .match(path(
-            node("customer"),
+            node(variable="customer"),
             relationship("BUYS", direction=">"),
-            node("Product", name="Chocolate")
+            node("Product", variable="product", name="Chocolate")
         ))
         .return_("customer.firstName AS chocolateCustomer")
     )
@@ -27,20 +27,20 @@ def test_next_clause_in_query_builder():
         "MATCH (c:Customer)\n"
         "RETURN c AS customer\n"
         "NEXT\n"
-        'MATCH (customer)-[:BUYS]->(Product {name: "Chocolate"})\n'
+        'MATCH (customer)-[:BUYS]->(product:Product {name: "Chocolate"})\n'
         "RETURN customer.firstName AS chocolateCustomer"
     )
     assert cypher == expected
 
 def test_next_clause_with_multiple_segments():
     query = (
-        match(node("a", "A"))
+        match(node("A", variable="a"))
         .return_("a")
         .next()
-        .match(node("b", "B"))
+        .match(node("B", variable="b"))
         .return_("b")
         .next()
-        .match(node("c", "C"))
+        .match(node("C", variable="c"))
         .return_("c")
     )
     

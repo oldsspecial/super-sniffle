@@ -17,7 +17,7 @@ class TestCallSubqueryClause:
     
     def test_basic_subquery_no_variables(self):
         """Test basic subquery without variable scoping."""
-        subquery = match(node("p", "Person")).return_("p.name")
+        subquery = match(node("Person", variable="p")).return_("p.name")
         query = call_subquery(subquery)
         cypher = query.to_cypher()
         expected = "CALL() {\n  MATCH (p:Person)\n  RETURN p.name\n}"
@@ -25,7 +25,7 @@ class TestCallSubqueryClause:
     
     def test_subquery_with_single_variable(self):
         """Test subquery with single variable scoping."""
-        subquery = match(node("p", "Person")).where(prop("p", "team") == var("t")).return_("p")
+        subquery = match(node("Person", variable="p")).where(prop("p", "team") == var("t")).return_("p")
         query = call_subquery(subquery, variables="t")
         cypher = query.to_cypher()
         expected = "CALL(t) {\n  MATCH (p:Person)\n  WHERE p.team = t\n  RETURN p\n}"
@@ -33,7 +33,7 @@ class TestCallSubqueryClause:
     
     def test_subquery_with_multiple_variables(self):
         """Test subquery with multiple variable scoping."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = call_subquery(subquery, variables=["t", "u"])
         cypher = query.to_cypher()
         expected = "CALL(t, u) {\n  MATCH (p:Person)\n  RETURN p\n}"
@@ -41,7 +41,7 @@ class TestCallSubqueryClause:
     
     def test_subquery_with_all_variables(self):
         """Test subquery with all variables scoping (*)."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = call_subquery(subquery, variables="*")
         cypher = query.to_cypher()
         expected = "CALL(*) {\n  MATCH (p:Person)\n  RETURN p\n}"
@@ -49,9 +49,9 @@ class TestCallSubqueryClause:
     
     def test_subquery_chained_with_match(self):
         """Test subquery chained with MATCH clause."""
-        subquery = match(node("p", "Player")).where(prop("p", "team") == var("t")).return_("collect(p) as players")
+        subquery = match(node("Player", variable="p")).where(prop("p", "team") == var("t")).return_("collect(p) as players")
         query = (
-            match(node("t", "Team"))
+            match(node("Team", variable="t"))
             .call_subquery(subquery, variables="t")
             .return_("t", "players")
         )
@@ -70,7 +70,7 @@ class TestCallSubqueryClause:
     def test_complex_subquery_with_where_and_order(self):
         """Test complex subquery with WHERE and ORDER BY."""
         subquery = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .where(prop("p", "age") > literal(18))
             .return_("p.name", "p.age")
             .order_by("p.age")
@@ -91,7 +91,7 @@ class TestCallSubqueryClause:
     
     def test_nested_subqueries(self):
         """Test nested subqueries."""
-        inner_subquery = match(node("c", "Company")).return_("c.name")
+        inner_subquery = match(node("Company", variable="c")).return_("c.name")
         outer_subquery = call_subquery(inner_subquery)
         query = call_subquery(outer_subquery)
         cypher = query.to_cypher()
@@ -126,7 +126,7 @@ class TestCallSubqueryClause:
     def test_subquery_with_with_clause(self):
         """Test subquery with WITH clause."""
         subquery = (
-            match(node("p", "Person"))
+            match(node("Person", variable="p"))
             .with_(("p.name", "name"), ("p.age", "age"))
             .return_("name", "age")
         )
@@ -144,11 +144,11 @@ class TestCallSubqueryClause:
     def test_real_world_team_players_example(self):
         """Test a real-world team players example."""
         subquery = (
-            match(path(node("p", "Player"), relationship(">", "PLAYS_FOR"), node("t")))
+            match(path(node("Player", variable="p"), relationship(">", "PLAYS_FOR"), node("t")))
             .return_("collect(p.name) as players")
         )
         query = (
-            match(node("t", "Team"))
+            match(node("Team", variable="t"))
             .call_subquery(subquery, variables="t")
             .return_("t.name", "players")
         )
@@ -166,7 +166,7 @@ class TestCallSubqueryClause:
     def test_subquery_with_aggregation(self):
         """Test subquery with aggregation functions."""
         subquery = (
-            match(path(node("Order", variable="o"), relationship("CONTAINS", direction=">"), node("i", "Item")))
+            match(path(node("Order", variable="o"), relationship("CONTAINS", direction=">"), node("Item", variable="i")))
             .return_("sum(i.price) as total_value")
         )
         query = call_subquery(subquery, variables="c")
@@ -181,7 +181,7 @@ class TestCallSubqueryClause:
     
     def test_empty_variable_list(self):
         """Test subquery with empty variable list (should behave like None)."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = call_subquery(subquery, variables=[])
         cypher = query.to_cypher()
         expected = "CALL() {\n  MATCH (p:Person)\n  RETURN p\n}"
@@ -193,19 +193,19 @@ class TestCallSubqueryStandaloneFunction:
     
     def test_standalone_function_no_variables(self):
         """Test standalone call_subquery function without variables."""
-        subquery = match(node("p", "Person")).return_("p.name")
+        subquery = match(node("Person", variable="p")).return_("p.name")
         query = call_subquery(subquery)
         assert isinstance(query.to_cypher(), str)
     
     def test_standalone_function_with_variables(self):
         """Test standalone call_subquery function with variables."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = call_subquery(subquery, variables=["a", "b"])
         assert "CALL(a, b)" in query.to_cypher()
     
     def test_standalone_function_with_star(self):
         """Test standalone call_subquery function with star."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = call_subquery(subquery, variables="*")
         assert "CALL(*)" in query.to_cypher()
 
@@ -215,7 +215,7 @@ class TestCallSubqueryIntegration:
     
     def test_subquery_with_limit_and_skip(self):
         """Test subquery integrated with LIMIT and SKIP."""
-        subquery = match(node("p", "Person")).return_("p.name")
+        subquery = match(node("Person", variable="p")).return_("p.name")
         query = (
             call_subquery(subquery)
             .skip(10)
@@ -234,7 +234,7 @@ class TestCallSubqueryIntegration:
     
     def test_subquery_with_order_by(self):
         """Test subquery with ORDER BY."""
-        subquery = match(node("p", "Person")).return_("p.name")
+        subquery = match(node("Person", variable="p")).return_("p.name")
         query = (
             call_subquery(subquery)
             .order_by("p.name")
@@ -251,7 +251,7 @@ class TestCallSubqueryIntegration:
     
     def test_subquery_with_where_clause(self):
         """Test subquery followed by WHERE clause."""
-        subquery = match(node("p", "Person")).return_("p.name as name")
+        subquery = match(node("Person", variable="p")).return_("p.name as name")
         query = (
             call_subquery(subquery)
             .where(var("name") == literal("Alice"))
@@ -274,7 +274,7 @@ class TestOptionalCallSubquery:
     
     def test_basic_optional_call_no_variables(self):
         """Test basic OPTIONAL CALL without variable scoping."""
-        subquery = match(node("p", "Person")).return_("p.name")
+        subquery = match(node("Person", variable="p")).return_("p.name")
         query = optional_call_subquery(subquery)
         cypher = query.to_cypher()
         expected = "OPTIONAL CALL() {\n  MATCH (p:Person)\n  RETURN p.name\n}"
@@ -282,7 +282,7 @@ class TestOptionalCallSubquery:
     
     def test_optional_call_with_variables(self):
         """Test OPTIONAL CALL with variable scoping."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = optional_call_subquery(subquery, variables=["t", "u"])
         cypher = query.to_cypher()
         expected = "OPTIONAL CALL(t, u) {\n  MATCH (p:Person)\n  RETURN p\n}"
@@ -290,7 +290,7 @@ class TestOptionalCallSubquery:
     
     def test_optional_call_with_star(self):
         """Test OPTIONAL CALL with all variables scoping."""
-        subquery = match(node("p", "Person")).return_("p")
+        subquery = match(node("Person", variable="p")).return_("p")
         query = optional_call_subquery(subquery, variables="*")
         cypher = query.to_cypher()
         expected = "OPTIONAL CALL(*) {\n  MATCH (p:Person)\n  RETURN p\n}"
@@ -298,9 +298,9 @@ class TestOptionalCallSubquery:
     
     def test_optional_call_chained_with_match(self):
         """Test OPTIONAL CALL chained with MATCH clause."""
-        subquery = match(node("p", "Player")).where(prop("p", "team") == var("t")).return_("collect(p) as players")
+        subquery = match(node("Player", variable="p")).where(prop("p", "team") == var("t")).return_("collect(p) as players")
         query = (
-            match(node("t", "Team"))
+            match(node("Team", variable="t"))
             .optional_call_subquery(subquery, variables="t")
             .return_("t", "players")
         )

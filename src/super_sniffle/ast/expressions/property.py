@@ -26,6 +26,10 @@ class Property(Expression):
         """
         return f"{self.variable}.{self.name}"
     
+    def __str__(self) -> str:
+        """String representation returns the Cypher format."""
+        return self.to_cypher()
+    
     # Comparison operators
     def __eq__(self, other: Any) -> ComparisonExpression:
         """Equality comparison using == operator."""
