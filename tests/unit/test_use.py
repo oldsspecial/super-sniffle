@@ -5,19 +5,19 @@ from super_sniffle.ast.expressions.variable import Variable
 
 def test_basic_use_clause():
     """Test simple USE clause with database name."""
-    query = use("neo4j").match(node("n")).return_("n")
+    query = use("neo4j").match(node(variable="n")).return_("n")
     expected = "USE neo4j\nMATCH (n)\nRETURN n"
     assert query.to_cypher() == expected
 
 def test_use_with_parameter():
     """Test USE clause with parameter binding."""
-    query = use(param("database")).match(node("n")).return_("n")
+    query = use(param("database")).match(node(variable="n")).return_("n")
     expected = "USE $database\nMATCH (n)\nRETURN n"
     assert query.to_cypher() == expected
 
 def test_use_clause_ordering():
     """Test USE clause appears before MATCH."""
-    query = use("movies").match(node("m:Movie")).where(prop("m", "year") > literal(2000)).return_("m.title")
+    query = use("movies").match(node("Movie", variable="m")).where(prop("m", "year") > literal(2000)).return_("m.title")
     expected = "USE movies\nMATCH (m:Movie)\nWHERE m.year > 2000\nRETURN m.title"
     assert query.to_cypher() == expected
 
@@ -44,26 +44,26 @@ def test_use_clause_empty_database_name():
 
 def test_use_clause_special_characters():
     """Test USE clause with database names containing special characters."""
-    query = use("my-database_123").match(node("n")).return_("n")
+    query = use("my-database_123").match(node(variable="n")).return_("n")
     expected = "USE my-database_123\nMATCH (n)\nRETURN n"
     assert query.to_cypher() == expected
 
 def test_use_in_call_subquery():
     """Test USE clause within CALL subquery."""
-    subquery = use("movies").match(node("m:Movie")).return_("m.title")
+    subquery = use("movies").match(node("Movie", variable="m")).return_("m.title")
     query = call_subquery(subquery).return_("count(*) AS movie_count")
     expected = "CALL() {\n  USE movies\n  MATCH (m:Movie)\n  RETURN m.title\n}\nRETURN count(*) AS movie_count"
     assert query.to_cypher() == expected
 
 def test_use_with_expression():
     """Test USE clause with variable expression."""
-    query = use(var("graphName")).match(node("n")).return_("n")
+    query = use(var("graphName")).match(node(variable="n")).return_("n")
     expected = "USE graphName\nMATCH (n)\nRETURN n"
     assert query.to_cypher() == expected
 
 def test_use_with_parameter_in_call():
     """Test USE with parameter in CALL subquery."""
-    subquery = use(param("db")).match(node("n")).return_("n")
+    subquery = use(param("db")).match(node(variable="n")).return_("n")
     query = call_subquery(subquery).return_("count(n) AS node_count")
     expected = "CALL() {\n  USE $db\n  MATCH (n)\n  RETURN n\n}\nRETURN count(n) AS node_count"
     assert query.to_cypher() == expected
@@ -74,7 +74,7 @@ def test_unwind_call_with_use():
     graph_expr = FunctionExpression("graph.byName", [Variable("graphName")])
     subquery = (
         use(graph_expr)
-        .match(node("m:Movie"))
+        .match(node("Movie", variable="m"))
         .return_("m.title AS title")
     )
     query = (
@@ -98,7 +98,7 @@ def test_multiple_use_clauses():
     query = (
         use("old_db")
         .use("new_db")
-        .match(node("n"))
+        .match(node(variable="n"))
         .return_("n")
     )
     expected = "USE new_db\nMATCH (n)\nRETURN n"

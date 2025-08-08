@@ -39,7 +39,7 @@ def test_unwind_with_other_clauses():
     """Test UNWIND combined with other clauses"""
     q = (
         unwind(literal([1,2,3]), "x")
-        .match(node("n"))
+        .match(node(variable="n"))
         .return_("n")
     )
     cypher = q.to_cypher()

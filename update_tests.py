@@ -40,7 +40,7 @@ def update_node_syntax(content):
     
     # Pattern 4: node("var") -> node(variable="var")
     # For variable-only nodes where var is lowercase (single letter usually)
-    pattern4 = r'node\("([a-z])\")(?!\s*\.)'  # Negative lookahead to avoid matching node("n").method()
+    pattern4 = r'node\("([a-z])"\)(?!\s*\.)'  # Negative lookahead to avoid matching node("n").method()
     def replacement4(match):
         var_name = match.group(1)
         return f'node(variable="{var_name}")'

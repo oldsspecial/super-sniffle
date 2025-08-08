@@ -109,7 +109,7 @@ class TestCallSubqueryClause:
         """Test subquery with OPTIONAL MATCH."""
         subquery = (
             match(node("Team", variable="t"))
-            .optional_match(path(node("Player", variable="p"), relationship("PLAYS_FOR", direction=">"), node("t")))
+            .optional_match(path(node("Player", variable="p"), relationship("PLAYS_FOR", direction=">"), node(variable="t")))
             .return_("t.name", "count(p) as player_count")
         )
         query = call_subquery(subquery)
@@ -144,7 +144,7 @@ class TestCallSubqueryClause:
     def test_real_world_team_players_example(self):
         """Test a real-world team players example."""
         subquery = (
-            match(path(node("Player", variable="p"), relationship(">", "PLAYS_FOR"), node("t")))
+            match(path(node("Player", variable="p"), relationship(">", "PLAYS_FOR"), node(variable="t")))
             .return_("collect(p.name) as players")
         )
         query = (
